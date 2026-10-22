@@ -122,6 +122,12 @@
           <button class="btn btn-verde" type="submit" id="salvar-textos">Salvar alterações</button>
         </form>
       </section>
+
+      <section class="textos" id="produtos" hidden aria-labelledby="titulo-produtos">
+        <h2 id="titulo-produtos">Produtos</h2>
+        <p>Fotos com o mesmo nome formam um produto. Toque num produto para pôr preço, prazo e descrição.</p>
+        <div id="lista-produtos"></div>
+      </section>
     </main>
   </section>
 
@@ -199,6 +205,7 @@
 <dialog id="dlg-nome" aria-labelledby="nome-titulo">
   <h2 id="nome-titulo">Nome da foto no site</h2>
   <p>Aparece embaixo da foto. Pode deixar em branco.</p>
+  <p class="aviso" id="nome-aviso" hidden></p>
   <label class="campo"><span class="sr">Nome da foto</span>
     <input id="nome-campo" maxlength="80" autocomplete="off">
   </label>

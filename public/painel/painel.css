@@ -99,6 +99,17 @@ main { padding: 20px 16px 120px; }
 .cartao-nome { font-size: 20px; font-weight: 800; line-height: 1.2; }
 .cartao .qtd { font-size: 15px; color: var(--tinta-suave); white-space: nowrap; }
 .cartao-preco { display: block; margin-top: 8px; font-size: 14px; font-weight: 600; color: var(--tinta-suave); }
+
+/* Produtos da LALAIÁ: um acordeão por produto */
+.produto-edit { border: 1px solid var(--linha); border-radius: 14px; background: #fff; margin-bottom: 10px; }
+.produto-edit summary { display: flex; flex-direction: column; gap: 2px; min-height: 48px; padding: 12px 16px; cursor: pointer; list-style: none; }
+.produto-edit summary::-webkit-details-marker { display: none; }
+.produto-edit .produto-nome { font-weight: 800; font-size: 17px; }
+.produto-edit .produto-resumo { font-size: 14px; color: var(--tinta-suave); }
+.produto-edit[open] summary { border-bottom: 1px solid var(--linha); }
+.produto-edit form { padding: 12px 16px 16px; display: grid; gap: 12px; }
+.produto-edit select { width: 100%; min-height: 48px; padding: 0 12px; border: 1px solid var(--linha); border-radius: 12px; background: #fff; }
+.aviso { padding: 10px 12px; border-radius: 10px; background: var(--mostarda-claro); color: var(--tinta); font-size: 15px; }
 .miniaturas { display: flex; gap: 6px; margin: 12px 0 10px; min-height: 64px; }
 .miniaturas img { width: 52px; height: 64px; object-fit: cover; border-radius: 8px; background: var(--fundo); }
 .miniaturas .mais { display: grid; place-items: center; width: 52px; height: 64px; border-radius: 8px; background: var(--fundo); font-weight: 800; color: var(--tinta-suave); }

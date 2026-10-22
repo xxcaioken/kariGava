@@ -4,6 +4,7 @@ import { SECOES, listarItens, lerTextos, salvarTextos, adicionarDoInstagram, adi
 import { contasLigadas, listarPosts, urlLigar, concluirLigacao, renovarTokens, CONTAS } from './instagram.js';
 import { renderizarSite } from './site.js';
 import { comCabecalhos } from './seguranca.js';
+import { listarProdutos, agruparProdutos, salvarProduto, renomearProduto } from './produtos.js';
 
 function exigirOrigem(request) {
   const origem = request.headers.get('origin');
@@ -59,8 +60,17 @@ async function api(request, env, url) {
   const rota = pathname.slice('/api/painel'.length);
 
   if (rota === '/estado' && metodo === 'GET') {
-    const [itens, textos, contas] = await Promise.all([listarItens(env), lerTextos(env), contasLigadas(env)]);
-    return json({ usuario: { email }, secoes: SECOES, itens, textos, instagram: { contas }, site_url: '/' });
+    const [itens, textos, contas, produtos] = await Promise.all([listarItens(env), lerTextos(env), contasLigadas(env), listarProdutos(env)]);
+    const lalaia = { produtos: agruparProdutos(itens.filter(i => i.secao === 'lalaia'), produtos) };
+    return json({ usuario: { email }, secoes: SECOES, itens, textos, lalaia, instagram: { contas }, site_url: '/' });
+  }
+
+  // ---------- Produtos da LALAIÁ ----------
+  const pr = rota.match(/^\/lalaia\/produtos\/([a-z0-9-]+)(\/renomear)?$/);
+  if (pr) {
+    const [, s, acao] = pr;
+    if (!acao && metodo === 'PUT') { exigirJson(request); return json({ produto: await salvarProduto(env, s, await lerJson(request)) }); }
+    if (acao && metodo === 'POST') { exigirJson(request); return json({ produto: await renomearProduto(env, s, (await lerJson(request)).nome) }); }
   }
 
   if (rota === '/instagram' && metodo === 'GET') {
@@ -127,8 +137,8 @@ async function tratar(request, env, url) {
   if (url.pathname.startsWith('/api/')) return api(request, env, url);
   if (url.pathname.startsWith('/fotos/') && request.method === 'GET') return foto(env, decodeURIComponent(url.pathname.slice('/fotos/'.length)));
   if (url.pathname === '/' && (request.method === 'GET' || request.method === 'HEAD')) {
-    const [itens, textos] = await Promise.all([listarItens(env), lerTextos(env)]);
-    return new Response(renderizarSite({ itens, textos, whatsappNumero: env.WHATSAPP_NUMERO }), {
+    const [itens, textos, produtos] = await Promise.all([listarItens(env), lerTextos(env), listarProdutos(env)]);
+    return new Response(renderizarSite({ itens, textos, produtos, whatsappNumero: env.WHATSAPP_NUMERO }), {
       headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
     });
   }

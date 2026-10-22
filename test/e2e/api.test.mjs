@@ -277,6 +277,101 @@ test('R-02 preço do serviço: PUT parcial, "A partir de", "Valor sob consulta" 
   assert.equal(estado.textos.consultoria.resumo, 'Resumo novo da consultoria.');
 });
 
+// ---------- R-03 · Peça da LALAIÁ mostra preço, prazo e disponibilidade ----------
+// Recorta o <li class="produto"> cujo <h3> é o título dado (null se o produto não está na home).
+function produtoNoHtml(html, titulo) {
+  const lalaia = html.slice(html.indexOf('id="lalaia"'), html.indexOf('id="cursos"'));
+  const h3 = lalaia.indexOf(`<h3>${titulo}</h3>`);
+  if (h3 < 0) return null;
+  const ini = lalaia.lastIndexOf('<li class="produto">', h3);
+  const fim = lalaia.indexOf('</li>', h3);
+  return lalaia.slice(ini, fim);
+}
+
+test('R-03 produtos da LALAIÁ: preço, disponibilidade, prazo, descrição e renomear', async () => {
+  const slug = 'bigscrunchie-a-xuxona';
+  let estado = (await chamar('/api/painel/estado')).dados;
+  const produto = estado.lalaia.produtos.find(p => p.slug === slug);
+  assert.ok(produto, 'estado devolve lalaia.produtos agrupados por slug');
+  assert.equal(produto.titulo, 'BigScrunchie (a Xuxona)');
+  assert.equal(produto.fotos.length, 2);
+  assert.equal(produto.preco, null);
+
+  const r = await chamar(`/api/painel/lalaia/produtos/${slug}`, { metodo: 'PUT', corpo: { preco: 65, disponibilidade: 'encomenda', prazo_dias: 7, descricao: 'Scrunchie gigante de organza, com a etiquetinha.' } });
+  assert.equal(r.status, 200, JSON.stringify(r.dados));
+  assert.equal(r.dados.produto.preco, 65);
+  let card = produtoNoHtml((await chamar('/')).dados, 'BigScrunchie (a Xuxona)');
+  assert.ok(card, 'produto na home');
+  assert.ok(card.includes('R$ 65'), 'preço');
+  assert.ok(card.includes('Sob encomenda · até 7 dias úteis'), 'disponibilidade com prazo');
+  assert.ok(card.includes('Scrunchie gigante de organza, com a etiquetinha.'), 'descrição editada');
+
+  // PUT parcial: só a disponibilidade muda, o preço fica.
+  assert.equal((await chamar(`/api/painel/lalaia/produtos/${slug}`, { metodo: 'PUT', corpo: { disponibilidade: 'pronta' } })).status, 200);
+  card = produtoNoHtml((await chamar('/')).dados, 'BigScrunchie (a Xuxona)');
+  assert.ok(card.includes('Pronta entrega') && card.includes('R$ 65') && !card.includes('Sob encomenda'));
+
+  // Sob encomenda sem prazo: só "Sob encomenda", sem " · ".
+  assert.equal((await chamar(`/api/painel/lalaia/produtos/${slug}`, { metodo: 'PUT', corpo: { disponibilidade: 'encomenda', prazo_dias: null } })).status, 200);
+  card = produtoNoHtml((await chamar('/')).dados, 'BigScrunchie (a Xuxona)');
+  assert.ok(card.includes('Sob encomenda') && !card.includes('Sob encomenda ·'), 'sem prazo não tem " · "');
+
+  // Preço vazio → produto sem preço e sem "sob consulta" (spec R-03).
+  assert.equal((await chamar(`/api/painel/lalaia/produtos/${slug}`, { metodo: 'PUT', corpo: { preco: null } })).status, 200);
+  card = produtoNoHtml((await chamar('/')).dados, 'BigScrunchie (a Xuxona)');
+  assert.ok(!card.includes('R$') && !/sob consulta/i.test(card), 'sem preço: nada');
+  assert.equal((await chamar(`/api/painel/lalaia/produtos/${slug}`, { metodo: 'PUT', corpo: { preco: 65 } })).status, 200);
+
+  // Validações com mensagem para a Kari.
+  for (const corpo of [{ preco: -1 }, { preco: '65' }, { preco: 100000 }, { disponibilidade: 'talvez' }, { prazo_dias: 0 }, { prazo_dias: 91 }, { prazo_dias: 7.5 }, { descricao: 'a'.repeat(221) }]) {
+    const ruim = await chamar(`/api/painel/lalaia/produtos/${slug}`, { metodo: 'PUT', corpo });
+    assert.equal(ruim.status, 400, JSON.stringify(corpo));
+    assert.equal(ruim.dados.erro, 'produto_invalido');
+    assert.ok(ruim.dados.mensagem?.length > 10, 'mensagem em PT-BR');
+  }
+  const inexistente = await chamar('/api/painel/lalaia/produtos/nao-existe', { metodo: 'PUT', corpo: { preco: 10 } });
+  assert.equal(inexistente.status, 404);
+
+  // Renomear: nome que vira slug vazio → 400; nome de outro produto → 409; nome novo move as fotos e os dados num batch.
+  const vazio = await chamar(`/api/painel/lalaia/produtos/${slug}/renomear`, { metodo: 'POST', corpo: { nome: '!!!' } });
+  assert.equal(vazio.status, 400);
+  assert.equal(vazio.dados.erro, 'produto_invalido');
+  const duplicado = await chamar(`/api/painel/lalaia/produtos/${slug}/renomear`, { metodo: 'POST', corpo: { nome: 'VAI DE PRESENTE' } });
+  assert.equal(duplicado.status, 409);
+  assert.equal(duplicado.dados.erro, 'produto_duplicado');
+  assert.match(duplicado.dados.mensagem, /Já existe/);
+  const antesRen = (await chamar('/api/painel/estado')).dados.lalaia.produtos.find(p => p.slug === slug);
+  assert.equal(antesRen.preco, 65, 'o 409 não mexeu em nada');
+
+  const ren = await chamar(`/api/painel/lalaia/produtos/${slug}/renomear`, { metodo: 'POST', corpo: { nome: 'Xuxona' } });
+  assert.equal(ren.status, 200, JSON.stringify(ren.dados));
+  assert.equal(ren.dados.produto.slug, 'xuxona');
+  assert.equal(ren.dados.produto.fotos.length, 2);
+  estado = (await chamar('/api/painel/estado')).dados;
+  assert.ok(!estado.lalaia.produtos.some(p => p.slug === slug), 'slug antigo sumiu');
+  const xuxona = estado.lalaia.produtos.find(p => p.slug === 'xuxona');
+  assert.equal(xuxona.preco, 65, 'dados vieram junto');
+  assert.ok(estado.itens.filter(i => i.secao === 'lalaia' && i.titulo === 'Xuxona').length === 2, 'as 2 fotos renomeadas');
+  card = produtoNoHtml((await chamar('/')).dados, 'Xuxona');
+  assert.ok(card && card.includes('R$ 65'));
+
+  // "Laço" e "Laco" têm o mesmo slug: um cartão só; e a linha de produto sobrevive sem fotos.
+  const cabeca = estado.lalaia.produtos.find(p => p.slug === 'acessorios-de-cabeca-sob-medida');
+  assert.equal(cabeca.fotos.length, 2);
+  assert.equal((await chamar(`/api/painel/itens/${cabeca.fotos[0].id}`, { metodo: 'PATCH', corpo: { titulo: 'Laço' } })).status, 200);
+  assert.equal((await chamar(`/api/painel/itens/${cabeca.fotos[1].id}`, { metodo: 'PATCH', corpo: { titulo: 'Laco' } })).status, 200);
+  let html = (await chamar('/')).dados;
+  assert.equal((html.match(/<h3>La[çc]o<\/h3>/g) || []).length, 1, 'um cartão só para Laço/Laco');
+  assert.equal(produtoNoHtml(html, 'Laço').match(/<img /g).length, 2);
+  assert.equal((await chamar('/api/painel/lalaia/produtos/laco', { metodo: 'PUT', corpo: { preco: 10 } })).status, 200);
+  for (const f of cabeca.fotos) assert.equal((await chamar(`/api/painel/itens/${f.id}`, { metodo: 'DELETE' })).status, 200);
+  estado = (await chamar('/api/painel/estado')).dados;
+  const laco = estado.lalaia.produtos.find(p => p.slug === 'laco');
+  assert.ok(laco && laco.preco === 10 && laco.fotos.length === 0, 'produto sem fotos continua no estado com o preço');
+  assert.equal(produtoNoHtml((await chamar('/')).dados, 'Laço'), null, 'mas não aparece no site');
+  for (const f of cabeca.fotos) assert.equal((await chamar(`/api/painel/itens/${f.id}/restaurar`, { metodo: 'POST' })).status, 200);
+});
+
 // ---------- R-01 · Cada botão de WhatsApp abre a conversa já com a mensagem certa ----------
 // O número vem da config (wrangler.jsonc é JSONC: tira os comentários antes do JSON.parse), nunca cravado aqui.
 function numeroWhatsAppDaConfig() {

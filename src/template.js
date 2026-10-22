@@ -60,7 +60,9 @@ export function template(d, esc) {
           <div class="produto-corpo">
             <p class="rotulo">${esc(p.rotulo)}</p>
             <h3>${esc(p.titulo)}</h3>
-            ${p.texto ? `<p>${esc(p.texto)}</p>` : ''}
+            ${p.descricao ? `<p>${esc(p.descricao)}</p>` : ''}
+            ${p.preco_texto ? `<p class="preco"><strong>${esc(p.preco_texto)}</strong></p>` : ''}
+            ${p.disponibilidade_texto ? `<p class="disponibilidade">${esc(p.disponibilidade_texto)}</p>` : ''}
             <a href="${esc(p.wa)}">${esc(p.cta)} →</a>
           </div>
         </li>`;

@@ -25,7 +25,7 @@ export function urlFoto(chave) {
   return chave.startsWith('img/') ? `/${chave}` : `/fotos/${chave}`;
 }
 
-function paraItem(l) {
+export function paraItem(l) {
   return {
     id: l.id, secao: l.secao, ordem: l.ordem, titulo: l.titulo,
     foto_url: urlFoto(l.foto_chave), origem: l.origem, ig_conta: l.ig_conta, ig_id: l.ig_id,

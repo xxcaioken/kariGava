@@ -290,9 +290,14 @@ function renderCartoes() {
     }
     // Serviço mostra também o estado do preço (R-02), para a Kari ver de longe o que falta preencher.
     const preco = s.tipo === 'servico' ? estado.textos?.[s.id]?.preco : undefined;
-    const linhaPreco = s.tipo === 'servico'
+    let linhaPreco = s.tipo === 'servico'
       ? el('span', { class: 'cartao-preco', text: preco ? `A partir de R$ ${preco.toLocaleString('pt-BR')}` : 'Sem preço no site' })
       : null;
+    if (s.id === 'lalaia') {
+      const lista = (estado.lalaia?.produtos || []).filter((p) => p.fotos.length);
+      const semPreco = lista.filter((p) => !p.preco).length;
+      linhaPreco = el('span', { class: 'cartao-preco', text: lista.length ? `${plural(lista.length, 'produto', 'produtos')} · ${semPreco ? `${semPreco} sem preço` : 'todos com preço'}` : 'Nenhum produto ainda' });
+    }
     const cartao = el('button', { class: 'cartao', type: 'button', 'data-secao': s.id, onclick: () => abrirSecao(s.id) },
       el('span', { class: 'cartao-topo' },
         el('span', { class: 'cartao-nome', text: s.nome }),
@@ -453,6 +458,7 @@ function abrirSecao(id) {
   const ehServico = s.tipo === 'servico';
   $('#textos').hidden = !ehServico;
   if (ehServico) preencherTextos();
+  $('#produtos').hidden = id !== 'lalaia';
   renderSecao();
   window.scrollTo(0, 0);
   mostrarTela('tela-secao');
@@ -514,6 +520,103 @@ function renderSecao({ foco } = {}) {
     const outra = lista.querySelector(`[data-id="${CSS.escape(foco.id)}"][data-dir="${foco.dir === 'cima' ? 'baixo' : 'cima'}"]`);
     (mesma && !mesma.disabled ? mesma : outra)?.focus();
   }
+  if (secaoAtual === 'lalaia') renderProdutos();
+}
+
+// ---------- Produtos da LALAIÁ (R-03) ----------
+
+const produtos = () => estado.lalaia?.produtos || [];
+const produtoDaFoto = (item) => produtos().find((p) => p.fotos.some((f) => f.id === item.id));
+const resumoProduto = (p) => {
+  const partes = [plural(p.fotos.length, 'foto', 'fotos'), p.preco ? `R$ ${p.preco.toLocaleString('pt-BR')}` : 'sem preço'];
+  if (p.disponibilidade === 'pronta') partes.push('pronta entrega');
+  if (p.disponibilidade === 'encomenda') partes.push(p.prazo_dias ? `até ${p.prazo_dias} dias úteis` : 'sob encomenda');
+  return partes.join(' · ');
+};
+
+function renderProdutos() {
+  const lista = $('#lista-produtos');
+  const abertos = new Set([...lista.querySelectorAll('details[open]')].map((d) => d.dataset.slug));
+  lista.replaceChildren();
+  const todos = produtos();
+  if (!todos.length) {
+    lista.append(el('div', { class: 'vazio' }, el('p', { text: 'Nenhum produto ainda. Coloque fotos da LALAIÁ com o nome da peça e elas viram produtos aqui.' })));
+    return;
+  }
+  for (const p of todos) lista.append(cartaoProduto(p, abertos.has(p.slug)));
+}
+
+function cartaoProduto(p, aberto) {
+  const erro = el('div', { class: 'erro', role: 'alert', hidden: true });
+  const precoCampo = el('input', { id: `prod-preco-${p.slug}`, type: 'number', inputmode: 'numeric', min: 1, max: 99999, step: 1, placeholder: 'Ex.: 65', value: p.preco ?? '' });
+  const dispCampo = el('select', { id: `prod-disp-${p.slug}` },
+    el('option', { value: '', text: 'Não dizer' }),
+    el('option', { value: 'pronta', text: 'Pronta entrega', selected: p.disponibilidade === 'pronta' }),
+    el('option', { value: 'encomenda', text: 'Sob encomenda', selected: p.disponibilidade === 'encomenda' }));
+  const prazoCampo = el('input', { id: `prod-prazo-${p.slug}`, type: 'number', inputmode: 'numeric', min: 1, max: 90, step: 1, placeholder: 'Ex.: 7', value: p.prazo_dias ?? '' });
+  const prazoLabel = el('label', { class: 'campo', hidden: p.disponibilidade !== 'encomenda' }, el('span', { text: 'Prazo de produção (dias úteis)' }), prazoCampo);
+  dispCampo.addEventListener('change', () => { prazoLabel.hidden = dispCampo.value !== 'encomenda'; });
+  const descCampo = el('textarea', { id: `prod-desc-${p.slug}`, maxlength: 220, 'aria-describedby': `prod-cont-${p.slug}` });
+  descCampo.value = p.descricao || '';
+  const contador = el('span', { class: 'ajuda', id: `prod-cont-${p.slug}`, text: `${descCampo.value.length} de 220 letras` });
+  descCampo.addEventListener('input', () => { contador.textContent = `${descCampo.value.length} de 220 letras`; contador.classList.toggle('passou', descCampo.value.length > 220); });
+
+  const salvar = el('button', { class: 'btn btn-verde', type: 'submit', text: 'Salvar produto' });
+  const form = el('form', { novalidate: true, onsubmit: async (ev) => {
+    ev.preventDefault();
+    const precoTexto = precoCampo.value.trim();
+    const preco = precoTexto ? Number(precoTexto) : null;
+    const prazoTexto = prazoCampo.value.trim();
+    const prazo = dispCampo.value === 'encomenda' && prazoTexto ? Number(prazoTexto) : null;
+    if (preco !== null && (!Number.isInteger(preco) || preco < 1 || preco > 99999)) { mostrarErro(erro, 'O preço precisa ser um número inteiro, sem centavos, de 1 a 99.999. Deixe vazio para não mostrar.'); precoCampo.focus(); return; }
+    if (prazo !== null && (!Number.isInteger(prazo) || prazo < 1 || prazo > 90)) { mostrarErro(erro, 'O prazo é em dias úteis, de 1 a 90.'); prazoCampo.focus(); return; }
+    if (descCampo.value.trim().length > 220) { mostrarErro(erro, 'A descrição pode ter até 220 letras.'); descCampo.focus(); return; }
+    ocupado(salvar, 'Salvando...');
+    try {
+      await api(`/api/painel/lalaia/produtos/${enc(p.slug)}`, { metodo: 'PUT', json: { preco, disponibilidade: dispCampo.value || null, prazo_dias: prazo, descricao: descCampo.value.trim() } });
+      erro.hidden = true;
+      await sincronizar();
+      mostrarToast('Produto salvo', { verSite: true });
+    } catch (e) {
+      if (e.tipo !== 'sessao') mostrarErro(erro, mensagemDe(e));
+    } finally {
+      livre(salvar);
+    }
+  } },
+    el('label', { class: 'campo' }, el('span', { text: 'Preço (R$, sem centavos)' }), precoCampo,
+      el('span', { class: 'ajuda', text: 'Deixe vazio para não mostrar preço.' })),
+    el('label', { class: 'campo' }, el('span', { text: 'Disponibilidade' }), dispCampo),
+    prazoLabel,
+    el('label', { class: 'campo' }, el('span', { text: 'Descrição curta' }), descCampo, contador),
+    erro,
+    salvar,
+    el('button', { class: 'btn btn-claro', type: 'button', text: 'Renomear produto', onclick: () => renomearProduto(p) }));
+
+  const det = el('details', { class: 'produto-edit', 'data-slug': p.slug, open: aberto },
+    el('summary', {},
+      el('span', { class: 'produto-nome', text: p.titulo || 'Sem nome' }),
+      el('span', { class: 'produto-resumo', text: resumoProduto(p) })),
+    form);
+  return det;
+}
+
+function mostrarErro(div, texto) { div.textContent = texto; div.hidden = false; }
+
+// Renomeia todas as fotos do produto e leva os dados junto (confirmação com a contagem, DES-20).
+async function renomearProduto(p) {
+  const nome = prompt('Novo nome do produto (vale para todas as fotos dele):', p.titulo || '');
+  if (nome === null) return;
+  const limpo = nome.replace(/\s+/g, ' ').trim();
+  if (!limpo) { mostrarToast('O nome não pode ficar vazio.'); return; }
+  if (limpo === p.titulo) return;
+  if (!confirm(`Mover ${plural(p.fotos.length, 'foto', 'fotos')} para "${limpo}"?`)) return;
+  try {
+    await api(`/api/painel/lalaia/produtos/${enc(p.slug)}/renomear`, { metodo: 'POST', json: { nome: limpo } });
+    await sincronizar();
+    mostrarToast(`Produto renomeado para "${limpo}"`, { verSite: true });
+  } catch (e) {
+    if (e.tipo !== 'sessao') mostrarToast(mensagemDe(e));
+  }
 }
 
 let movendo = false;
@@ -572,6 +675,13 @@ function abrirNome(item) {
   nomeItem = item;
   $('#nome-campo').value = item.titulo || '';
   esconder('#nome-erro');
+  // Na LALAIÁ, fotos com o mesmo nome formam um produto: avisa que renomear uma só a tira do produto.
+  const produto = item.secao === 'lalaia' ? produtoDaFoto(item) : null;
+  if (produto && (produto.fotos.length > 1 || produto.preco != null || produto.disponibilidade || produto.descricao)) {
+    mostrar('#nome-aviso', `Essa foto faz parte do produto "${produto.titulo}". Com outro nome ela sai do produto e vira um produto novo, sem preço. Para renomear o produto inteiro, use "Renomear produto" na lista de produtos.`);
+  } else {
+    esconder('#nome-aviso');
+  }
   abrirDialogo('#dlg-nome');
   $('#nome-campo').focus();
   $('#nome-campo').select();

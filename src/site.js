@@ -1,5 +1,6 @@
 import conteudo from '../conteudo.json' with { type: 'json' };
 import { template } from './template.js';
+import { agruparProdutos, textoPreco, textoDisponibilidade } from './produtos.js';
 
 // Nome de cor estilo cartela Pantone para cada serviço.
 // `var` é o nome da cor em public/site.css; `curto` vai no leque, `legenda` nos botões do celular.
@@ -46,7 +47,7 @@ export function textoDoPreco(preco, grupo) {
 }
 
 // Junta o conteúdo fixo (conteudo.json) com o que a Kari muda no painel (fotos e textos).
-export function montarDados({ itens = [], textos = {}, whatsappNumero } = {}) {
+export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos = [], whatsappNumero } = {}) {
   const porSecao = new Map();
   for (const it of itens) porSecao.set(it.secao, [...(porSecao.get(it.secao) || []), it]);
   const grupos = new Map(conteudo.grupos_servicos.map(g => [g.id, g.titulo]));
@@ -63,7 +64,10 @@ export function montarDados({ itens = [], textos = {}, whatsappNumero } = {}) {
     wa: wa(MENSAGENS_WA.servico(s.titulo)),
   }));
 
-  const produtos = agruparProdutos(porSecao.get('lalaia') || []).map(p => ({ ...p, wa: wa(MENSAGENS_WA.produto(p.titulo)) }));
+  // Só produtos com foto vão para o site; os dados de um produto sem fotos ficam guardados (ENG-20).
+  const produtos = agruparProdutos(porSecao.get('lalaia') || [], linhasProdutos)
+    .filter(p => p.fotos.length)
+    .map(p => ({ ...p, preco_texto: textoPreco(p.preco), disponibilidade_texto: textoDisponibilidade(p), wa: wa(MENSAGENS_WA.produto(p.titulo)) }));
 
   return {
     marca: conteudo.marca,
@@ -76,22 +80,6 @@ export function montarDados({ itens = [], textos = {}, whatsappNumero } = {}) {
     lalaia: { ...conteudo.lalaia, produtos, wa: wa(MENSAGENS_WA.lalaia) },
     ensino_realizado: conteudo.ensino_realizado,
   };
-}
-
-// Fotos da LALAIÁ com o mesmo nome viram um produto só (na ordem da 1ª foto).
-// Se o nome bater com uma linha de conteudo.json, o produto ganha a descrição dela.
-function agruparProdutos(fotos) {
-  const linhas = new Map(conteudo.lalaia.linhas.map(l => [l.titulo.toLowerCase(), l]));
-  const produtos = new Map();
-  for (const f of fotos) {
-    const chave = (f.titulo || '').trim().toLowerCase() || `sem-nome-${f.id}`;
-    if (!produtos.has(chave)) {
-      const linha = linhas.get(chave);
-      produtos.set(chave, { titulo: f.titulo, rotulo: linha?.rotulo || 'Produto', texto: linha?.texto || '', cta: linha?.cta || 'Encomendar', fotos: [] });
-    }
-    produtos.get(chave).fotos.push(f);
-  }
-  return [...produtos.values()];
 }
 
 export function renderizarSite(entrada) {

@@ -82,6 +82,19 @@ Rotas que mudam algo (POST/PUT/PATCH/DELETE) exigem `Content-Type: application/j
   - `preco`: inteiro em reais de 1 a 99.999 (sem centavos) ou `null`. Fora disso: `400 { erro: "texto_invalido", mensagem: "O preço precisa ser um número inteiro, sem centavos. Deixe vazio para não mostrar." }`. No site vira "A partir de R$ 380"; sem preço, serviços dos grupos `lojas`/`ensino` mostram "Valor sob consulta" e os do grupo `voce` não mostram nada.
   - Exemplo: `curl -X PUT "$BASE/api/painel/textos/consultoria" -H 'content-type: application/json' -H "origin: $BASE" -b "kari_sessao=..." -d '{"preco":380}'`
 
+## Produtos da LALAIÁ
+
+Fotos da seção `lalaia` com o mesmo nome formam um produto; a chave é o **slug** do nome (minúsculo, sem acento, `[^a-z0-9]+` → `-`, sem hífen nas pontas: "BigScrunchie (a Xuxona)" → `bigscrunchie-a-xuxona`). O estado traz `lalaia.produtos`: `[ { "slug", "titulo", "rotulo", "descricao", "cta", "preco", "disponibilidade", "prazo_dias", "fotos": [item...] } ]`, incluindo produtos cujas fotos saíram do site (os dados ficam guardados; o site só mostra produtos com foto).
+
+- `PUT /api/painel/lalaia/produtos/:slug` `{ "preco": 65, "disponibilidade": "encomenda", "prazo_dias": 7, "descricao": "..." }` → `{ "produto": {...} }`
+  - PUT parcial: campo ausente mantém, `null` limpa. `preco` inteiro em reais de 1 a 99.999; `disponibilidade` `"pronta"` | `"encomenda"` | `null`; `prazo_dias` inteiro de 1 a 90 (dias úteis); `descricao` até 220 letras.
+  - Fora disso: `400 { erro: "produto_invalido", mensagem }` (ex.: "O prazo é em dias úteis, de 1 a 90."). Slug sem fotos nem dados: `404 { erro: "nao_encontrado", mensagem }`.
+  - No site: "R$ 65", "Pronta entrega" ou "Sob encomenda · até 7 dias úteis" (sem prazo: só "Sob encomenda"); sem preço, nada (não há "sob consulta" em produto).
+  - Exemplo: `curl -X PUT "$BASE/api/painel/lalaia/produtos/bigscrunchie-a-xuxona" -H 'content-type: application/json' -H "origin: $BASE" -b "kari_sessao=..." -d '{"preco":65,"disponibilidade":"encomenda","prazo_dias":7}'`
+- `POST /api/painel/lalaia/produtos/:slug/renomear` `{ "nome": "Xuxona" }` → `{ "produto": {...} }` com o slug novo
+  - Renomeia todas as fotos do produto e move os dados num só `batch` (ou tudo, ou nada). Nome que vira slug vazio → `400 produto_invalido`; nome de outro produto → `409 { erro: "produto_duplicado", mensagem: "Já existe um produto com esse nome..." }` sem mexer em nada.
+  - Renomear **uma foto** pelo `PATCH /itens/:id` continua valendo: ela sai do produto (vira produto novo, sem dados) e o produto original fica com o restante e com os dados. O painel avisa isso.
+
 ## Site público
 
 - `GET /` → página gerada com o conteúdo atual (cache curto, limpo a cada mudança no painel).

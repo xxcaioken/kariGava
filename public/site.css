@@ -201,6 +201,9 @@ p { margin: 0; }
 .produto-corpo { display: flex; flex-direction: column; gap: 10px; padding: 18px 18px 20px; flex: 1; }
 .produto h3 { font-size: 24px; line-height: 1.1; }
 .produto p { color: var(--tinta-suave); font-size: 16px; }
+.produto .preco { margin-top: 4px; }
+.produto .preco strong { color: var(--tinta); }
+.produto .disponibilidade { font: 13px/1.4 var(--mono); color: var(--tinta-suave); }
 .produto a { margin-top: auto; padding-top: 8px; font-weight: 600; text-underline-offset: 4px; min-height: 44px; display: inline-flex; align-items: center; }
 .lalaia-cta { margin-top: 28px; }
 .lalaia-cta .btn { background: var(--tinta); }
