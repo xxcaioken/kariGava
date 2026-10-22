@@ -288,7 +288,8 @@ ${faq}</main>
     <div class="redes">
       <a href="${esc(d.marca.instagram.kari)}">@karienegavaw</a>
       <a href="${esc(d.marca.instagram.lalaia)}">@lalaia.acessorios</a>
-      <a href="/quiz">Quiz: qual é o seu momento de estilo?</a>${d.marca.gbp_url ? `
+      <a href="/quiz">Quiz: qual é o seu momento de estilo?</a>
+      <a href="/privacidade">Privacidade</a>${d.marca.gbp_url ? `
       <a href="${esc(d.marca.gbp_url)}" rel="noopener">Avaliações no Google</a>` : ''}
     </div>
     <p class="rodape-fim">${esc(d.marca.nome)} · Styling &amp; Visual Merchandising · ${esc(d.marca.cidade)}<br>Foto do topo: ${esc(d.hero.credito_foto.replace(/^Foto: /, ''))}</p>

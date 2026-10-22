@@ -901,3 +901,29 @@ test('R-07 quiz: página com 8 perguntas e noscript, quiz.js com os cabeçalhos,
   assert.ok(linkHero[1].includes('Faça o quiz') && !linkHero[0].includes('class="btn'), 'link de texto, não botão');
   assert.ok(rodape(home).includes('href="/quiz"'), 'link do quiz no rodapé');
 });
+
+// ---------- S-11 · Privacidade e página 404 (R-13, uc9a) ----------
+test('R-13 privacidade: página com os 4 títulos, canal pelo WhatsApp sem EMAIL_CONTATO, links no site e no painel; 404 em HTML fora da API', async () => {
+  const { status, dados: html, r } = await chamar('/privacidade');
+  assert.equal(status, 200);
+  assert.match(r.headers.get('content-type'), /text\/html/);
+  for (const t of ['Quem cuida dos seus dados', 'O que o site coleta', 'O painel', 'Seus direitos']) assert.ok(html.includes(`>${t}<`), t);
+  assert.ok(html.includes('class="marca" href="/"'), 'marca leva para /');
+  assert.ok(!html.includes('mailto:'), 'sem EMAIL_CONTATO não há mailto');
+  assert.ok(html.includes(`https://wa.me/${numeroWhatsAppDaConfig()}?text=`), 'WhatsApp como canal');
+  for (const [nome, valor] of Object.entries(CABECALHOS_SEGURANCA)) assert.equal(r.headers.get(nome), valor, `/privacidade → ${nome}`);
+
+  assert.ok((await chamar('/')).dados.includes('href="/privacidade"'), 'link no rodapé do site');
+  assert.ok((await chamar('/painel/')).dados.includes('href="/privacidade"'), 'link no painel');
+
+  const nao = await fetch(BASE + '/nao-existe');
+  assert.equal(nao.status, 404);
+  assert.match(nao.headers.get('content-type'), /text\/html/);
+  const corpo = await nao.text();
+  assert.ok(corpo.includes('Essa página não existe') && corpo.includes('href="/"') && corpo.includes('wa.me/') && corpo.includes('<meta name="robots" content="noindex">'));
+  for (const [nome, valor] of Object.entries(CABECALHOS_SEGURANCA)) assert.equal(nao.headers.get(nome), valor, `/nao-existe → ${nome}`);
+  const api404 = await chamar('/api/painel/nada');
+  assert.equal(api404.status, 404);
+  assert.equal(api404.dados.erro, 'nao_encontrado', 'a API continua respondendo JSON');
+  assert.equal((await fetch(BASE + '/fotos/nao-existe.jpg')).status, 404);
+});

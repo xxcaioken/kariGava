@@ -84,6 +84,17 @@ p { margin: 0; }
 .quiz-sem-js { margin-top: 24px; padding: 14px 16px; border-radius: var(--raio); background: #fff; border: 1px solid var(--linha); }
 .quiz-lista { margin: 20px 0 24px; padding-left: 0; list-style: none; display: grid; gap: 18px; }
 .quiz-lista-pergunta ul { margin: 6px 0 0; padding-left: 20px; color: var(--tinta-suave); }
+/* ---------- Páginas de leitura: /privacidade e 404 ---------- */
+.pagina-leitura .topo-cta { display: inline-flex; min-height: 42px; padding: 0 16px; font-size: 15px; }
+.leitura-wrap { max-width: 70ch; padding: 40px 0 72px; }
+.leitura h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1; letter-spacing: -.04em; margin: 8px 0 16px; }
+.leitura h2 { font-size: 24px; margin: 36px 0 10px; }
+.leitura p, .leitura li { font-size: 17px; line-height: 1.6; }
+.leitura p + p { margin-top: 12px; }
+.leitura-intro { color: var(--tinta-suave); font-size: 18px; }
+.leitura ul { margin: 8px 0 0; padding-left: 22px; display: grid; gap: 8px; }
+.leitura-acoes { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.leitura-versao { margin-top: 36px; font: 13px/1.4 var(--mono); color: var(--tinta-suave); }
 .rodape-curto { padding-bottom: 32px; }
 .rodape-curto .wrap { padding-top: 24px; }
 .rodape-curto .rodape-fim { margin-top: 0; padding-top: 0; border-top: 0; }

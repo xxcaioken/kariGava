@@ -7,6 +7,8 @@ import { listarFaq, criarFaq, salvarFaq, removerFaq, restaurarFaq, moverFaq } fr
 import { contasLigadas, listarPosts, urlLigar, concluirLigacao, renovarTokens, CONTAS } from './instagram.js';
 import { renderizarSite } from './site.js';
 import { renderizarQuiz } from './quiz.js';
+import { renderizarPrivacidade } from './privacidade.js';
+import { naoEncontrada } from './paginas.js';
 import { comCabecalhos } from './seguranca.js';
 import { listarProdutos, agruparProdutos, salvarProduto, renomearProduto } from './produtos.js';
 import { lerCondicoes, salvarCondicoes, lerCupom } from './config.js';
@@ -221,12 +223,16 @@ async function tratar(request, env, url) {
       headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
     });
   }
-  if (url.pathname === '/quiz' && (request.method === 'GET' || request.method === 'HEAD')) {
-    return new Response(renderizarQuiz({ whatsappNumero: env.WHATSAPP_NUMERO }), {
-      headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300' },
-    });
+  const leitura = request.method === 'GET' || request.method === 'HEAD';
+  const pagina = html => new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300' } });
+  if (url.pathname === '/quiz' && leitura) return pagina(renderizarQuiz({ whatsappNumero: env.WHATSAPP_NUMERO }));
+  if (url.pathname === '/privacidade' && leitura) return pagina(renderizarPrivacidade({ emailContato: env.EMAIL_CONTATO, whatsappNumero: env.WHATSAPP_NUMERO }));
+  const asset = await env.ASSETS.fetch(request);
+  // Endereço que não existe: página 404 do site (noindex) em vez do 404 vazio dos assets.
+  if (asset.status === 404 && leitura) {
+    return new Response(naoEncontrada({ whatsappNumero: env.WHATSAPP_NUMERO }), { status: 404, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } });
   }
-  return env.ASSETS.fetch(request);
+  return asset;
 }
 
 export default {
