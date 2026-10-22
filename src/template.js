@@ -68,6 +68,14 @@ export function template(d, esc) {
         </li>`;
   }).join('');
 
+  // Como encomendar (R-03): 3 passos fixos; as condições que a Kari preencheu entram abaixo, as vazias somem.
+  const passosLalaia = d.lalaia.como_encomendar.map(p => `
+          <li class="passo"><div><h4>${esc(p.titulo)}</h4><p>${esc(p.texto)}</p></div></li>`).join('');
+  const condicoes = d.lalaia.condicoes.length ? `
+        <dl class="condicoes">${d.lalaia.condicoes.map(c => `
+          <div><dt>${esc(c.rotulo)}</dt><dd>${esc(c.texto)}</dd></div>`).join('')}
+        </dl>` : '';
+
   const agenda = d.ensino_realizado.map(e => `
         <li><p class="rotulo">${esc(e.tipo)}<br>${esc(e.quando)}</p><h3>${esc(e.titulo)}</h3><p>${esc(e.onde)}</p></li>`).join('');
 
@@ -191,6 +199,11 @@ export function template(d, esc) {
       <ul class="detalhes">${d.lalaia.detalhes.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
       <ul class="produtos">${produtos}
       </ul>
+      <div class="como-encomendar" id="como-encomendar">
+        <h3>Como encomendar</h3>
+        <ol class="passos">${passosLalaia}
+        </ol>${condicoes}
+      </div>
       <div class="lalaia-cta"><a class="btn" href="${esc(d.lalaia.wa)}">${esc(d.lalaia.cta)}</a></div>
     </div>
   </section>
@@ -214,7 +227,8 @@ export function template(d, esc) {
     <a class="btn" href="${wa}">Chamar no WhatsApp</a>
     <div class="redes">
       <a href="${esc(d.marca.instagram.kari)}">@karienegavaw</a>
-      <a href="${esc(d.marca.instagram.lalaia)}">@lalaia.acessorios</a>
+      <a href="${esc(d.marca.instagram.lalaia)}">@lalaia.acessorios</a>${d.marca.gbp_url ? `
+      <a href="${esc(d.marca.gbp_url)}" rel="noopener">Avaliações no Google</a>` : ''}
     </div>
     <p class="rodape-fim">${esc(d.marca.nome)} · Styling &amp; Visual Merchandising · ${esc(d.marca.cidade)}<br>Foto do topo: ${esc(d.hero.credito_foto.replace(/^Foto: /, ''))}</p>
   </div>

@@ -128,6 +128,35 @@
         <p>Fotos com o mesmo nome formam um produto. Toque num produto para pôr preço, prazo e descrição.</p>
         <div id="lista-produtos"></div>
       </section>
+
+      <section class="textos" id="condicoes" hidden aria-labelledby="titulo-condicoes">
+        <h2 id="titulo-condicoes">Como encomendar</h2>
+        <p>O site já explica os 3 passos da encomenda. Aqui você completa com as suas condições. O que ficar vazio não aparece.</p>
+        <form id="form-condicoes" novalidate>
+          <label class="campo"><span>Pagamento</span>
+            <textarea id="cond-pagamento" maxlength="220" aria-describedby="cont-cond-pagamento" placeholder="Ex.: Pix à vista ou cartão em até 3x"></textarea>
+            <span class="ajuda" id="cont-cond-pagamento"></span>
+          </label>
+          <label class="campo"><span>Frete</span>
+            <textarea id="cond-frete" maxlength="220" aria-describedby="cont-cond-frete" placeholder="Ex.: Correios para todo o Brasil; retirada em Florianópolis"></textarea>
+            <span class="ajuda" id="cont-cond-frete"></span>
+          </label>
+          <label class="campo"><span>Prazo padrão</span>
+            <textarea id="cond-prazo" maxlength="220" aria-describedby="cont-cond-prazo" placeholder="Ex.: Até 10 dias úteis depois do pagamento"></textarea>
+            <span class="ajuda" id="cont-cond-prazo"></span>
+          </label>
+          <label class="campo"><span>Trocas e peça artesanal</span>
+            <textarea id="cond-troca" maxlength="220" aria-describedby="cont-cond-troca" placeholder="Ex.: Cada peça é feita à mão para você; encomenda não tem troca"></textarea>
+            <span class="ajuda" id="cont-cond-troca"></span>
+          </label>
+          <label class="campo"><span>Link das suas avaliações no Google (opcional)</span>
+            <input id="cond-gbp" type="url" inputmode="url" autocomplete="off" placeholder="https://g.page/r/..." aria-describedby="ajuda-gbp">
+            <span class="ajuda" id="ajuda-gbp">Cole o link do seu perfil da empresa no Google. Com ele, o rodapé do site ganha "Avaliações no Google".</span>
+          </label>
+          <div class="erro" id="erro-condicoes" role="alert" hidden></div>
+          <button class="btn btn-verde" type="submit" id="salvar-condicoes">Salvar condições</button>
+        </form>
+      </section>
     </main>
   </section>
 

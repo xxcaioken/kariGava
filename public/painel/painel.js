@@ -459,6 +459,8 @@ function abrirSecao(id) {
   $('#textos').hidden = !ehServico;
   if (ehServico) preencherTextos();
   $('#produtos').hidden = id !== 'lalaia';
+  $('#condicoes').hidden = id !== 'lalaia';
+  if (id === 'lalaia') preencherCondicoes();
   renderSecao();
   window.scrollTo(0, 0);
   mostrarTela('tela-secao');
@@ -467,7 +469,7 @@ function abrirSecao(id) {
 }
 
 function sairDaSecao() {
-  if (textosMudaram() && !confirm('Você mudou os textos e ainda não salvou. Quer voltar sem salvar?')) return false;
+  if ((textosMudaram() || condicoesMudaram()) && !confirm('Você mudou os textos e ainda não salvou. Quer voltar sem salvar?')) return false;
   irInicio({ focarSecao: secaoAtual });
   return true;
 }
@@ -770,6 +772,70 @@ $('#form-textos').addEventListener('submit', async (ev) => {
     mostrarToast('Alterações salvas', { verSite: true });
   } catch (e) {
     if (e.tipo !== 'sessao') mostrar('#erro-textos', mensagemDe(e));
+  } finally {
+    livre(botao);
+  }
+});
+
+// ---------- Como encomendar: condições da LALAIÁ (R-03) ----------
+
+const CAMPOS_CONDICOES = [
+  ['pagamento', '#cond-pagamento', '#cont-cond-pagamento'],
+  ['frete', '#cond-frete', '#cont-cond-frete'],
+  ['prazo_padrao', '#cond-prazo', '#cont-cond-prazo'],
+  ['troca', '#cond-troca', '#cont-cond-troca'],
+];
+const condicoesAtuais = () => estado?.lalaia?.condicoes || {};
+
+function preencherCondicoes() {
+  const c = condicoesAtuais();
+  for (const [campo, sel] of CAMPOS_CONDICOES) $(sel).value = c[campo] || '';
+  $('#cond-gbp').value = c.gbp_url || '';
+  esconder('#erro-condicoes');
+  atualizarContadoresCondicoes();
+}
+
+function atualizarContadoresCondicoes() {
+  for (const [, sel, cont] of CAMPOS_CONDICOES) {
+    const n = $(sel).value.length;
+    const c = $(cont);
+    c.textContent = `${n} de ${LIMITE_TEXTO} letras`;
+    c.classList.toggle('passou', n > LIMITE_TEXTO);
+  }
+}
+for (const [, sel] of CAMPOS_CONDICOES) $(sel).addEventListener('input', atualizarContadoresCondicoes);
+
+function condicoesMudaram() {
+  if (telaAtual !== 'tela-secao' || $('#condicoes').hidden) return false;
+  const c = condicoesAtuais();
+  return CAMPOS_CONDICOES.some(([campo, sel]) => $(sel).value !== (c[campo] || '')) || $('#cond-gbp').value !== (c.gbp_url || '');
+}
+
+$('#form-condicoes').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const corpo = {};
+  for (const [campo, sel] of CAMPOS_CONDICOES) corpo[campo] = $(sel).value.trim() || null;
+  if (CAMPOS_CONDICOES.some(([campo]) => (corpo[campo] || '').length > LIMITE_TEXTO)) {
+    mostrar('#erro-condicoes', `Cada condição pode ter até ${LIMITE_TEXTO} letras.`);
+    return;
+  }
+  const gbp = $('#cond-gbp').value.trim();
+  if (gbp && !/^https:\/\/\S+\.\S+/i.test(gbp)) {
+    mostrar('#erro-condicoes', 'Cole o link do seu perfil no Google (começa com https://).');
+    $('#cond-gbp').focus();
+    return;
+  }
+  corpo.gbp_url = gbp || null;
+  const botao = $('#salvar-condicoes');
+  ocupado(botao, 'Salvando...');
+  try {
+    const r = await api('/api/painel/lalaia/condicoes', { metodo: 'PUT', json: corpo });
+    estado.lalaia = { ...(estado.lalaia || {}), condicoes: r.condicoes };
+    esconder('#erro-condicoes');
+    if (secaoAtual === 'lalaia') preencherCondicoes();
+    mostrarToast('Condições salvas', { verSite: true });
+  } catch (e) {
+    if (e.tipo !== 'sessao') mostrar('#erro-condicoes', mensagemDe(e));
   } finally {
     livre(botao);
   }

@@ -95,6 +95,16 @@ Fotos da seção `lalaia` com o mesmo nome formam um produto; a chave é o **slu
   - Renomeia todas as fotos do produto e move os dados num só `batch` (ou tudo, ou nada). Nome que vira slug vazio → `400 produto_invalido`; nome de outro produto → `409 { erro: "produto_duplicado", mensagem: "Já existe um produto com esse nome..." }` sem mexer em nada.
   - Renomear **uma foto** pelo `PATCH /itens/:id` continua valendo: ela sai do produto (vira produto novo, sem dados) e o produto original fica com o restante e com os dados. O painel avisa isso.
 
+## Como encomendar: condições da LALAIÁ
+
+O site fecha o bloco da LALAIÁ com "Como encomendar" (`id="como-encomendar"`): 3 passos fixos de `conteudo.json` (`lalaia.como_encomendar`) e, abaixo, as condições que a Kari preencheu. Condição vazia não aparece; todas vazias → só os passos. Ficam na tabela `config` (chave/valor em JSON): chave `condicoes` com os 4 textos e chave `gbp_url` com o link das avaliações no Google. O estado traz tudo junto em `lalaia.condicoes`: `{ "pagamento", "frete", "prazo_padrao", "troca", "gbp_url" }` (strings, vazias quando não preenchidas).
+
+- `PUT /api/painel/lalaia/condicoes` `{ "pagamento": "Pix à vista ou cartão em até 3x", "frete": "...", "prazo_padrao": "...", "troca": "...", "gbp_url": "https://g.page/r/.../review" }` → `{ "condicoes": {...} }`
+  - PUT parcial: campo ausente mantém, `null` (ou `""`) limpa. Cada texto tem até 220 letras (espaços repetidos viram um só). Fora disso: `400 { erro: "condicao_invalida", mensagem: "O campo trocas pode ter até 220 letras; este tem 221." }`. Campo desconhecido → `400 condicao_invalida`.
+  - `gbp_url`: URL `https://` válida, até 300 letras, ou vazia. Senão: `400 { erro: "condicao_invalida", mensagem: "Cole o link do seu perfil no Google (começa com https://)." }`. Preenchida, o rodapé do site ganha o link "Avaliações no Google" ao lado dos Instagrams.
+  - No site, os rótulos são Pagamento, Frete, Prazo e Trocas, nessa ordem; o texto é escapado.
+  - Exemplo: `curl -X PUT "$BASE/api/painel/lalaia/condicoes" -H 'content-type: application/json' -H "origin: $BASE" -b "kari_sessao=..." -d '{"pagamento":"Pix à vista ou cartão em até 3x","frete":null}'`
+
 ## Site público
 
 - `GET /` → página gerada com o conteúdo atual (cache curto, limpo a cada mudança no painel).

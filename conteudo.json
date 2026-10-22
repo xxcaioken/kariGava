@@ -203,7 +203,24 @@
         ]
       }
     ],
-    "cta": "Encomendar pelo WhatsApp"
+    "cta": "Encomendar pelo WhatsApp",
+    "como_encomendar": [
+      {
+        "titulo": "Me chame no WhatsApp.",
+        "texto": "Diga qual peça e qual cor você quer.",
+        "rascunho": true
+      },
+      {
+        "titulo": "Eu confirmo prazo e valor.",
+        "texto": "Já com o frete para o seu endereço.",
+        "rascunho": true
+      },
+      {
+        "titulo": "Pagamento por Pix e a peça segue pelos Correios.",
+        "texto": "Embalada com a etiquetinha LALAIÁ.",
+        "rascunho": true
+      }
+    ]
   },
   "proibido": "Não usar fotos de crianças/adolescentes clientes, nem imagens de terceiros (ex.: Lauryn Hill). Não usar img/kari-chapeu-anturio.jpg (a pessoa de chapéu não é a Kari; foto de post da Modateca) nem img/kari-oculos.jpg (capa de reel com texto gravado).",
   "como_trabalhar": [

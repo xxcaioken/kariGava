@@ -457,3 +457,71 @@ test('R-10 fontes locais: site e painel sem Google Fonts, WOFF2 servidas pelo si
 
   assert.ok(existsSync(new URL('../../docs/DESIGN.md', import.meta.url)), 'docs/DESIGN.md documenta os tokens');
 });
+
+// ---------- S-05 · Como encomendar e condições da LALAIÁ (R-03) ----------
+const blocoComoEncomendar = html => {
+  const ini = html.indexOf('id="como-encomendar"');
+  return ini < 0 ? null : html.slice(ini, html.indexOf('id="cursos"'));
+};
+const rodape = html => html.slice(html.indexOf('<footer'), html.indexOf('</footer>'));
+
+test('R-03 condições e como encomendar', async () => {
+  let html = (await chamar('/')).dados;
+  const posLalaia = html.indexOf('id="lalaia"'), posBloco = html.indexOf('id="como-encomendar"'), posCursos = html.indexOf('id="cursos"');
+  assert.ok(posBloco > 0, 'home tem id="como-encomendar"');
+  assert.ok(posLalaia < posBloco && posBloco < posCursos, 'bloco fica depois da LALAIÁ e antes dos cursos');
+  let bloco = blocoComoEncomendar(html);
+  for (const passo of ['WhatsApp', 'prazo e valor', 'Pix', 'Correios']) assert.ok(bloco.includes(passo), `passo fixo: ${passo}`);
+  assert.ok(!bloco.includes('class="condicoes'), 'sem condições, só os 3 passos');
+  assert.ok(!rodape(html).includes('Avaliações no Google'), 'sem gbp_url não há link no rodapé');
+
+  const estado = (await chamar('/api/painel/estado')).dados;
+  assert.deepEqual(estado.lalaia.condicoes, { pagamento: '', frete: '', prazo_padrao: '', troca: '', gbp_url: '' }, 'estado devolve lalaia.condicoes vazias');
+
+  const condicoes = { pagamento: 'Pix à vista ou cartão em até 3x', frete: 'Correios para todo o Brasil; <b>retirada</b> em Floripa', prazo_padrao: 'Até 10 dias úteis depois do pagamento', troca: 'Peça artesanal feita para você: encomenda não tem troca, só ajuste' };
+  const r = await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: condicoes });
+  assert.equal(r.status, 200, JSON.stringify(r.dados));
+  assert.equal(r.dados.condicoes.frete, condicoes.frete);
+  bloco = blocoComoEncomendar((await chamar('/')).dados);
+  assert.ok(bloco.includes('class="condicoes'), 'condições aparecem');
+  assert.ok(bloco.includes('Pix à vista ou cartão em até 3x') && bloco.includes('Até 10 dias úteis depois do pagamento') && bloco.includes('encomenda não tem troca, só ajuste'));
+  assert.ok(bloco.includes('&lt;b&gt;retirada&lt;/b&gt;') && !bloco.includes('<b>retirada</b>'), 'texto escapado');
+
+  // PUT parcial: null limpa um campo, os outros ficam.
+  const parcial = await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { frete: null } });
+  assert.equal(parcial.status, 200);
+  assert.equal(parcial.dados.condicoes.frete, '');
+  assert.equal(parcial.dados.condicoes.pagamento, condicoes.pagamento);
+  bloco = blocoComoEncomendar((await chamar('/')).dados);
+  assert.ok(!bloco.includes('retirada') && bloco.includes('Pix à vista'));
+
+  // 221 letras → 400 com a mensagem dizendo o campo e o tamanho.
+  const grande = await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { troca: 'a'.repeat(221) } });
+  assert.equal(grande.status, 400);
+  assert.equal(grande.dados.erro, 'condicao_invalida');
+  assert.match(grande.dados.mensagem, /220 letras.*221/);
+  assert.equal((await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { pagamento: 5 } })).status, 400, 'número não é texto');
+
+  // gbp_url (uc6a): só https:// válida, até 300 letras; no rodapé vira "Avaliações no Google".
+  for (const gbp_url of ['http://g.page/r/abc', 'javascript:alert(1)', 'g.page/r/abc', `https://g.page/${'a'.repeat(300)}`]) {
+    const ruim = await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { gbp_url } });
+    assert.equal(ruim.status, 400, gbp_url);
+    assert.equal(ruim.dados.erro, 'condicao_invalida');
+    assert.match(ruim.dados.mensagem, /https:\/\//);
+  }
+  const url = 'https://g.page/r/AbC123/review?x=1&y=2';
+  assert.equal((await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { gbp_url: url } })).status, 200);
+  let pe = rodape((await chamar('/')).dados);
+  assert.ok(pe.includes('Avaliações no Google'), 'link no rodapé');
+  assert.ok(pe.includes('href="https://g.page/r/AbC123/review?x=1&amp;y=2"'), 'href escapado');
+  assert.equal((await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { gbp_url: '' } })).status, 200);
+  pe = rodape((await chamar('/')).dados);
+  assert.ok(!pe.includes('Avaliações no Google'), 'vazio tira o link');
+
+  // Tudo vazio → bloco volta a mostrar só os passos.
+  assert.equal((await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { pagamento: null, prazo_padrao: null, troca: null } })).status, 200);
+  html = (await chamar('/')).dados;
+  bloco = blocoComoEncomendar(html);
+  assert.ok(!bloco.includes('class="condicoes') && bloco.includes('Correios'));
+  assert.deepEqual((await chamar('/api/painel/estado')).dados.lalaia.condicoes, { pagamento: '', frete: '', prazo_padrao: '', troca: '', gbp_url: '' });
+});
