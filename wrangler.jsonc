@@ -31,7 +31,8 @@
   "vars": {
     "EMAILS_PERMITIDOS": "",
     "REMETENTE": "",
-    "WHATSAPP": "https://wa.me/message/X6FXMZWUW2EKM1",
+    // Só dígitos, com DDI e DDD: cada botão do site monta wa.me/<número>?text=<mensagem da intenção>.
+    "WHATSAPP_NUMERO": "5548998459412",
     "MODO_INSTAGRAM": "real"
   }
   // Segredos (wrangler secret put): SEGREDO_SESSAO, IG_APP_ID, IG_APP_SECRET

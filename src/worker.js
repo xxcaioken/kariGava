@@ -128,7 +128,7 @@ async function tratar(request, env, url) {
   if (url.pathname.startsWith('/fotos/') && request.method === 'GET') return foto(env, decodeURIComponent(url.pathname.slice('/fotos/'.length)));
   if (url.pathname === '/' && (request.method === 'GET' || request.method === 'HEAD')) {
     const [itens, textos] = await Promise.all([listarItens(env), lerTextos(env)]);
-    return new Response(renderizarSite({ itens, textos, whatsapp: env.WHATSAPP }), {
+    return new Response(renderizarSite({ itens, textos, whatsappNumero: env.WHATSAPP_NUMERO }), {
       headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
     });
   }

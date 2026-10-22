@@ -26,6 +26,7 @@ No `wrangler.jsonc`, preencha:
 - `database_id` (do comando acima);
 - `vars.EMAILS_PERMITIDOS`: `"email.da.kari@...,seu.email@..."` (só esses entram no painel);
 - `vars.REMETENTE`: um endereço do domínio, ex.: `"painel@karigava.com.br"`;
+- `vars.WHATSAPP_NUMERO`: o número da Kari só com dígitos, com DDI e DDD (`"5548998459412"`); cada botão do site abre a conversa já com a mensagem do serviço ou produto;
 - a rota do domínio, adicionando no topo do arquivo:
 
 ```jsonc

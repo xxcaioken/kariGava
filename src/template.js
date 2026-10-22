@@ -5,7 +5,7 @@ const ICONE_WA = '<svg class="icone-wa" viewBox="0 0 24 24" fill="currentColor" 
 const CORES_MARCA = ['roxo', 'vermelho', 'mostarda', 'pink', 'verde', 'grafite'];
 
 export function template(d, esc) {
-  const wa = esc(d.whatsapp);
+  const wa = esc(d.whatsapp.geral); // botões gerais (topo, hero, rodapé, barra fixa); serviço e produto têm o próprio link
   const listras = CORES_MARCA.map(c => `<i style="background:var(--${c})"></i>`).join('');
   const img = (f, alt, extra = '') => f
     ? `<img src="${esc(f.foto_url)}" alt="${esc(alt ?? f.titulo)}" loading="lazy" decoding="async"${extra}>`
@@ -41,7 +41,7 @@ export function template(d, esc) {
               <ol>${s.como_funciona.map(p => `<li>${esc(p)}</li>`).join('')}</ol>
             </details>` : ''}
             ${s.citacao ? `<blockquote class="citacao">${esc(s.citacao)}</blockquote>` : ''}
-            <a class="btn" href="${wa}">${esc(s.cta)}</a>
+            <a class="btn" href="${esc(s.wa)}">${esc(s.cta)}</a>
           </div>
         </li>`;
   }).join('');
@@ -60,7 +60,7 @@ export function template(d, esc) {
             <p class="rotulo">${esc(p.rotulo)}</p>
             <h3>${esc(p.titulo)}</h3>
             ${p.texto ? `<p>${esc(p.texto)}</p>` : ''}
-            <a href="${wa}">${esc(p.cta)} →</a>
+            <a href="${esc(p.wa)}">${esc(p.cta)} →</a>
           </div>
         </li>`;
   }).join('');
@@ -188,7 +188,7 @@ export function template(d, esc) {
       <ul class="detalhes">${d.lalaia.detalhes.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
       <ul class="produtos">${produtos}
       </ul>
-      <div class="lalaia-cta"><a class="btn" href="${wa}">${esc(d.lalaia.cta)}</a></div>
+      <div class="lalaia-cta"><a class="btn" href="${esc(d.lalaia.wa)}">${esc(d.lalaia.cta)}</a></div>
     </div>
   </section>
 

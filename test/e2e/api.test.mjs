@@ -223,6 +223,37 @@ test('sair encerra a sessão', async () => {
   assert.equal((await chamar('/api/painel/estado')).status, 401);
 });
 
+// ---------- R-01 · Cada botão de WhatsApp abre a conversa já com a mensagem certa ----------
+// O número vem da config (wrangler.jsonc é JSONC: tira os comentários antes do JSON.parse), nunca cravado aqui.
+function numeroWhatsAppDaConfig() {
+  const jsonc = readFileSync(new URL('../../wrangler.jsonc', import.meta.url), 'utf8');
+  const json = jsonc.replace(/^\s*\/\/.*$/gm, '').replace(/,(\s*[}\]])/g, '$1');
+  const numero = JSON.parse(json).vars?.WHATSAPP_NUMERO;
+  assert.match(numero || '', /^\d{10,15}$/, 'vars.WHATSAPP_NUMERO só com dígitos em wrangler.jsonc');
+  return numero;
+}
+const decodificarTexto = href => decodeURIComponent(new URL(href.replaceAll('&amp;', '&')).searchParams.get('text') || '');
+
+test('R-01 botões de WhatsApp: número da config e mensagem por contexto', async () => {
+  const numero = numeroWhatsAppDaConfig();
+  const { status, dados: html } = await chamar('/');
+  assert.equal(status, 200);
+  assert.ok(!html.includes('wa.me/message'), 'o link curto wa.me/message saiu');
+  const links = [...html.matchAll(/href="(https:\/\/wa\.me\/[^"]+)"/g)].map(m => m[1]);
+  assert.ok(links.length >= 8, `há ${links.length} links de WhatsApp`);
+  for (const l of links) assert.ok(l.startsWith(`https://wa.me/${numero}?text=`), l);
+
+  const cartao = html.slice(html.indexOf('id="edicao"'), html.indexOf('id="oficina-look"'));
+  const botao = cartao.match(/<a class="btn" href="([^"]+)"/)[1];
+  assert.equal(decodificarTexto(botao), 'Oi Kari, vi o site e quero saber sobre Edição de guarda-roupa');
+
+  const lalaia = html.slice(html.indexOf('id="lalaia"'), html.indexOf('id="cursos"'));
+  const produto = lalaia.slice(lalaia.indexOf('<li class="produto">'));
+  const titulo = produto.match(/<h3>([^<]+)<\/h3>/)[1];
+  const linkProduto = produto.match(/href="(https:\/\/wa\.me\/[^"]+)"/)[1];
+  assert.equal(decodificarTexto(linkProduto), `Oi Kari, quero encomendar ${titulo}`);
+});
+
 // ---------- R-12 · Cabeçalhos de segurança em todas as respostas ----------
 const CABECALHOS_SEGURANCA = {
   'strict-transport-security': 'max-age=63072000; includeSubDomains',

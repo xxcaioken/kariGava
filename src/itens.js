@@ -1,4 +1,4 @@
-import conteudo from '../conteudo.json';
+import conteudo from '../conteudo.json' with { type: 'json' };
 import { ErroApi, agora, novoId } from './util.js';
 import { buscarPost, baixarImagem } from './instagram.js';
 

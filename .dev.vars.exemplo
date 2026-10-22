@@ -2,5 +2,7 @@ DEV_LOGIN=1
 SEGREDO_SESSAO=segredo-local-so-para-desenvolvimento-123
 EMAILS_PERMITIDOS=kari@exemplo.com,caio@exemplo.com
 MODO_INSTAGRAM=falso
+# O número do WhatsApp vem de vars.WHATSAPP_NUMERO no wrangler.jsonc; para testar outro número localmente:
+# WHATSAPP_NUMERO=5548998459412
 # Para depurar bloqueios da CSP, descomente: o navegador só avisa no console em vez de bloquear.
 # CSP_MODO=relatorio
