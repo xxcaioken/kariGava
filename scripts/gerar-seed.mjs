@@ -16,14 +16,11 @@ function item(secao, ordem, foto, titulo) {
 for (const s of c.servicos) item(s.id, 0, s.foto, s.titulo);
 item('sobre', 0, c.sobre.foto, 'Kari');
 
+// Fotos com o mesmo título viram um produto só no site.
 let ordem = 0;
 for (const linha of c.lalaia.linhas) {
-  for (const foto of linha.fotos) {
-    if (foto.includes('babado')) continue; // a do babado é a foto do Styling
-    item('lalaia', ordem++, foto, linha.titulo);
-  }
+  for (const foto of linha.fotos) item('lalaia', ordem++, foto, linha.titulo);
 }
-item('lalaia', ordem++, c.lalaia.embalagem, 'Embalagem LALAIÁ');
 
 writeFileSync(new URL('migrations/0002_fotos_iniciais.sql', raiz), `-- Gerado por scripts/gerar-seed.mjs. Não editar à mão.\n${linhas.join('\n')}\n`);
 console.log(`${linhas.length} fotos iniciais`);

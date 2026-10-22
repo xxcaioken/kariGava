@@ -131,9 +131,14 @@
       "titulo": "Cursos, oficinas e palestras",
       "resumo": "Aulas sobre moda, visual merchandising, expografia e acessórios de cabeça.",
       "para_quem": "Faculdades, escolas de moda e eventos.",
-      "foto": "img/oficina-turma.jpg",
+      "foto": "img/modateca-curso.jpg",
       "cta": "Quero levar a Kari para minha escola",
-      "rascunho": true
+      "rascunho": true,
+      "como_funciona": [
+        "Conversa sobre o tema e o público.",
+        "Montagem da aula, oficina ou palestra.",
+        "Encontro presencial, com prática quando fizer sentido."
+      ]
     }
   ],
   "ensino_realizado": [
@@ -170,7 +175,9 @@
     "linhas": [
       {
         "titulo": "BigScrunchie (a Xuxona)",
+        "rotulo": "Linha",
         "texto": "O scrunchie gigante de organza, com a etiquetinha LALAIÁ.",
+        "cta": "Encomendar a minha",
         "fotos": [
           "img/lalaia-scrunchie.jpg",
           "img/lalaia-laco-organza.jpg"
@@ -178,22 +185,40 @@
       },
       {
         "titulo": "Acessórios de cabeça sob medida",
+        "rotulo": "Linha",
         "texto": "Fascinators e headpieces criados para casamentos e momentos especiais.",
+        "cta": "Pedir uma peça sob medida",
         "fotos": [
           "img/lalaia-perolas.jpg",
           "img/lalaia-flor-vermelha.jpg"
         ]
       },
       {
-        "titulo": "Peças de artista",
-        "texto": "Babados, flores e peças de carnaval para quem gosta de presença.",
+        "titulo": "Vai de presente",
+        "rotulo": "Embalagem",
+        "texto": "Cada pedido sai embalado com a etiquetinha LALAIÁ.",
+        "cta": "Encomendar um presente",
         "fotos": [
-          "img/lalaia-babado-vermelho.jpg"
+          "img/lalaia-caixa.jpg"
         ]
       }
     ],
-    "embalagem": "img/lalaia-caixa.jpg",
     "cta": "Encomendar pelo WhatsApp"
   },
-  "proibido": "Não usar fotos de crianças/adolescentes clientes, nem imagens de terceiros (ex.: Lauryn Hill). Não usar img/kari-chapeu-anturio.jpg (a pessoa de chapéu não é a Kari; foto de post da Modateca) nem img/kari-oculos.jpg (capa de reel com texto gravado)."
+  "proibido": "Não usar fotos de crianças/adolescentes clientes, nem imagens de terceiros (ex.: Lauryn Hill). Não usar img/kari-chapeu-anturio.jpg (a pessoa de chapéu não é a Kari; foto de post da Modateca) nem img/kari-oculos.jpg (capa de reel com texto gravado).",
+  "como_trabalhar": [
+    {
+      "titulo": "Você me chama no WhatsApp.",
+      "texto": "Pelo botão do serviço que te interessou."
+    },
+    {
+      "titulo": "A gente conversa sobre o que você precisa.",
+      "texto": "Sua rotina, sua loja ou o seu evento."
+    },
+    {
+      "titulo": "Eu te mando a proposta e combinamos a data.",
+      "texto": "Tudo certinho antes de começar.",
+      "rascunho": true
+    }
+  ]
 }

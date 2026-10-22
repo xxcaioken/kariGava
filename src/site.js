@@ -2,13 +2,14 @@ import conteudo from '../conteudo.json';
 import { template } from './template.js';
 
 // Nome de cor estilo cartela Pantone para cada serviço.
+// `var` é o nome da cor em public/site.css; `curto` vai no leque, `legenda` nos botões do celular.
 const AMOSTRAS = {
-  consultoria: { kg: 'KG 01', nome: 'Roxo Autêntico', cor: '#8D51FF', texto: '#FFFFFF' },
-  edicao: { kg: 'KG 02', nome: 'Vermelho Armário', cor: '#C52118', texto: '#FFFFFF' },
-  'oficina-look': { kg: 'KG 03', nome: 'Mostarda Oficina', cor: '#FEBC5C', texto: '#141218' },
-  styling: { kg: 'KG 04', nome: 'Pink Produção', cor: '#E5196E', texto: '#FFFFFF' },
-  vm: { kg: 'KG 05', nome: 'Verde Vitrine', cor: '#017F38', texto: '#FFFFFF' },
-  ensino: { kg: 'KG 06', nome: 'Grafite Aula', cor: '#2A2730', texto: '#FFFFFF' },
+  consultoria: { kg: 'KG 01', nome: 'Roxo Autêntico', cor: '#8D51FF', var: 'roxo', escuro: false, curto: 'Consultoria', legenda: 'Consultoria de estilo' },
+  edicao: { kg: 'KG 02', nome: 'Vermelho Armário', cor: '#C52118', var: 'vermelho', escuro: false, curto: 'Edição', legenda: 'Edição de guarda-roupa' },
+  'oficina-look': { kg: 'KG 03', nome: 'Mostarda Oficina', cor: '#FEBC5C', var: 'mostarda', escuro: true, curto: 'Oficina de Look', legenda: 'Oficina de Look' },
+  styling: { kg: 'KG 04', nome: 'Pink Produção', cor: '#E5196E', var: 'pink', escuro: false, curto: 'Styling', legenda: 'Styling e produção' },
+  vm: { kg: 'KG 05', nome: 'Verde Vitrine', cor: '#017F38', var: 'verde', escuro: false, curto: 'Vitrines', legenda: 'Vitrines e VM' },
+  ensino: { kg: 'KG 06', nome: 'Grafite Aula', cor: '#2A2730', var: 'grafite', escuro: false, curto: 'Cursos', legenda: 'Cursos e palestras' },
 };
 const ORDEM_SERVICOS = ['consultoria', 'edicao', 'oficina-look', 'styling', 'vm', 'ensino'];
 
@@ -36,10 +37,27 @@ export function montarDados({ itens, textos, whatsapp }) {
     hero: conteudo.hero,
     servicos,
     grupos: conteudo.grupos_servicos,
+    como_trabalhar: conteudo.como_trabalhar,
     sobre: { ...conteudo.sobre, fotos: porSecao.get('sobre') || [] },
-    lalaia: { ...conteudo.lalaia, fotos: porSecao.get('lalaia') || [] },
+    lalaia: { ...conteudo.lalaia, produtos: agruparProdutos(porSecao.get('lalaia') || []) },
     ensino_realizado: conteudo.ensino_realizado,
   };
+}
+
+// Fotos da LALAIÁ com o mesmo nome viram um produto só (na ordem da 1ª foto).
+// Se o nome bater com uma linha de conteudo.json, o produto ganha a descrição dela.
+function agruparProdutos(fotos) {
+  const linhas = new Map(conteudo.lalaia.linhas.map(l => [l.titulo.toLowerCase(), l]));
+  const produtos = new Map();
+  for (const f of fotos) {
+    const chave = (f.titulo || '').trim().toLowerCase() || `sem-nome-${f.id}`;
+    if (!produtos.has(chave)) {
+      const linha = linhas.get(chave);
+      produtos.set(chave, { titulo: f.titulo, rotulo: linha?.rotulo || 'Produto', texto: linha?.texto || '', cta: linha?.cta || 'Encomendar', fotos: [] });
+    }
+    produtos.get(chave).fotos.push(f);
+  }
+  return [...produtos.values()];
 }
 
 export function renderizarSite(entrada) {

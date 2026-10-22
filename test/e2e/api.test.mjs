@@ -100,6 +100,16 @@ test('traz posts do Instagram para a LALAIÁ sem duplicar', async () => {
   assert.deepEqual(marcada.dados.posts[0].no_site, ['lalaia']);
 });
 
+test('fotos da LALAIÁ com o mesmo nome viram um produto só', async () => {
+  const renomear = await chamar(`/api/painel/itens/${novos[1].id}`, { metodo: 'PATCH', corpo: { titulo: 'Vai de presente' } });
+  assert.equal(renomear.status, 200);
+  const site = (await chamar('/')).dados;
+  const lalaia = site.slice(site.indexOf('id="lalaia"'), site.indexOf('id="cursos"'));
+  const produto = lalaia.slice(lalaia.lastIndexOf('<li class="produto">', lalaia.indexOf('<h3>Vai de presente</h3>')), lalaia.indexOf('<h3>Vai de presente</h3>'));
+  assert.equal((produto.match(/<img /g) || []).length, 2);
+  assert.equal((lalaia.match(/<h3>Vai de presente<\/h3>/g) || []).length, 1);
+});
+
 test('foto guardada abre e aparece no site', async () => {
   const f = await fetch(BASE + novos[0].foto_url);
   assert.equal(f.status, 200);
@@ -163,6 +173,11 @@ test('foto do celular: aceita jpg e recusa o que não é foto', async () => {
   assert.equal(ok.status, 201);
   assert.equal(ok.dados.itens[0].origem, 'celular');
   assert.equal((await fetch(BASE + ok.dados.itens[0].foto_url)).status, 200);
+  // 2ª foto do serviço aparece como miniatura no cartão dele.
+  const site = (await chamar('/')).dados;
+  const cartao = site.slice(site.indexOf('id="edicao"'), site.indexOf('id="oficina-look"'));
+  assert.match(cartao, /class="servico-mais"/);
+  assert.ok(cartao.includes(ok.dados.itens[0].foto_url));
 
   const ruim = new FormData();
   ruim.set('secao', 'edicao');
