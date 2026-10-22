@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kari Gava · Styling & VM</title>
+<meta name="description" content="Consultoria de moda, styling e vitrines com Kariene Gava. Acessórios LALAIÁ feitos à mão.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,600;1,6..96,400&family=Jost:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --parede: #7E1712;
+    --parede-funda: #4E0D0A;
+    --vermelho: #C52118;
+    --luz: #FEBC5C;
+    --latao: #D9A85B;
+    --preto: #140D0C;
+    --marfim: #FBF2E6;
+    --marfim-suave: #E9D6C2;
+    --roxo: #8D51FF;
+    --verde: #017F38;
+    --serif: "Bodoni Moda", Didot, Georgia, serif;
+    --sans: "Jost", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--parede); color: var(--marfim); font: 17px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+  img { display: block; max-width: 100%; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--luz); outline-offset: 4px; }
+  .wrap { width: min(1180px, 100% - 32px); margin-inline: auto; }
+  .rotulo { font: 500 12px/1 var(--sans); letter-spacing: .28em; text-transform: uppercase; color: var(--latao); }
+
+  .btn { display: inline-flex; align-items: center; min-height: 48px; padding: 0 28px; background: var(--luz); color: var(--preto); font: 500 15px var(--sans); letter-spacing: .06em; text-transform: uppercase; text-decoration: none; border-radius: 2px; transition: background .2s; }
+  .btn:hover { background: #FFD08A; }
+  .btn-linha { background: transparent; color: var(--marfim); box-shadow: inset 0 0 0 1px var(--latao); }
+  .btn-linha:hover { background: rgba(254,188,92,.12); }
+
+  header { border-bottom: 1px solid rgba(217,168,91,.35); }
+  header .wrap { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 84px; gap: 16px; }
+  nav ul { display: flex; gap: 26px; list-style: none; margin: 0; padding: 0; font-size: 14px; letter-spacing: .14em; text-transform: uppercase; }
+  nav a { text-decoration: none; }
+  nav a:hover { color: var(--luz); }
+  .marca { font: italic 400 30px var(--serif); text-decoration: none; letter-spacing: -.01em; }
+  header .btn { justify-self: end; min-height: 42px; padding: 0 18px; font-size: 13px; }
+
+  /* Assinatura: a vitrine em arco com luz de cima */
+  .hero { position: relative; text-align: center; padding: 64px 0 100px; overflow: hidden; }
+  .hero::before { content: ""; position: absolute; left: 50%; top: -120px; width: 900px; height: 700px; transform: translateX(-50%); background: radial-gradient(ellipse at top, rgba(254,188,92,.35), transparent 62%); pointer-events: none; }
+  .vitrine { position: relative; width: min(380px, 78vw); margin: 0 auto; padding: 14px; border: 1px solid var(--latao); border-radius: 999px 999px 0 0; background: var(--parede-funda); box-shadow: 0 40px 80px rgba(0,0,0,.45); }
+  .vitrine img { width: 100%; aspect-ratio: 3/4.4; object-fit: cover; border-radius: 999px 999px 0 0; }
+  .vitrine::after { content: ""; position: absolute; left: -40px; right: -40px; bottom: -18px; height: 18px; background: linear-gradient(var(--latao), #8a6a35); border-radius: 2px; }
+  .hero h1 { position: relative; font: 400 clamp(46px, 8vw, 104px)/.98 var(--serif); letter-spacing: -.02em; margin: 64px auto 20px; max-width: 13ch; }
+  .hero h1 em { color: var(--luz); }
+  .hero p { position: relative; color: var(--marfim-suave); font-size: 19px; margin: 0 0 32px; }
+  .hero .acoes { position: relative; display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; }
+
+  .secao { padding: 110px 0; }
+  .secao-titulo { text-align: center; margin-bottom: 56px; }
+  .secao-titulo h2 { font: 400 clamp(38px, 5vw, 64px)/1 var(--serif); margin: 14px 0 0; }
+  .secao-titulo p { color: var(--marfim-suave); max-width: 44ch; margin: 16px auto 0; }
+
+  .servicos { background: var(--parede-funda); }
+  .nichos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; list-style: none; margin: 0; padding: 0; }
+  .nicho { position: relative; padding: 70px 28px 32px; border: 1px solid rgba(217,168,91,.5); border-radius: 999px 999px 0 0; text-align: center; background: radial-gradient(ellipse at top, rgba(254,188,92,.16), transparent 70%); min-height: 300px; display: flex; flex-direction: column; align-items: center; }
+  .nicho .rotulo { font-size: 11px; }
+  .nicho h3 { font: 400 28px/1.1 var(--serif); margin: 14px 0 12px; }
+  .nicho p { color: var(--marfim-suave); margin: 0 0 20px; font-size: 16px; }
+  .nicho a { margin-top: auto; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--luz); text-underline-offset: 6px; }
+
+  .frase { padding: 120px 0; text-align: center; background: var(--preto); }
+  .frase blockquote { margin: 0; font: italic 400 clamp(44px, 8vw, 116px)/1 var(--serif); }
+  .frase cite { display: block; margin-top: 28px; font-style: normal; }
+
+  .prateleira { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px 24px; }
+  .prateleira figure { margin: 0; text-align: center; }
+  .prateleira .moldura { padding: 10px; border: 1px solid rgba(217,168,91,.55); border-radius: 999px 999px 0 0; background: var(--parede-funda); }
+  .prateleira img { width: 100%; aspect-ratio: 4/5; object-fit: cover; border-radius: 999px 999px 0 0; }
+  .prateleira figcaption { margin-top: 14px; font: italic 400 20px var(--serif); }
+  .centro { text-align: center; margin-top: 48px; }
+
+  .cursos { background: var(--parede-funda); }
+  .curso { display: grid; grid-template-columns: 200px 1fr; gap: 36px; align-items: center; max-width: 880px; margin: 0 auto; padding: 32px 0; border-top: 1px solid rgba(217,168,91,.35); }
+  .curso:last-child { border-bottom: 1px solid rgba(217,168,91,.35); }
+  .curso h3 { font: 400 30px/1.15 var(--serif); margin: 10px 0; }
+  .curso p { margin: 0; color: var(--marfim-suave); }
+
+  footer { padding: 110px 0 40px; text-align: center; background: radial-gradient(ellipse at top, rgba(254,188,92,.22), transparent 60%), var(--parede); }
+  footer h2 { font: italic 400 clamp(52px, 9vw, 120px)/1 var(--serif); margin: 0 0 32px; }
+  .redes { display: flex; justify-content: center; flex-wrap: wrap; gap: 28px; margin-top: 36px; letter-spacing: .1em; }
+  .rodape-fim { margin-top: 80px; padding-top: 20px; border-top: 1px solid rgba(217,168,91,.3); font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--marfim-suave); }
+
+  @media (max-width: 860px) {
+    header .wrap { grid-template-columns: 1fr auto; }
+    nav { display: none; }
+    .marca { justify-self: start; }
+    .nichos, .prateleira { grid-template-columns: 1fr 1fr; gap: 18px; }
+    .nicho { padding: 56px 16px 24px; min-height: 0; }
+    .nicho h3 { font-size: 22px; }
+    .nicho p { font-size: 14px; }
+    .curso { grid-template-columns: 110px 1fr; gap: 18px; }
+    .curso h3 { font-size: 22px; }
+    .secao, .frase { padding: 80px 0; }
+  }
+  @media (max-width: 520px) { .nichos { grid-template-columns: 1fr; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <nav aria-label="Seções"><ul>
+      <li><a href="#servicos">Serviços</a></li>
+      <li><a href="#lalaia">LALAIÁ</a></li>
+      <li><a href="#cursos">Cursos</a></li>
+    </ul></nav>
+    <a class="marca" href="#">Kari Gava</a>
+    <a class="btn" href="https://wa.me/message/X6FXMZWUW2EKM1">WhatsApp</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div class="vitrine"><img src="../../public/img/kari-look-blazer.jpg" alt="Kari de óculos redondos, blazer cinza e broche dourado"></div>
+      <h1>Moda para guarda-roupas <em>autênticos.</em></h1>
+      <p>Consultoria de moda, styling e vitrines com Kariene Gava.</p>
+      <div class="acoes">
+        <a class="btn" href="https://wa.me/message/X6FXMZWUW2EKM1">Chamar no WhatsApp</a>
+        <a class="btn btn-linha" href="#servicos">Ver serviços</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="secao servicos" id="servicos">
+    <div class="wrap">
+      <div class="secao-titulo"><span class="rotulo">Stylist · Visual Merchandiser</span><h2>Serviços</h2></div>
+      <ul class="nichos">
+        <li class="nicho"><span class="rotulo">Para você</span><h3>Consultoria de guarda-roupa</h3><p>Descobrir o seu estilo a partir de quem você é, da sua rotina e do que já mora no seu armário.</p><a href="https://wa.me/message/X6FXMZWUW2EKM1">Quero saber mais</a></li>
+        <li class="nicho"><span class="rotulo">Para você</span><h3>Edição de guarda-roupa</h3><p>Peça por peça: o que fica, o que sai e o que ganha combinação nova.</p><a href="https://wa.me/message/X6FXMZWUW2EKM1">Quero saber mais</a></li>
+        <li class="nicho"><span class="rotulo">Produções</span><h3>Styling</h3><p>Looks pensados para ensaios, eventos, campanhas e produções.</p><a href="https://wa.me/message/X6FXMZWUW2EKM1">Quero saber mais</a></li>
+        <li class="nicho"><span class="rotulo">Para lojas</span><h3>Vitrines e VM</h3><p>Visual merchandising: vitrine, exposição e arrumação que fazem a peça vender.</p><a href="https://wa.me/message/X6FXMZWUW2EKM1">Quero saber mais</a></li>
+        <li class="nicho"><span class="rotulo">Em grupo</span><h3>Oficina de Look</h3><p>Encontros para aprender a montar looks com o que você já tem.</p><a href="https://wa.me/message/X6FXMZWUW2EKM1">Quero saber mais</a></li>
+        <li class="nicho"><span class="rotulo">Escolas e eventos</span><h3>Cursos e palestras</h3><p>Aulas sobre moda, styling e acessórios de cabeça.</p><a href="#cursos">Ver cursos</a></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="frase">
+    <div class="wrap">
+      <blockquote>nós somos a moda.<br>as pessoas.</blockquote>
+      <cite class="rotulo">Kari Gava</cite>
+    </div>
+  </section>
+
+  <section class="secao" id="lalaia">
+    <div class="wrap">
+      <div class="secao-titulo"><span class="rotulo">Produtos · LALAIÁ Acessórios</span><h2>Feitos à mão, sob encomenda</h2><p>Para celebrar, colorir e memorar a vida. Laços, scrunchies, flores e peças de carnaval.</p></div>
+      <div class="prateleira">
+        <figure><div class="moldura"><img src="../../public/img/lalaia-laco-organza.jpg" alt="Laço grande de organza rosa"></div><figcaption>Laço de organza</figcaption></figure>
+        <figure><div class="moldura"><img src="../../public/img/lalaia-perolas.jpg" alt="Tiara de pérolas em forma de laço"></div><figcaption>Laço de pérolas</figcaption></figure>
+        <figure><div class="moldura"><img src="../../public/img/lalaia-flor-vermelha.jpg" alt="Flor vermelha no cabelo"></div><figcaption>Flor vermelha</figcaption></figure>
+        <figure><div class="moldura"><img src="../../public/img/lalaia-scrunchie.jpg" alt="Scrunchie de organza rosa num coque"></div><figcaption>Scrunchie</figcaption></figure>
+        <figure><div class="moldura"><img src="../../public/img/lalaia-babado-vermelho.jpg" alt="Peça de babados vermelhos"></div><figcaption>Babados vermelhos</figcaption></figure>
+        <figure><div class="moldura"><img src="../../public/img/lalaia-caixa.jpg" alt="Caixa redonda de presente com etiqueta LALAIÁ"></div><figcaption>Embalagem LALAIÁ</figcaption></figure>
+      </div>
+      <div class="centro"><a class="btn" href="https://wa.me/message/X6FXMZWUW2EKM1">Encomendar pelo WhatsApp</a></div>
+    </div>
+  </section>
+
+  <section class="secao cursos" id="cursos">
+    <div class="wrap">
+      <div class="secao-titulo"><span class="rotulo">Já passou por aqui</span><h2>Cursos e palestras</h2></div>
+      <article class="curso">
+        <img src="../../public/img/modateca-curso.jpg" alt="Cartaz do curso Criação de Acessórios de Cabeça">
+        <div><span class="rotulo">Curso · 20 horas · set/out 2026</span><h3>Criação de Acessórios de Cabeça: do conceito à passarela</h3><p>Modateca, Centro de Artes, Design e Moda da UDESC.</p></div>
+      </article>
+      <article class="curso">
+        <img src="../../public/img/modateca-palestra.jpg" alt="Cartaz da palestra Moda e Adornos de Cabeça">
+        <div><span class="rotulo">Palestra · 29/09/2026</span><h3>Moda e Adornos de Cabeça</h3><p>Auditório do CEART/UDESC, com exposição de chapéus do acervo da Modateca.</p></div>
+      </article>
+    </div>
+  </section>
+</main>
+
+<footer id="contato">
+  <div class="wrap">
+    <h2>Vamos conversar?</h2>
+    <a class="btn" href="https://wa.me/message/X6FXMZWUW2EKM1">Chamar no WhatsApp</a>
+    <div class="redes">
+      <a href="https://www.instagram.com/karienegavaw/">@karienegavaw</a>
+      <a href="https://www.instagram.com/lalaia.acessorios/">@lalaia.acessorios</a>
+    </div>
+    <div class="rodape-fim">Kariene Gava · Styling & Visual Merchandising</div>
+  </div>
+</footer>
+</body>
+</html>

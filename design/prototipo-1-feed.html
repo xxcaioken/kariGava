@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Painel da Kari · Protótipo 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --roxo: #8D51FF;
+    --roxo-forte: #6A2FE0;
+    --roxo-claro: #F1EAFF;
+    --verde: #017F38;
+    --verde-claro: #E3F4EA;
+    --mostarda: #FEBC5C;
+    --vermelho: #C52118;
+    --vermelho-claro: #FCE9E7;
+    --tinta: #17141F;
+    --tinta-suave: #4F4A58;
+    --linha: #DDD8E4;
+    --fundo: #F6F4F9;
+    --branco: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: #E9E5EF; color: var(--tinta); font: 17px/1.45 "Onest", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  img { display: block; max-width: 100%; }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--roxo); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  .app { position: relative; max-width: 480px; min-height: 100vh; margin: 0 auto; background: var(--fundo); box-shadow: 0 0 40px rgba(0,0,0,.08); }
+  .selo { display: block; padding: 6px 16px; background: var(--tinta); color: #fff; font-size: 13px; font-weight: 600; text-align: center; letter-spacing: .02em; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 56px; padding: 0 22px; border: 0; border-radius: 16px; background: var(--roxo-forte); color: #fff; font-size: 18px; font-weight: 700; text-decoration: none; width: 100%; }
+  .btn:active { transform: scale(.98); }
+  .btn-verde { background: var(--verde); }
+  .btn-claro { background: var(--branco); color: var(--tinta); box-shadow: inset 0 0 0 2px var(--linha); }
+  .btn-perigo { background: var(--vermelho); }
+  .link { background: none; border: 0; padding: 12px 4px; min-height: 48px; color: var(--roxo-forte); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+
+  /* Login */
+  .login { padding: 40px 24px 32px; }
+  .login .marca { font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin: 24px 0 4px; }
+  .login .marca span { color: var(--roxo); }
+  .login h1 { font-size: 26px; line-height: 1.2; margin: 28px 0 10px; }
+  .login p { color: var(--tinta-suave); margin: 0 0 24px; }
+  .campo { display: block; margin-bottom: 18px; }
+  .campo span { display: block; font-weight: 700; margin-bottom: 8px; }
+  .campo input, .campo textarea { width: 100%; min-height: 56px; padding: 14px 16px; border: 2px solid var(--linha); border-radius: 14px; background: #fff; font-size: 18px; }
+  .campo input:focus, .campo textarea:focus { border-color: var(--roxo); outline: none; }
+  .campo .ajuda { display: block; font-weight: 400; color: var(--tinta-suave); font-size: 15px; margin-top: 6px; }
+  .erro { display: block; margin: -8px 0 16px; padding: 12px 14px; border-radius: 12px; background: var(--vermelho-claro); color: #8E140D; font-weight: 600; }
+  .codigo { letter-spacing: .4em; text-align: center; font-weight: 800; font-size: 26px !important; }
+
+  /* Topo */
+  .topo { position: sticky; top: 0; z-index: 5; background: var(--branco); border-bottom: 1px solid var(--linha); }
+  .topo-linha { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
+  .topo h1 { font-size: 21px; margin: 0; }
+  .topo h1 small { display: block; font-size: 14px; font-weight: 500; color: var(--tinta-suave); }
+  .avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--mostarda); }
+
+  .contas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 0 16px 12px; }
+  .conta { min-height: 48px; border: 2px solid var(--linha); border-radius: 999px; background: #fff; font-weight: 700; font-size: 16px; }
+  .conta[aria-selected="true"] { background: var(--tinta); border-color: var(--tinta); color: #fff; }
+
+  main { padding: 16px 16px 120px; }
+  .dica { margin: 0 0 14px; color: var(--tinta-suave); }
+
+  .grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 0 -16px; }
+  .post { position: relative; padding: 0; border: 0; background: #ccc; aspect-ratio: 4/5; overflow: hidden; }
+  .post img { width: 100%; height: 100%; object-fit: cover; }
+  .post .etq { position: absolute; left: 6px; bottom: 6px; padding: 4px 8px; border-radius: 999px; background: var(--verde); color: #fff; font-size: 13px; font-weight: 700; }
+
+  /* Navegação inferior */
+  .abas { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: min(480px, 100%); display: grid; grid-template-columns: 1fr 1fr; background: #fff; border-top: 1px solid var(--linha); padding-bottom: env(safe-area-inset-bottom); z-index: 6; }
+  .aba { display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 64px; justify-content: center; border: 0; background: none; font-size: 15px; font-weight: 700; color: var(--tinta-suave); }
+  .aba svg { width: 26px; height: 26px; }
+  .aba[aria-current="page"] { color: var(--roxo-forte); }
+  .aba .num { display: inline-block; min-width: 22px; padding: 0 6px; border-radius: 999px; background: var(--roxo-forte); color: #fff; font-size: 13px; }
+
+  /* Folha inferior */
+  .cortina { position: fixed; inset: 0; background: rgba(23,20,31,.55); z-index: 10; display: flex; align-items: flex-end; justify-content: center; }
+  .folha { width: min(480px, 100%); max-height: 94vh; overflow-y: auto; background: #fff; border-radius: 22px 22px 0 0; padding: 10px 20px calc(24px + env(safe-area-inset-bottom)); animation: sobe .22s ease-out; }
+  @keyframes sobe { from { transform: translateY(30px); opacity: .6; } }
+  .alca { width: 44px; height: 5px; border-radius: 5px; background: var(--linha); margin: 4px auto 14px; }
+  .folha-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .folha-topo h2 { font-size: 20px; margin: 0; }
+  .fechar { min-width: 48px; min-height: 48px; border: 0; border-radius: 50%; background: var(--fundo); font-size: 24px; line-height: 1; }
+  .foto-grande { width: 100%; max-height: 46vh; object-fit: contain; background: var(--fundo); border-radius: 14px; }
+  .legenda { margin: 10px 0 18px; color: var(--tinta-suave); font-size: 15px; }
+  .pergunta { font-size: 19px; font-weight: 800; margin: 0 0 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .chip { min-height: 48px; padding: 0 16px; border: 2px solid var(--linha); border-radius: 999px; background: #fff; font-weight: 700; font-size: 16px; }
+  .chip[aria-pressed="true"] { background: var(--roxo-forte); border-color: var(--roxo-forte); color: #fff; }
+  .chip[aria-pressed="true"]::before { content: "✓ "; }
+  .aviso-ja { margin: 0 0 16px; padding: 12px 14px; border-radius: 12px; background: var(--verde-claro); color: #0B5129; font-weight: 600; font-size: 16px; }
+
+  /* No site agora */
+  .secao { margin-bottom: 26px; }
+  .secao h2 { font-size: 20px; margin: 0 0 10px; display: flex; justify-content: space-between; align-items: baseline; }
+  .secao h2 small { font-size: 15px; font-weight: 500; color: var(--tinta-suave); }
+  .item { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; padding: 10px; margin-bottom: 8px; border-radius: 14px; background: #fff; box-shadow: 0 1px 0 var(--linha); }
+  .item img { width: 64px; height: 80px; object-fit: cover; border-radius: 8px; }
+  .item .nome { font-weight: 700; line-height: 1.25; }
+  .item .acoes-item { display: flex; gap: 4px; }
+  .mini { min-width: 48px; min-height: 48px; border: 2px solid var(--linha); border-radius: 12px; background: #fff; font-size: 20px; font-weight: 700; }
+  .mini:disabled { opacity: .35; }
+  .tirar { grid-column: 2 / -1; justify-self: start; border: 0; background: none; color: var(--vermelho); font-weight: 700; min-height: 44px; padding: 0; text-decoration: underline; text-underline-offset: 4px; }
+  .vazio { padding: 18px; border: 2px dashed var(--linha); border-radius: 14px; text-align: center; color: var(--tinta-suave); }
+  .vazio p { margin: 0 0 10px; }
+
+  /* Aviso (toast) */
+  .toast { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); width: min(448px, calc(100% - 32px)); display: flex; align-items: center; gap: 8px; padding: 10px 10px 10px 16px; border-radius: 16px; background: var(--tinta); color: #fff; z-index: 20; box-shadow: 0 10px 30px rgba(0,0,0,.25); animation: sobe .2s ease-out; }
+  .toast p { flex: 1; margin: 0; font-weight: 700; }
+  .toast button, .toast a { min-height: 48px; padding: 0 12px; border: 0; border-radius: 10px; background: rgba(255,255,255,.12); color: var(--mostarda); font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; }
+
+  dialog { width: min(420px, calc(100% - 32px)); border: 0; border-radius: 20px; padding: 24px; }
+  dialog::backdrop { background: rgba(23,20,31,.55); }
+  dialog h2 { margin: 0 0 8px; font-size: 22px; }
+  dialog p { margin: 0 0 20px; color: var(--tinta-suave); }
+  dialog .btn + .btn { margin-top: 10px; }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <span class="selo">Protótipo · nada aqui é salvo de verdade</span>
+
+  <!-- Login -->
+  <section class="login" id="tela-email">
+    <div class="marca">Kari <span>Gava</span></div>
+    <h1>Entrar no painel do site</h1>
+    <p>Daqui você coloca e tira fotos do seu site.</p>
+    <form id="form-email" novalidate>
+      <label class="campo"><span>Seu e-mail</span><input type="email" id="email" autocomplete="email" inputmode="email" placeholder="voce@email.com"></label>
+      <span class="erro" id="erro-email" hidden></span>
+      <button class="btn" type="submit">Receber código</button>
+    </form>
+  </section>
+
+  <section class="login" id="tela-codigo" hidden>
+    <div class="marca">Kari <span>Gava</span></div>
+    <h1>Confira seu e-mail</h1>
+    <p>Mandamos um código de 6 números para <strong id="email-mostrado"></strong>.</p>
+    <form id="form-codigo" novalidate>
+      <label class="campo"><span>Código</span><input id="codigo" class="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label>
+      <span class="erro" id="erro-codigo" hidden></span>
+      <button class="btn" type="submit">Entrar</button>
+    </form>
+    <button class="link" id="trocar-email" type="button">Usar outro e-mail</button>
+  </section>
+
+  <!-- App -->
+  <div id="tela-app" hidden>
+    <header class="topo">
+      <div class="topo-linha">
+        <h1 id="titulo-tela">Seu Instagram<small>Toque numa foto para colocar no site</small></h1>
+        <img class="avatar" src="../public/img/kari-perfil.jpg" alt="">
+      </div>
+      <div class="contas" role="tablist" id="contas">
+        <button class="conta" role="tab" data-conta="kari" aria-selected="true">@karienegavaw</button>
+        <button class="conta" role="tab" data-conta="lalaia" aria-selected="false">@lalaia.acessorios</button>
+      </div>
+    </header>
+
+    <main id="vista-instagram">
+      <div class="grade" id="grade"></div>
+    </main>
+
+    <main id="vista-site" hidden></main>
+
+    <nav class="abas" aria-label="Telas">
+      <button class="aba" data-vista="instagram" aria-current="page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
+        Instagram
+      </button>
+      <button class="aba" data-vista="site">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>
+        <span>No site agora <span class="num" id="num-site"></span></span>
+      </button>
+    </nav>
+  </div>
+</div>
+
+<!-- Folha: publicar -->
+<div class="cortina" id="cortina" hidden>
+  <div class="folha" role="dialog" aria-modal="true" aria-labelledby="folha-titulo">
+    <div class="alca"></div>
+    <div class="folha-topo">
+      <h2 id="folha-titulo">Colocar no site</h2>
+      <button class="fechar" id="fechar-folha" aria-label="Fechar">×</button>
+    </div>
+    <img class="foto-grande" id="folha-foto" alt="">
+    <p class="legenda" id="folha-legenda"></p>
+    <p class="aviso-ja" id="folha-ja" hidden></p>
+    <p class="pergunta" id="pergunta-secao">Onde essa foto vai aparecer?</p>
+    <div class="chips" id="chips" role="group" aria-labelledby="pergunta-secao"></div>
+    <span class="erro" id="erro-secao" hidden>Escolha onde a foto vai aparecer, tocando numa das opções acima.</span>
+    <label class="campo"><span>Nome no site (opcional)</span><input id="folha-nome" maxlength="60"><span class="ajuda">Aparece embaixo da foto. Pode deixar como está.</span></label>
+    <button class="btn btn-verde" id="publicar">Publicar no site</button>
+  </div>
+</div>
+
+<dialog id="confirmar">
+  <h2>Tirar esta foto do site?</h2>
+  <p>Ela sai só do site. No seu Instagram ela continua do mesmo jeito.</p>
+  <button class="btn btn-perigo" id="confirmar-sim">Sim, tirar do site</button>
+  <button class="btn btn-claro" id="confirmar-nao">Cancelar</button>
+</dialog>
+
+<div class="toast" id="toast" role="status" hidden>
+  <p id="toast-texto"></p>
+  <button id="toast-desfazer" type="button">Desfazer</button>
+  <a id="toast-ver" href="../variantes/a-arara.html" target="_blank" rel="noopener">Ver no site</a>
+</div>
+
+<script>
+const SECOES = [
+  { id: 'lalaia', nome: 'LALAIÁ' },
+  { id: 'consultoria', nome: 'Consultoria de estilo' },
+  { id: 'edicao', nome: 'Edição de guarda-roupa' },
+  { id: 'styling', nome: 'Styling e produção' },
+  { id: 'vm', nome: 'Vitrines e VM' },
+  { id: 'oficina-look', nome: 'Oficina de Look' },
+  { id: 'ensino', nome: 'Cursos e palestras' },
+  { id: 'sobre', nome: 'Sobre mim' }
+];
+const nomeSecao = id => SECOES.find(s => s.id === id).nome;
+
+const POSTS = [
+  { id: 'p1', conta: 'kari', img: '../public/img/kari-stylist-toia.jpg', legenda: 'Oi gente! Eu sou a Kari!\nUsando essas fotos maravilhosas pra contar que sou Stylist.' },
+  { id: 'p2', conta: 'kari', img: '../public/img/kari-look-blazer.jpg', legenda: 'Como desencaretar um look: broches + cor nos pés.' },
+  { id: 'p3', conta: 'kari', img: '../public/img/sapatos-vermelhos.jpg', legenda: 'Barra barroca\nUm efeito surpresa onde quase ninguém espera.' },
+  { id: 'p4', conta: 'kari', img: '../public/img/oficina-turma.jpg', legenda: 'Oficina de VM e expografia na UDESC\nPara as turmas da 2ª e 6ª fase da Moda.' },
+  { id: 'p5', conta: 'kari', img: '../public/img/kari-stylist-toia.jpg', legenda: 'Oi gente! Fotos da produção com a Toia' },
+  { id: 'p6', conta: 'kari', img: '../public/img/atelie-busto.jpg', legenda: 'Bastidores do curso\n4 dias de criatividade e mão na massa.' },
+  { id: 'p7', conta: 'kari', img: '../public/img/modateca-curso.jpg', legenda: 'Curso: Criação de Acessórios de Cabeça\nModateca UDESC.' },
+  { id: 'p8', conta: 'kari', img: '../public/img/modateca-palestra.jpg', legenda: 'Palestra Moda e Adornos de Cabeça\n29/09 no CEART.' },
+  { id: 'p9', conta: 'kari', img: '../public/img/kari-oculos.jpg', legenda: 'Eu amei brincar!' },
+  { id: 'p10', conta: 'kari', img: '../public/img/kari-brasil.jpg', legenda: 'Meu Brasil brasileiro' },
+  { id: 'l1', conta: 'lalaia', img: '../public/img/lalaia-scrunchie.jpg', legenda: 'BigScrunchie na cor Bege\nTodos com nossa etiquetinha Lalaiá.' },
+  { id: 'l2', conta: 'lalaia', img: '../public/img/lalaia-laco-organza.jpg', legenda: 'Laço de organza\nDo mais querido, do mais chique, do mais fofo.' },
+  { id: 'l3', conta: 'lalaia', img: '../public/img/lalaia-perolas.jpg', legenda: 'Elegantão\nCriado especialmente para um casamento na Escócia.' },
+  { id: 'l4', conta: 'lalaia', img: '../public/img/lalaia-flor-vermelha.jpg', legenda: 'Bem Xuxona\nDescobrindo novos jeitos de usar minha Xuxona.' },
+  { id: 'l5', conta: 'lalaia', img: '../public/img/lalaia-babado-vermelho.jpg', legenda: 'Babados vermelhos\nPara quem gosta de presença.' },
+  { id: 'l6', conta: 'lalaia', img: '../public/img/lalaia-caixa.jpg', legenda: 'Aquele barulhinho bom!\nEu adoro embalar os pedidos de vocês.' }
+];
+const post = id => POSTS.find(p => p.id === id);
+const primeiraLinha = t => t.split('\n')[0].replace(/[!?.]+$/, '');
+
+// O que já está no site (ordem dentro de cada seção = ordem do array)
+let noSite = [
+  { uid: 1, postId: 'l3', secao: 'lalaia', nome: 'Laço de pérolas' },
+  { uid: 2, postId: 'l4', secao: 'lalaia', nome: 'Flor vermelha' },
+  { uid: 3, postId: 'p2', secao: 'consultoria', nome: 'Look com broche' },
+  { uid: 4, postId: 'p6', secao: 'vm', nome: 'Bastidores' },
+  { uid: 5, postId: 'p7', secao: 'ensino', nome: 'Curso Acessórios de Cabeça' },
+  { uid: 6, postId: 'p9', secao: 'sobre', nome: 'Eu amei brincar' }
+];
+let proximoUid = 7;
+
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ---------- Login ----------
+$('#form-email').addEventListener('submit', e => {
+  e.preventDefault();
+  const v = $('#email').value.trim();
+  const erro = $('#erro-email');
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) {
+    erro.textContent = v ? 'Esse e-mail parece incompleto. Confira se tem @ e o final, como .com' : 'Escreva seu e-mail para receber o código.';
+    erro.hidden = false; $('#email').focus(); return;
+  }
+  erro.hidden = true;
+  $('#email-mostrado').textContent = v;
+  $('#tela-email').hidden = true; $('#tela-codigo').hidden = false; $('#codigo').focus();
+});
+$('#trocar-email').addEventListener('click', () => { $('#tela-codigo').hidden = true; $('#tela-email').hidden = false; $('#email').focus(); });
+$('#form-codigo').addEventListener('submit', e => {
+  e.preventDefault();
+  const v = $('#codigo').value.replace(/\D/g, '');
+  const erro = $('#erro-codigo');
+  if (v.length !== 6) {
+    erro.textContent = 'O código tem 6 números. Confira no seu e-mail e digite de novo.';
+    erro.hidden = false; $('#codigo').focus(); return;
+  }
+  $('#tela-codigo').hidden = true; $('#tela-app').hidden = false;
+  render();
+});
+
+// ---------- Estado da tela ----------
+let conta = 'kari';
+let vista = 'instagram';
+
+function render() {
+  $('#num-site').textContent = noSite.length;
+  renderGrade();
+  renderSite();
+}
+
+function renderGrade() {
+  const posts = POSTS.filter(p => p.conta === conta);
+  $('#grade').innerHTML = posts.map(p => {
+    const no = noSite.filter(n => n.postId === p.id);
+    return `<button class="post" data-post="${p.id}" aria-label="${esc(primeiraLinha(p.legenda))}${no.length ? ', já está no site' : ''}">
+      <img src="${p.img}" alt="" loading="lazy">${no.length ? '<span class="etq">No site</span>' : ''}</button>`;
+  }).join('');
+}
+
+function renderSite() {
+  $('#vista-site').innerHTML = '<p class="dica">É isso que aparece no seu site hoje. A foto de cima aparece primeiro.</p>' + SECOES.map(s => {
+    const itens = noSite.filter(n => n.secao === s.id);
+    const corpo = itens.length ? itens.map((n, i) => `
+      <div class="item">
+        <img src="${post(n.postId).img}" alt="">
+        <div class="nome">${esc(n.nome || 'Sem nome')}</div>
+        <div class="acoes-item">
+          <button class="mini" data-subir="${n.uid}" ${i === 0 ? 'disabled' : ''} aria-label="Mostrar antes">↑</button>
+          <button class="mini" data-descer="${n.uid}" ${i === itens.length - 1 ? 'disabled' : ''} aria-label="Mostrar depois">↓</button>
+        </div>
+        <button class="tirar" data-tirar="${n.uid}">Tirar do site</button>
+      </div>`).join('')
+      : `<div class="vazio"><p>Nenhuma foto aqui ainda.</p><button class="btn btn-claro" data-ir-instagram>Trazer do Instagram</button></div>`;
+    return `<section class="secao"><h2>${s.nome} <small>${itens.length} ${itens.length === 1 ? 'foto' : 'fotos'}</small></h2>${corpo}</section>`;
+  }).join('');
+}
+
+function mudarVista(v) {
+  vista = v;
+  document.querySelectorAll('.aba').forEach(a => a.dataset.vista === v ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
+  $('#vista-instagram').hidden = v !== 'instagram';
+  $('#vista-site').hidden = v !== 'site';
+  $('#contas').hidden = v !== 'instagram';
+  $('#titulo-tela').innerHTML = v === 'instagram'
+    ? 'Seu Instagram<small>Toque numa foto para colocar no site</small>'
+    : 'No site agora<small>Mude a ordem ou tire fotos</small>';
+  window.scrollTo(0, 0);
+}
+
+document.querySelectorAll('.aba').forEach(a => a.addEventListener('click', () => mudarVista(a.dataset.vista)));
+$('#contas').addEventListener('click', e => {
+  const b = e.target.closest('[data-conta]'); if (!b) return;
+  conta = b.dataset.conta;
+  document.querySelectorAll('.conta').forEach(c => c.setAttribute('aria-selected', c === b));
+  renderGrade();
+});
+
+// ---------- Folha de publicar ----------
+let postAberto = null;
+let secaoEscolhida = null;
+let ultimoFoco = null;
+
+$('#grade').addEventListener('click', e => {
+  const b = e.target.closest('[data-post]'); if (!b) return;
+  abrirFolha(b.dataset.post, b);
+});
+
+function abrirFolha(id, origem) {
+  ultimoFoco = origem;
+  postAberto = post(id);
+  secaoEscolhida = postAberto.conta === 'lalaia' ? 'lalaia' : null;
+  $('#folha-foto').src = postAberto.img;
+  $('#folha-legenda').textContent = postAberto.legenda.replace('\n', ' ');
+  $('#folha-nome').value = primeiraLinha(postAberto.legenda);
+  const ja = noSite.filter(n => n.postId === id).map(n => nomeSecao(n.secao));
+  $('#folha-ja').hidden = !ja.length;
+  $('#folha-ja').textContent = ja.length ? `Essa foto já está no site em: ${ja.join(', ')}. Você pode colocar também em outro lugar.` : '';
+  $('#erro-secao').hidden = true;
+  $('#erro-secao').textContent = 'Escolha onde a foto vai aparecer, tocando numa das opções acima.';
+  renderChips();
+  $('#cortina').hidden = false;
+  document.body.style.overflow = 'hidden';
+  $('#fechar-folha').focus();
+}
+function fecharFolha() {
+  $('#cortina').hidden = true;
+  document.body.style.overflow = '';
+  if (ultimoFoco) ultimoFoco.focus();
+}
+function renderChips() {
+  $('#chips').innerHTML = SECOES.map(s => `<button class="chip" data-secao="${s.id}" aria-pressed="${s.id === secaoEscolhida}">${s.nome}</button>`).join('');
+}
+$('#chips').addEventListener('click', e => {
+  const b = e.target.closest('[data-secao]'); if (!b) return;
+  secaoEscolhida = b.dataset.secao;
+  $('#erro-secao').hidden = true;
+  renderChips();
+});
+$('#fechar-folha').addEventListener('click', fecharFolha);
+$('#cortina').addEventListener('click', e => { if (e.target.id === 'cortina') fecharFolha(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#cortina').hidden) fecharFolha(); });
+
+$('#publicar').addEventListener('click', () => {
+  if (!secaoEscolhida) { $('#erro-secao').hidden = false; $('#chips').scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
+  if (noSite.some(n => n.postId === postAberto.id && n.secao === secaoEscolhida)) {
+    $('#erro-secao').textContent = `Essa foto já está em ${nomeSecao(secaoEscolhida)}. Escolha outro lugar ou feche.`;
+    $('#erro-secao').hidden = false; return;
+  }
+  const novo = { uid: proximoUid++, postId: postAberto.id, secao: secaoEscolhida, nome: $('#folha-nome').value.trim() };
+  noSite.unshift(novo);
+  fecharFolha();
+  render();
+  mostrarToast(`Publicado no site em ${nomeSecao(novo.secao)}`, () => { noSite = noSite.filter(n => n.uid !== novo.uid); render(); mostrarToast('Pronto, a foto saiu do site', null); });
+});
+
+// ---------- No site agora ----------
+$('#vista-site').addEventListener('click', e => {
+  const t = e.target;
+  if (t.closest('[data-ir-instagram]')) { mudarVista('instagram'); return; }
+  const subir = t.closest('[data-subir]'), descer = t.closest('[data-descer]'), tirar = t.closest('[data-tirar]');
+  if (subir || descer) {
+    const uid = +(subir || descer).dataset[subir ? 'subir' : 'descer'];
+    const item = noSite.find(n => n.uid === uid);
+    const mesma = noSite.filter(n => n.secao === item.secao);
+    const i = mesma.indexOf(item), j = subir ? i - 1 : i + 1;
+    if (j < 0 || j >= mesma.length) return;
+    const a = noSite.indexOf(mesma[i]), b = noSite.indexOf(mesma[j]);
+    [noSite[a], noSite[b]] = [noSite[b], noSite[a]];
+    renderSite();
+    const alvo = document.querySelector(`[data-${subir ? 'subir' : 'descer'}="${uid}"]`);
+    (alvo && !alvo.disabled ? alvo : document.querySelector(`[data-tirar="${uid}"]`)).focus();
+  }
+  if (tirar) pedirConfirmacao(+tirar.dataset.tirar);
+});
+
+let paraTirar = null;
+function pedirConfirmacao(uid) { paraTirar = uid; $('#confirmar').showModal(); }
+$('#confirmar-nao').addEventListener('click', () => $('#confirmar').close());
+$('#confirmar-sim').addEventListener('click', () => {
+  const idx = noSite.findIndex(n => n.uid === paraTirar);
+  const [removido] = noSite.splice(idx, 1);
+  $('#confirmar').close();
+  render();
+  mostrarToast('A foto saiu do site', () => { noSite.splice(idx, 0, removido); render(); mostrarToast('Pronto, a foto voltou para o site', null); });
+});
+
+// ---------- Aviso ----------
+let timerToast;
+function mostrarToast(texto, desfazer) {
+  clearTimeout(timerToast);
+  $('#toast-texto').textContent = texto;
+  $('#toast-desfazer').hidden = !desfazer;
+  $('#toast-desfazer').onclick = desfazer ? () => { desfazer(); } : null;
+  $('#toast').hidden = false;
+  timerToast = setTimeout(() => { $('#toast').hidden = true; }, 7000);
+}
+</script>
+</body>
+</html>

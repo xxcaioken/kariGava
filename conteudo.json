@@ -1,0 +1,199 @@
+{
+  "_nota": "Fonte única de conteúdo do site. Textos marcados com \"rascunho\": true foram redigidos a partir do Instagram e precisam de revisão da Kari. Os demais vêm de legendas/bio dela.",
+  "marca": {
+    "nome": "Kariene Gava",
+    "apelido": "Kari",
+    "assinatura": "Kari Gava",
+    "profissao": "Stylist · Visual Merchandiser",
+    "cidade": "Florianópolis, SC",
+    "formacao": "Formada em Moda pela UDESC (2016)",
+    "whatsapp": "https://wa.me/message/X6FXMZWUW2EKM1",
+    "instagram": {
+      "kari": "https://www.instagram.com/karienegavaw/",
+      "lalaia": "https://www.instagram.com/lalaia.acessorios/"
+    }
+  },
+  "cores": {
+    "roxo": "#8D51FF",
+    "verde": "#017F38",
+    "mostarda": "#FEBC5C",
+    "vermelho": "#C52118"
+  },
+  "hero": {
+    "titulo": "Moda para guarda-roupas autênticos.",
+    "subtitulo": "Consultoria de estilo, edição de guarda-roupa, styling e vitrines com Kariene Gava, em Florianópolis.",
+    "foto": "img/kari-stylist-toia.jpg",
+    "credito_foto": "Foto: @toiaoliveirafotografia"
+  },
+  "sobre": {
+    "texto": "Oi, eu sou a Kari! Sou stylist: monto looks e faço produções autênticas e cheias de estilo. Também levo esse olhar para lojas, com consultoria de visual merchandising e varejo de moda. E brinco de artista na LALAIÁ, minha marca de acessórios feitos à mão.",
+    "fonte": "adaptado da legenda de apresentação dela (post CpPnUq-AL3Z)",
+    "frase": "nós somos a moda. as pessoas.",
+    "foto": "img/kari-brasil.jpg"
+  },
+  "grupos_servicos": [
+    {
+      "id": "voce",
+      "titulo": "Para você",
+      "cor": "roxo"
+    },
+    {
+      "id": "lojas",
+      "titulo": "Para marcas e lojas",
+      "cor": "verde"
+    },
+    {
+      "id": "ensino",
+      "titulo": "Para escolas e eventos",
+      "cor": "mostarda"
+    }
+  ],
+  "servicos": [
+    {
+      "id": "consultoria",
+      "grupo": "voce",
+      "titulo": "Consultoria de estilo",
+      "resumo": "Para se reconhecer no espelho e vestir quem você é, sem fórmula pronta.",
+      "para_quem": "Mulheres que sentem que o guarda-roupa não conversa mais com elas.",
+      "como_funciona": [
+        "Uma conversa sobre sua rotina, suas referências e o que você quer comunicar.",
+        "Leitura do seu estilo e das peças que mais têm a sua cara.",
+        "Um mapa de looks e de compras para você seguir sozinha."
+      ],
+      "foto": "img/kari-look-blazer.jpg",
+      "cta": "Quero minha consultoria",
+      "rascunho": true
+    },
+    {
+      "id": "edicao",
+      "grupo": "voce",
+      "titulo": "Edição de guarda-roupa",
+      "resumo": "Peça por peça, no seu armário: o que fica, o que sai e o que ganha combinação nova.",
+      "para_quem": "Quem tem o armário cheio e a sensação de não ter o que vestir. Também atendo adolescentes, sempre com a vontade delas no centro.",
+      "como_funciona": [
+        "Visita ao seu armário.",
+        "Triagem de cada peça: fica, sai ou vira look novo.",
+        "Organização e combinações registradas para você usar no dia a dia."
+      ],
+      "citacao": "Como falo sempre para as mulheres que procuram esse serviço: ela precisa querer.",
+      "foto": "img/sapatos-vermelhos.jpg",
+      "cta": "Quero editar meu guarda-roupa",
+      "rascunho": true
+    },
+    {
+      "id": "styling",
+      "grupo": "lojas",
+      "titulo": "Styling e produção de moda",
+      "resumo": "Looks e produções para ensaios, shows, campanhas e conteúdo de moda.",
+      "para_quem": "Artistas, fotógrafos, marcas e criadores de conteúdo.",
+      "como_funciona": [
+        "Briefing e referências.",
+        "Pesquisa e prova de looks.",
+        "Produção no dia da foto, do show ou da gravação."
+      ],
+      "foto": "img/lalaia-babado-vermelho.jpg",
+      "cta": "Quero uma produção",
+      "rascunho": true
+    },
+    {
+      "id": "vm",
+      "grupo": "lojas",
+      "titulo": "Vitrines e visual merchandising",
+      "resumo": "Consultoria de VM e varejo de moda: vitrine, exposição e loja que fazem a peça vender.",
+      "para_quem": "Lojas de moda e acessórios.",
+      "como_funciona": [
+        "Visita e diagnóstico da loja.",
+        "Projeto de vitrine e de exposição dos produtos.",
+        "Montagem junto com a equipe."
+      ],
+      "foto": "img/atelie-busto.jpg",
+      "cta": "Quero falar sobre minha loja",
+      "rascunho": true
+    },
+    {
+      "id": "oficina-look",
+      "grupo": "voce",
+      "titulo": "Oficina de Look",
+      "resumo": "Encontros em grupo para aprender a montar looks com o que você já tem.",
+      "para_quem": "Grupos de amigas, empresas e eventos.",
+      "como_funciona": [
+        "Conversa sobre estilo e combinações.",
+        "Prática com peças reais.",
+        "Cada pessoa sai com ideias de looks para usar."
+      ],
+      "foto": "img/oficina-turma.jpg",
+      "cta": "Quero uma Oficina de Look",
+      "rascunho": true
+    },
+    {
+      "id": "ensino",
+      "grupo": "ensino",
+      "titulo": "Cursos, oficinas e palestras",
+      "resumo": "Aulas sobre moda, visual merchandising, expografia e acessórios de cabeça.",
+      "para_quem": "Faculdades, escolas de moda e eventos.",
+      "foto": "img/oficina-turma.jpg",
+      "cta": "Quero levar a Kari para minha escola",
+      "rascunho": true
+    }
+  ],
+  "ensino_realizado": [
+    {
+      "tipo": "Curso · 20 horas · 4 dias",
+      "titulo": "Acessórios de Cabeça: da criação à passarela",
+      "onde": "Modateca, Moda UDESC",
+      "quando": "set/out 2026",
+      "foto": "img/modateca-curso.jpg"
+    },
+    {
+      "tipo": "Palestra",
+      "titulo": "Moda e Adornos de Cabeça",
+      "onde": "Auditório do CEART/UDESC, com exposição de chapéus do acervo da Modateca",
+      "quando": "29/09/2026",
+      "foto": "img/modateca-palestra.jpg"
+    },
+    {
+      "tipo": "Oficina",
+      "titulo": "VM e expografia",
+      "onde": "Turmas da 2ª e 6ª fase de Moda da UDESC",
+      "quando": "nov 2025",
+      "foto": "img/oficina-turma.jpg"
+    }
+  ],
+  "lalaia": {
+    "nome": "LALAIÁ Acessórios",
+    "tagline": "Feitos à mão, sob encomenda, para celebrar, colorir e memorar a vida.",
+    "detalhes": [
+      "Feitos à mão em Florianópolis",
+      "Sob encomenda",
+      "Enviamos para todo o Brasil"
+    ],
+    "linhas": [
+      {
+        "titulo": "BigScrunchie (a Xuxona)",
+        "texto": "O scrunchie gigante de organza, com a etiquetinha LALAIÁ.",
+        "fotos": [
+          "img/lalaia-scrunchie.jpg",
+          "img/lalaia-laco-organza.jpg"
+        ]
+      },
+      {
+        "titulo": "Acessórios de cabeça sob medida",
+        "texto": "Fascinators e headpieces criados para casamentos e momentos especiais.",
+        "fotos": [
+          "img/lalaia-perolas.jpg",
+          "img/lalaia-flor-vermelha.jpg"
+        ]
+      },
+      {
+        "titulo": "Peças de artista",
+        "texto": "Babados, flores e peças de carnaval para quem gosta de presença.",
+        "fotos": [
+          "img/lalaia-babado-vermelho.jpg"
+        ]
+      }
+    ],
+    "embalagem": "img/lalaia-caixa.jpg",
+    "cta": "Encomendar pelo WhatsApp"
+  },
+  "proibido": "Não usar fotos de crianças/adolescentes clientes, nem imagens de terceiros (ex.: Lauryn Hill). Não usar img/kari-chapeu-anturio.jpg (a pessoa de chapéu não é a Kari; foto de post da Modateca) nem img/kari-oculos.jpg (capa de reel com texto gravado)."
+}
