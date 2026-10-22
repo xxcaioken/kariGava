@@ -21,7 +21,10 @@ export const modoFalso = env => env.MODO_INSTAGRAM === 'falso';
 
 export function tituloSugerido(legenda) {
   const linha = String(legenda || '').split('\n').map(l => l.trim()).find(Boolean) || '';
-  const limpa = linha.replace(/#\S+/g, '').replace(/\s+/g, ' ').trim();
+  const semTags = linha.replace(/#\S+/g, '').replace(/\s+/g, ' ').trim();
+  // Fica só com a 1ª frase quando ela tem tamanho de título ("Elegantão." e não a legenda toda).
+  const frase = semTags.match(/^.{3,}?[.!?…](?=\s|$)/u)?.[0];
+  const limpa = frase && frase.length <= 60 ? frase : semTags;
   if (limpa.length <= 60) return limpa;
   const corte = limpa.slice(0, 60);
   const espaco = corte.lastIndexOf(' ');

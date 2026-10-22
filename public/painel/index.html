@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#6A2FE0">
+<title>Painel do site · Kari Gava</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="painel.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<script type="module" src="painel.js"></script>
+</head>
+<body>
+<div class="app">
+
+  <!-- Abrindo -->
+  <section id="tela-carregando" class="carregando" aria-live="polite">
+    <div><div class="girando" aria-hidden="true"></div>Abrindo o painel...</div>
+  </section>
+
+  <!-- Não deu para abrir -->
+  <section id="tela-falha" class="falha" hidden>
+    <div class="marca">Kari <span>Gava</span></div>
+    <h1 tabindex="-1">Não deu para abrir o painel</h1>
+    <p id="falha-texto">Sem internet agora. Confira a conexão e tente de novo.</p>
+    <button class="btn" id="falha-tentar" type="button">Tentar de novo</button>
+  </section>
+
+  <!-- Login: e-mail -->
+  <section class="login" id="tela-email" hidden>
+    <div class="marca">Kari <span>Gava</span></div>
+    <h1 tabindex="-1">Entrar no painel do site</h1>
+    <p>Daqui você coloca e tira fotos do seu site e muda os textos dos serviços.</p>
+    <form id="form-email" novalidate>
+      <label class="campo"><span>Seu e-mail</span>
+        <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="voce@email.com" required>
+      </label>
+      <div class="erro" id="erro-email" role="alert" hidden></div>
+      <button class="btn" type="submit" id="btn-email">Receber código</button>
+    </form>
+  </section>
+
+  <!-- Login: código -->
+  <section class="login" id="tela-codigo" hidden>
+    <div class="marca">Kari <span>Gava</span></div>
+    <h1 tabindex="-1">Confira seu e-mail</h1>
+    <p>Mandamos um código de 6 números para <strong id="email-mostrado"></strong>. Ele vale por 10 minutos.</p>
+    <form id="form-codigo" novalidate>
+      <label class="campo"><span>Código</span>
+        <input id="codigo" class="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" required>
+      </label>
+      <div class="erro" id="erro-codigo" role="alert" hidden></div>
+      <button class="btn" type="submit" id="btn-codigo">Entrar</button>
+    </form>
+    <button class="link" type="button" id="reenviar">Mandar outro código</button>
+    <button class="link" type="button" id="trocar-email">Usar outro e-mail</button>
+  </section>
+
+  <!-- Início -->
+  <section id="tela-inicio" hidden>
+    <header class="topo">
+      <h1>Painel do site</h1>
+      <div class="acoes-topo">
+        <a href="/" target="_blank" rel="noopener">Ver site</a>
+        <button type="button" class="btn-sair">Sair</button>
+      </div>
+    </header>
+    <main>
+      <h2 class="ola" id="ola" tabindex="-1">Oi!</h2>
+      <p class="dica">Toque numa foto do Instagram para colocar no site, ou escolha uma parte do site para arrumar.</p>
+
+      <section class="bloco" aria-labelledby="titulo-novidades">
+        <h2 class="bloco-titulo" id="titulo-novidades">Novidades do Instagram</h2>
+        <p class="bloco-sub">Toque numa foto para colocar no site.</p>
+        <div id="novidades"></div>
+      </section>
+
+      <section class="bloco" aria-labelledby="titulo-partes">
+        <h2 class="bloco-titulo" id="titulo-partes">Partes do site</h2>
+        <p class="bloco-sub">Toque numa parte para trocar as fotos ou os textos.</p>
+        <div id="cartoes"></div>
+      </section>
+    </main>
+  </section>
+
+  <!-- Uma parte do site -->
+  <section id="tela-secao" hidden>
+    <header class="topo">
+      <button class="voltar" id="voltar" type="button">← Voltar</button>
+      <h1 id="secao-titulo" tabindex="-1"></h1>
+    </header>
+    <main>
+      <div class="botoes-add">
+        <button class="btn" type="button" id="abrir-instagram">+ Trazer do Instagram</button>
+        <button class="btn btn-claro" type="button" id="abrir-celular">+ Foto do celular</button>
+      </div>
+
+      <section aria-labelledby="titulo-no-site">
+        <h2 class="bloco-titulo" id="titulo-no-site">No site agora <small id="secao-qtd"></small></h2>
+        <p class="bloco-sub" id="secao-dica" hidden></p>
+        <div id="secao-itens"></div>
+      </section>
+
+      <section class="textos" id="textos" hidden aria-labelledby="titulo-textos">
+        <h2 id="titulo-textos">Textos do serviço</h2>
+        <p>É o que aparece no site junto com as fotos.</p>
+        <form id="form-textos" novalidate>
+          <label class="campo"><span>Frase de apresentação</span>
+            <textarea id="txt-resumo" maxlength="220" aria-describedby="cont-resumo"></textarea>
+            <span class="ajuda" id="cont-resumo"></span>
+          </label>
+          <label class="campo"><span>Para quem é</span>
+            <textarea id="txt-para" maxlength="220" aria-describedby="cont-para"></textarea>
+            <span class="ajuda" id="cont-para"></span>
+          </label>
+          <div class="erro" id="erro-textos" role="alert" hidden></div>
+          <button class="btn btn-verde" type="submit" id="salvar-textos">Salvar alterações</button>
+        </form>
+      </section>
+    </main>
+  </section>
+
+</div>
+
+<!-- Publicar um post do Instagram (3 toques) -->
+<dialog class="folha" id="dlg-publicar" aria-labelledby="pub-titulo">
+  <div class="alca" aria-hidden="true"></div>
+  <div class="folha-topo">
+    <h2 id="pub-titulo">Colocar no site</h2>
+    <button class="fechar" type="button" data-fechar aria-label="Fechar">×</button>
+  </div>
+  <img class="foto-grande" id="pub-foto" alt="">
+  <p class="legenda" id="pub-legenda"></p>
+  <p class="aviso-ja" id="pub-ja" hidden></p>
+  <p class="pergunta" id="pub-pergunta">Onde essa foto vai aparecer?</p>
+  <div class="chips" id="pub-chips" role="group" aria-labelledby="pub-pergunta"></div>
+  <label class="campo"><span>Nome no site (opcional)</span>
+    <input id="pub-nome" maxlength="80" autocomplete="off">
+    <span class="ajuda">Aparece embaixo da foto. Pode deixar como está.</span>
+  </label>
+  <div class="erro" id="pub-erro" role="alert" hidden></div>
+  <button class="btn btn-verde" type="button" id="pub-ok">Publicar no site</button>
+</dialog>
+
+<!-- Trazer várias do Instagram -->
+<dialog class="cheia" id="dlg-instagram" aria-labelledby="ig-titulo">
+  <div class="rolagem">
+    <header class="topo">
+      <button class="voltar" type="button" data-fechar>← Voltar</button>
+      <h1 id="ig-titulo">Fotos do Instagram</h1>
+    </header>
+    <div class="contas" id="ig-contas" role="tablist" aria-label="Contas do Instagram"></div>
+    <div class="grade-area" id="ig-area"></div>
+  </div>
+  <div class="barra-fim">
+    <p id="ig-contador" aria-live="polite">Toque nas fotos que você quer colocar</p>
+    <div class="erro" id="ig-erro" role="alert" hidden></div>
+    <button class="btn btn-verde" type="button" id="ig-adicionar" disabled>Adicionar fotos</button>
+  </div>
+</dialog>
+
+<!-- Foto do celular -->
+<dialog class="cheia" id="dlg-celular" aria-labelledby="cel-titulo">
+  <div class="rolagem">
+    <header class="topo">
+      <button class="voltar" type="button" data-fechar>← Voltar</button>
+      <h1 id="cel-titulo">Foto do celular</h1>
+    </header>
+    <div class="celular-corpo">
+      <input type="file" id="arquivo" accept="image/*" class="sr" tabindex="-1" aria-hidden="true">
+      <img class="previa" id="cel-previa" alt="Foto escolhida">
+      <p class="previa-falhou" id="cel-sem-previa" hidden>Não deu para mostrar a prévia dessa foto, mas ela pode ir para o site do mesmo jeito.</p>
+      <label class="campo"><span>Nome no site (opcional)</span>
+        <input id="cel-nome" maxlength="80" autocomplete="off">
+        <span class="ajuda">Aparece embaixo da foto.</span>
+      </label>
+      <div class="erro" id="cel-erro" role="alert" hidden></div>
+      <button class="btn btn-verde" type="button" id="cel-ok">Colocar no site</button>
+      <button class="btn btn-claro" type="button" id="cel-outra">Escolher outra foto</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Tirar do site -->
+<dialog id="dlg-tirar" aria-labelledby="tirar-titulo">
+  <h2 id="tirar-titulo">Tirar essa foto do site?</h2>
+  <p>Ela some do site, mas continua no seu Instagram e no seu celular.</p>
+  <div class="erro" id="tirar-erro" role="alert" hidden></div>
+  <button class="btn btn-perigo" type="button" id="tirar-sim">Sim, tirar do site</button>
+  <button class="btn btn-claro" type="button" data-fechar autofocus>Não, deixar como está</button>
+</dialog>
+
+<!-- Mudar o nome da foto -->
+<dialog id="dlg-nome" aria-labelledby="nome-titulo">
+  <h2 id="nome-titulo">Nome da foto no site</h2>
+  <p>Aparece embaixo da foto. Pode deixar em branco.</p>
+  <label class="campo"><span class="sr">Nome da foto</span>
+    <input id="nome-campo" maxlength="80" autocomplete="off">
+  </label>
+  <div class="erro" id="nome-erro" role="alert" hidden></div>
+  <button class="btn btn-verde" type="button" id="nome-ok">Salvar nome</button>
+  <button class="btn btn-claro" type="button" data-fechar>Cancelar</button>
+</dialog>
+
+<!-- Aviso -->
+<div id="toast-area" role="status" aria-live="polite"></div>
+</body>
+</html>
