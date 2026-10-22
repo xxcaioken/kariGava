@@ -41,6 +41,7 @@ export function template(d, esc) {
               <ol>${s.como_funciona.map(p => `<li>${esc(p)}</li>`).join('')}</ol>
             </details>` : ''}
             ${s.citacao ? `<blockquote class="citacao">${esc(s.citacao)}</blockquote>` : ''}
+            ${s.preco ? `<p class="preco"><span class="rotulo">${esc(s.preco.rotulo)}</span>${s.preco.valor ? ` <strong>${esc(s.preco.valor)}</strong>` : ''}</p>` : ''}
             <a class="btn" href="${esc(s.wa)}">${esc(s.cta)}</a>
           </div>
         </li>`;

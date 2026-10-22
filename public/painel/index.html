@@ -114,6 +114,10 @@
             <textarea id="txt-para" maxlength="220" aria-describedby="cont-para"></textarea>
             <span class="ajuda" id="cont-para"></span>
           </label>
+          <label class="campo"><span>Preço (a partir de)</span>
+            <input id="txt-preco" type="number" inputmode="numeric" min="1" max="99999" step="1" placeholder="Ex.: 380" aria-describedby="ajuda-preco">
+            <span class="ajuda" id="ajuda-preco">Valor de entrada, em reais e sem centavos: o site mostra "A partir de R$ …". Deixe vazio para não mostrar preço.</span>
+          </label>
           <div class="erro" id="erro-textos" role="alert" hidden></div>
           <button class="btn btn-verde" type="submit" id="salvar-textos">Salvar alterações</button>
         </form>

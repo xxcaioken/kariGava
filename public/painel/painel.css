@@ -98,6 +98,7 @@ main { padding: 20px 16px 120px; }
 .cartao-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .cartao-nome { font-size: 20px; font-weight: 800; line-height: 1.2; }
 .cartao .qtd { font-size: 15px; color: var(--tinta-suave); white-space: nowrap; }
+.cartao-preco { display: block; margin-top: 8px; font-size: 14px; font-weight: 600; color: var(--tinta-suave); }
 .miniaturas { display: flex; gap: 6px; margin: 12px 0 10px; min-height: 64px; }
 .miniaturas img { width: 52px; height: 64px; object-fit: cover; border-radius: 8px; background: var(--fundo); }
 .miniaturas .mais { display: grid; place-items: center; width: 52px; height: 64px; border-radius: 8px; background: var(--fundo); font-weight: 800; color: var(--tinta-suave); }

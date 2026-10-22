@@ -223,6 +223,60 @@ test('sair encerra a sessão', async () => {
   assert.equal((await chamar('/api/painel/estado')).status, 401);
 });
 
+// ---------- R-02 · Serviço mostra "A partir de R$ X" quando a Kari preencher o preço ----------
+const cartaoDoServico = (html, id, proximo) => html.slice(html.indexOf(`id="${id}"`), html.indexOf(`id="${proximo}"`));
+
+test('R-02 preço do serviço: PUT parcial, "A partir de", "Valor sob consulta" e validação', async () => {
+  // Precisa de sessão: entra de novo (o teste anterior saiu).
+  await chamar('/api/login/codigo', { metodo: 'POST', corpo: { email: EMAIL } });
+  await new Promise(r => setTimeout(r, 300));
+  const entrou = await chamar('/api/login/entrar', { metodo: 'POST', corpo: { email: EMAIL, codigo: ultimoCodigo(EMAIL) } });
+  assert.equal(entrou.status, 200);
+  cookie = entrou.r.headers.get('set-cookie').split(';')[0];
+
+  const antes = (await chamar('/api/painel/estado')).dados.textos.consultoria;
+  const r = await chamar('/api/painel/textos/consultoria', { metodo: 'PUT', corpo: { preco: 380 } });
+  assert.equal(r.status, 200);
+  assert.equal(r.dados.textos.preco, 380);
+  assert.equal(r.dados.textos.resumo, antes.resumo, 'PUT parcial mantém o resumo');
+
+  let html = (await chamar('/')).dados;
+  let cartao = cartaoDoServico(html, 'consultoria', 'edicao');
+  assert.ok(cartao.includes('A partir de'), 'rótulo');
+  assert.ok(cartao.includes('R$ 380'), 'valor');
+  const escapado = antes.resumo.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  assert.ok(cartao.includes(escapado), 'resumo anterior continua (escapado no HTML)');
+  assert.ok(!cartaoDoServico(html, 'vm', 'ensino').includes('A partir de'));
+  assert.ok(cartaoDoServico(html, 'vm', 'ensino').includes('Valor sob consulta'), 'grupo lojas sem preço');
+  assert.ok(cartaoDoServico(html, 'ensino', 'como-trabalhar').includes('Valor sob consulta'), 'grupo ensino sem preço');
+  assert.ok(!cartaoDoServico(html, 'edicao', 'oficina-look').includes('sob consulta'), 'grupo "para você" sem preço não mostra nada');
+
+  // Só o resumo muda; o preço fica.
+  const soResumo = await chamar('/api/painel/textos/consultoria', { metodo: 'PUT', corpo: { resumo: 'Resumo novo da consultoria.' } });
+  assert.equal(soResumo.status, 200);
+  assert.equal(soResumo.dados.textos.preco, 380);
+  assert.equal(soResumo.dados.textos.resumo, 'Resumo novo da consultoria.');
+
+  for (const preco of [-5, 0, 380.5, '380', 100000]) {
+    const ruim = await chamar('/api/painel/textos/consultoria', { metodo: 'PUT', corpo: { preco } });
+    assert.equal(ruim.status, 400, `preco ${JSON.stringify(preco)}`);
+    assert.equal(ruim.dados.erro, 'texto_invalido');
+    assert.match(ruim.dados.mensagem, /inteiro|centavos/);
+  }
+
+  const limpa = await chamar('/api/painel/textos/consultoria', { metodo: 'PUT', corpo: { preco: null } });
+  assert.equal(limpa.status, 200);
+  assert.equal(limpa.dados.textos.preco, null);
+  html = (await chamar('/')).dados;
+  cartao = cartaoDoServico(html, 'consultoria', 'edicao');
+  assert.ok(!cartao.includes('A partir de'));
+  assert.ok(!cartao.includes('sob consulta'));
+
+  const estado = (await chamar('/api/painel/estado')).dados;
+  assert.equal(estado.textos.consultoria.preco, null);
+  assert.equal(estado.textos.consultoria.resumo, 'Resumo novo da consultoria.');
+});
+
 // ---------- R-01 · Cada botão de WhatsApp abre a conversa já com a mensagem certa ----------
 // O número vem da config (wrangler.jsonc é JSONC: tira os comentários antes do JSON.parse), nunca cravado aqui.
 function numeroWhatsAppDaConfig() {

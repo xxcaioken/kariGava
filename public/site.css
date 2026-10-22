@@ -162,7 +162,10 @@ p { margin: 0; }
 .como[open] summary::after { content: "−"; }
 .como ol { margin: 4px 0 6px; padding-left: 20px; font-size: 15px; display: grid; gap: 6px; }
 .citacao { margin: 0; padding-left: 14px; border-left: 3px solid var(--cor); font-style: italic; font-size: 16px; color: var(--tinta-suave); }
+.preco { margin-top: auto; display: flex; align-items: baseline; gap: 8px; }
+.preco strong { font-size: 20px; line-height: 1; letter-spacing: -.02em; }
 .servico .btn { margin-top: auto; background: var(--cor-forte); width: 100%; }
+.servico .preco + .btn { margin-top: 0; }
 .servico.escuro .btn { color: var(--tinta); }
 
 /* Como trabalhar comigo */

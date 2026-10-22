@@ -76,8 +76,11 @@ Rotas que mudam algo (POST/PUT/PATCH/DELETE) exigem `Content-Type: application/j
 
 ## Textos dos serviços
 
-- `PUT /api/painel/textos/:servicoId` `{ "resumo": "...", "para_quem": "..." }` → `{ "textos": { "titulo": "...", "resumo": "...", "para_quem": "..." } }`
+- `PUT /api/painel/textos/:servicoId` `{ "resumo": "...", "para_quem": "...", "preco": 380 }` → `{ "textos": { "titulo": "...", "resumo": "...", "para_quem": "...", "preco": 380 } }`
+  - **PUT parcial com semeadura:** campo ausente mantém o valor atual (se o serviço nunca foi editado, o de `conteudo.json`); `"preco": null` limpa. Assim o painel pode mandar só o que mostra, e um PUT `{"preco": 380}` não apaga o resumo.
   - Limites: resumo 1 a 220 caracteres, para_quem 0 a 220. Fora disso: `400 { erro: "texto_invalido", mensagem: "O resumo precisa ter até 220 letras." }`
+  - `preco`: inteiro em reais de 1 a 99.999 (sem centavos) ou `null`. Fora disso: `400 { erro: "texto_invalido", mensagem: "O preço precisa ser um número inteiro, sem centavos. Deixe vazio para não mostrar." }`. No site vira "A partir de R$ 380"; sem preço, serviços dos grupos `lojas`/`ensino` mostram "Valor sob consulta" e os do grupo `voce` não mostram nada.
+  - Exemplo: `curl -X PUT "$BASE/api/painel/textos/consultoria" -H 'content-type: application/json' -H "origin: $BASE" -b "kari_sessao=..." -d '{"preco":380}'`
 
 ## Site público
 

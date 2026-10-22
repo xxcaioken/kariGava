@@ -160,29 +160,55 @@ export async function mover(env, id, direcao) {
 }
 
 // ---------- Textos dos serviços ----------
+const MAX_PRECO = 99999; // spec R-02: 0 < preço < 100.000, em reais inteiros
+
 export async function lerTextos(env) {
-  const { results } = await env.DB.prepare('SELECT servico, resumo, para_quem FROM textos').all();
+  const { results } = await env.DB.prepare('SELECT servico, resumo, para_quem, preco FROM textos').all();
   const editados = new Map(results.map(r => [r.servico, r]));
   return Object.fromEntries(conteudo.servicos.map(s => [s.id, {
     titulo: s.titulo,
     resumo: editados.get(s.id)?.resumo ?? s.resumo,
     para_quem: editados.get(s.id)?.para_quem ?? s.para_quem,
+    preco: editados.get(s.id)?.preco ?? null,
   }]));
 }
 
-export async function salvarTextos(env, servico, { resumo, para_quem }) {
+function limparTexto(valor) {
+  return String(valor ?? '').replace(/\s+/g, ' ').trim();
+}
+
+// null ou vazio limpa; senão tem de ser inteiro em reais entre 1 e 99.999.
+function validarPreco(valor) {
+  if (valor === null || valor === '' || valor === undefined) return null;
+  if (typeof valor !== 'number' || !Number.isInteger(valor) || valor < 1 || valor > MAX_PRECO) {
+    throw new ErroApi(400, 'texto_invalido', 'O preço precisa ser um número inteiro, sem centavos. Deixe vazio para não mostrar.');
+  }
+  return valor;
+}
+
+// PUT parcial: campo ausente mantém o valor atual (ou o de conteudo.json, se o serviço nunca foi editado); null limpa.
+export async function salvarTextos(env, servico, campos) {
   const s = conteudo.servicos.find(x => x.id === servico);
   if (!s) throw new ErroApi(404, 'nao_encontrado');
-  const r = String(resumo ?? '').replace(/\s+/g, ' ').trim();
-  const p = String(para_quem ?? '').replace(/\s+/g, ' ').trim();
-  if (!r) throw new ErroApi(400, 'texto_invalido', 'Escreva um resumo do serviço.');
-  if (r.length > MAX_TEXTO) throw new ErroApi(400, 'texto_invalido', `O resumo precisa ter até ${MAX_TEXTO} letras.`);
-  if (p.length > MAX_TEXTO) throw new ErroApi(400, 'texto_invalido', `O "para quem" precisa ter até ${MAX_TEXTO} letras.`);
+  const atual = await env.DB.prepare('SELECT resumo, para_quem, preco FROM textos WHERE servico = ?').bind(servico).first();
+  const novo = { resumo: atual?.resumo ?? s.resumo, para_quem: atual?.para_quem ?? s.para_quem, preco: atual?.preco ?? null };
+
+  if ('resumo' in campos) {
+    novo.resumo = limparTexto(campos.resumo);
+    if (!novo.resumo) throw new ErroApi(400, 'texto_invalido', 'Escreva um resumo do serviço.');
+    if (novo.resumo.length > MAX_TEXTO) throw new ErroApi(400, 'texto_invalido', `O resumo precisa ter até ${MAX_TEXTO} letras.`);
+  }
+  if ('para_quem' in campos) {
+    novo.para_quem = limparTexto(campos.para_quem);
+    if (novo.para_quem.length > MAX_TEXTO) throw new ErroApi(400, 'texto_invalido', `O "para quem" precisa ter até ${MAX_TEXTO} letras.`);
+  }
+  if ('preco' in campos) novo.preco = validarPreco(campos.preco);
+
   await env.DB.prepare(
-    `INSERT INTO textos (servico, resumo, para_quem, atualizado_em) VALUES (?1, ?2, ?3, ?4)
-     ON CONFLICT (servico) DO UPDATE SET resumo = ?2, para_quem = ?3, atualizado_em = ?4`
-  ).bind(servico, r, p, agora()).run();
-  return { titulo: s.titulo, resumo: r, para_quem: p };
+    `INSERT INTO textos (servico, resumo, para_quem, preco, atualizado_em) VALUES (?1, ?2, ?3, ?4, ?5)
+     ON CONFLICT (servico) DO UPDATE SET resumo = ?2, para_quem = ?3, preco = ?4, atualizado_em = ?5`
+  ).bind(servico, novo.resumo, novo.para_quem, novo.preco, agora()).run();
+  return { titulo: s.titulo, ...novo };
 }
 
 // Em quais seções cada post já está (para o selo "No site").

@@ -37,6 +37,14 @@ export function linkWa(numero, mensagem) {
   return `https://wa.me/${digitos}?text=${encodeURIComponent(mensagem)}`;
 }
 
+// R-02: com preço, "A partir de R$ 380"; sem preço, lojas/escolas mostram "Valor sob consulta" e "Para você" não mostra nada.
+const GRUPOS_SOB_CONSULTA = new Set(['lojas', 'ensino']);
+export function textoDoPreco(preco, grupo) {
+  if (Number.isInteger(preco) && preco > 0) return { rotulo: 'A partir de', valor: `R$ ${preco.toLocaleString('pt-BR')}` };
+  if (GRUPOS_SOB_CONSULTA.has(grupo)) return { rotulo: 'Valor sob consulta', valor: '' };
+  return null;
+}
+
 // Junta o conteúdo fixo (conteudo.json) com o que a Kari muda no painel (fotos e textos).
 export function montarDados({ itens = [], textos = {}, whatsappNumero } = {}) {
   const porSecao = new Map();
@@ -49,6 +57,7 @@ export function montarDados({ itens = [], textos = {}, whatsappNumero } = {}) {
     ...AMOSTRAS[s.id],
     resumo: textos[s.id]?.resumo ?? s.resumo,
     para_quem: textos[s.id]?.para_quem ?? s.para_quem,
+    preco: textoDoPreco(textos[s.id]?.preco, s.grupo),
     grupo_nome: grupos.get(s.grupo),
     fotos: porSecao.get(s.id) || [],
     wa: wa(MENSAGENS_WA.servico(s.titulo)),

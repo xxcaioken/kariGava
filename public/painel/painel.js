@@ -288,11 +288,17 @@ function renderCartoes() {
     } else {
       miniaturas.append(el('span', { class: 'sem', text: 'Ainda sem fotos. Toque para colocar.' }));
     }
+    // Serviço mostra também o estado do preço (R-02), para a Kari ver de longe o que falta preencher.
+    const preco = s.tipo === 'servico' ? estado.textos?.[s.id]?.preco : undefined;
+    const linhaPreco = s.tipo === 'servico'
+      ? el('span', { class: 'cartao-preco', text: preco ? `A partir de R$ ${preco.toLocaleString('pt-BR')}` : 'Sem preço no site' })
+      : null;
     const cartao = el('button', { class: 'cartao', type: 'button', 'data-secao': s.id, onclick: () => abrirSecao(s.id) },
       el('span', { class: 'cartao-topo' },
         el('span', { class: 'cartao-nome', text: s.nome }),
         el('span', { class: 'qtd', text: plural(itens.length, 'foto', 'fotos') })),
       miniaturas,
+      ...(linhaPreco ? [linhaPreco] : []),
       el('span', { class: 'ir', 'aria-hidden': 'true', text: 'Atualizar →' }));
     aplicarCor(cartao, s.cor);
     caixa.append(cartao);
@@ -595,14 +601,25 @@ function preencherTextos() {
   const t = estado.textos?.[secaoAtual] || {};
   $('#txt-resumo').value = t.resumo || '';
   $('#txt-para').value = t.para_quem || '';
+  $('#txt-preco').value = t.preco ?? '';
   esconder('#erro-textos');
   atualizarContadores();
+}
+
+// Campo vazio = sem preço (null). Qualquer outra coisa tem de ser inteiro em reais de 1 a 99.999.
+function lerPrecoDoCampo() {
+  const texto = $('#txt-preco').value.trim();
+  if (!texto) return null;
+  const n = Number(texto);
+  if (!Number.isInteger(n) || n < 1 || n > 99999) return NaN;
+  return n;
 }
 
 function textosMudaram() {
   if (telaAtual !== 'tela-secao' || $('#textos').hidden) return false;
   const t = estado?.textos?.[secaoAtual] || {};
-  return $('#txt-resumo').value !== (t.resumo || '') || $('#txt-para').value !== (t.para_quem || '');
+  return $('#txt-resumo').value !== (t.resumo || '') || $('#txt-para').value !== (t.para_quem || '')
+    || $('#txt-preco').value !== String(t.preco ?? '');
 }
 
 function atualizarContadores() {
@@ -625,12 +642,19 @@ $('#form-textos').addEventListener('submit', async (ev) => {
     mostrar('#erro-textos', `Cada texto pode ter até ${LIMITE_TEXTO} letras.`);
     return;
   }
+  const preco = lerPrecoDoCampo();
+  if (Number.isNaN(preco)) {
+    mostrar('#erro-textos', 'O preço precisa ser um número inteiro, sem centavos, de 1 a 99.999. Deixe vazio para não mostrar.');
+    $('#txt-preco').focus();
+    return;
+  }
   const botao = $('#salvar-textos');
   const id = secaoAtual;
   ocupado(botao, 'Salvando...');
   try {
-    const r = await api(`/api/painel/textos/${enc(id)}`, { metodo: 'PUT', json: { resumo, para_quem: paraQuem } });
-    estado.textos = { ...(estado.textos || {}), [id]: r.textos || { resumo, para_quem: paraQuem } };
+    const r = await api(`/api/painel/textos/${enc(id)}`, { metodo: 'PUT', json: { resumo, para_quem: paraQuem, preco } });
+    estado.textos = { ...(estado.textos || {}), [id]: r.textos || { resumo, para_quem: paraQuem, preco } };
+    renderCartoes();
     esconder('#erro-textos');
     if (secaoAtual === id) preencherTextos();
     mostrarToast('Alterações salvas', { verSite: true });
