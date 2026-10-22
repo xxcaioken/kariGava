@@ -223,6 +223,33 @@ test('sair encerra a sessão', async () => {
   assert.equal((await chamar('/api/painel/estado')).status, 401);
 });
 
+// ---------- R-12 · Cabeçalhos de segurança em todas as respostas ----------
+const CABECALHOS_SEGURANCA = {
+  'strict-transport-security': 'max-age=63072000; includeSubDomains',
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'strict-origin-when-cross-origin',
+  'permissions-policy': 'camera=(), microphone=(), geolocation=()',
+  'x-frame-options': 'DENY',
+  'content-security-policy': "default-src 'self'; img-src 'self' data: blob: https://*.cdninstagram.com https://*.fbcdn.net; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://cloudflareinsights.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
+};
+
+test('R-12 cabeçalhos de segurança: toda resposta do Worker traz os 6 cabeçalhos', async () => {
+  const rotas = [
+    ['/', 200], ['/painel/', 200], ['/painel/painel.js', 200], ['/site.css', 200],
+    ['/api/painel/estado', 401], ['/fotos/nao-existe.jpg', 404], ['/nao-existe.css', 404],
+  ];
+  for (const [rota, statusEsperado] of rotas) {
+    const r = await fetch(BASE + rota, { redirect: 'manual' });
+    assert.equal(r.status, statusEsperado, rota);
+    for (const [nome, valor] of Object.entries(CABECALHOS_SEGURANCA)) {
+      assert.equal(r.headers.get(nome), valor, `${rota} → ${nome}`);
+    }
+  }
+  const home = await chamar('/');
+  assert.ok(!home.dados.includes('<style'), 'sem <style> inline');
+  assert.ok(!home.dados.includes('onclick='), 'sem onclick=');
+});
+
 // ---------- R-10 · O site carrega rápido no celular ----------
 test('R-10 fontes locais: site e painel sem Google Fonts, WOFF2 servidas pelo site', async () => {
   const home = await chamar('/');

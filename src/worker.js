@@ -3,6 +3,7 @@ import { pedirCodigo, entrar, cookieSair, exigirSessao } from './auth.js';
 import { SECOES, listarItens, lerTextos, salvarTextos, adicionarDoInstagram, adicionarDoCelular, renomear, remover, restaurar, mover, secoesPorPost } from './itens.js';
 import { contasLigadas, listarPosts, urlLigar, concluirLigacao, renovarTokens, CONTAS } from './instagram.js';
 import { renderizarSite } from './site.js';
+import { comCabecalhos } from './seguranca.js';
 
 function exigirOrigem(request) {
   const origem = request.headers.get('origin');
@@ -121,24 +122,34 @@ async function foto(env, chave) {
   });
 }
 
+// Toda rota passa por aqui; os assets estáticos (run_worker_first) caem no ASSETS.
+async function tratar(request, env, url) {
+  if (url.pathname.startsWith('/api/')) return api(request, env, url);
+  if (url.pathname.startsWith('/fotos/') && request.method === 'GET') return foto(env, decodeURIComponent(url.pathname.slice('/fotos/'.length)));
+  if (url.pathname === '/' && (request.method === 'GET' || request.method === 'HEAD')) {
+    const [itens, textos] = await Promise.all([listarItens(env), lerTextos(env)]);
+    return new Response(renderizarSite({ itens, textos, whatsapp: env.WHATSAPP }), {
+      headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
+    });
+  }
+  return env.ASSETS.fetch(request);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    let resposta;
     try {
-      if (url.pathname.startsWith('/api/')) return await api(request, env, url);
-      if (url.pathname.startsWith('/fotos/') && request.method === 'GET') return await foto(env, decodeURIComponent(url.pathname.slice('/fotos/'.length)));
-      if (url.pathname === '/' && (request.method === 'GET' || request.method === 'HEAD')) {
-        const [itens, textos] = await Promise.all([listarItens(env), lerTextos(env)]);
-        return new Response(renderizarSite({ itens, textos, whatsapp: env.WHATSAPP }), {
-          headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
-        });
-      }
-      return env.ASSETS.fetch(request);
+      resposta = await tratar(request, env, url);
     } catch (e) {
-      if (e instanceof ErroApi) return respostaDeErro(e);
-      console.error(e?.stack || e);
-      return json({ erro: 'erro_interno', mensagem: 'Algo deu errado do nosso lado. Tente de novo em instantes.' }, 500);
+      if (e instanceof ErroApi) resposta = respostaDeErro(e);
+      else {
+        console.error(e?.stack || e);
+        resposta = json({ erro: 'erro_interno', mensagem: 'Algo deu errado do nosso lado. Tente de novo em instantes.' }, 500);
+      }
     }
+    // Único ponto de saída: sucesso, erro tratado, 500, foto e asset saem com os mesmos cabeçalhos.
+    return comCabecalhos(resposta, env);
   },
 
   async scheduled(_evento, env, ctx) {
