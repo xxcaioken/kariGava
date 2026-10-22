@@ -46,6 +46,7 @@ Atualizado em 22/10/2026.
 - [ ] Nomes das cores da cartela: Roxo Autêntico, Vermelho Armário, Mostarda Oficina, Pink Produção, Verde Vitrine, Grafite Aula.
 - [ ] Mais fotos de produto da LALAIÁ. Hoje são só as 5 que estavam públicas no Instagram; com o painel ligado, ela mesma traz.
 - [ ] Depoimentos de clientes, se ela quiser. Não inventamos nenhum.
+- [ ] **Perguntas frequentes** (dona: Kari; até 30/11/2026). As 8 foram escritas por nós e aparecem no painel em "Perguntas frequentes" com a marca "Rascunho: revisar" até ela editar cada uma. Publicadas desde já, por se apoiarem no que ela já disse publicamente: "Preciso comprar roupa nova?", "Como é a Oficina de Look?", "Como funciona a encomenda na LALAIÁ?", "Enviam para todo o Brasil?". Despublicadas, por dependerem de política só dela (revisar e ligar no painel): "Atende online?", "Quanto tempo leva a edição de guarda-roupa?", "Atende lojas fora de Florianópolis?", "Posso trocar uma peça sob encomenda?".
 
 ## Observações técnicas
 

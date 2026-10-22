@@ -3,6 +3,7 @@ import { pedirCodigo, entrar, cookieSair, exigirSessao } from './auth.js';
 import { SECOES, listarItens, lerTextos, salvarTextos, adicionarDoInstagram, adicionarDoCelular, renomear, remover, restaurar, mover, secoesPorPost, lerFotoDoForm } from './itens.js';
 import { listarDepoimentos, criarDepoimento, editarDepoimento, removerDepoimento, restaurarDepoimento, moverDepoimento } from './depoimentos.js';
 import { listarPares, criarPar, editarPar, removerPar, restaurarPar, moverPar } from './antesdepois.js';
+import { listarFaq, criarFaq, salvarFaq, removerFaq, restaurarFaq, moverFaq } from './faq.js';
 import { contasLigadas, listarPosts, urlLigar, concluirLigacao, renovarTokens, CONTAS } from './instagram.js';
 import { renderizarSite } from './site.js';
 import { comCabecalhos } from './seguranca.js';
@@ -76,11 +77,22 @@ async function api(request, env, url) {
   const rota = pathname.slice('/api/painel'.length);
 
   if (rota === '/estado' && metodo === 'GET') {
-    const [itens, textos, contas, produtos, condicoes, cupom, depoimentos, antes_depois] = await Promise.all([
-      listarItens(env), lerTextos(env), contasLigadas(env), listarProdutos(env), lerCondicoes(env), lerCupom(env), listarDepoimentos(env), listarPares(env),
+    const [itens, textos, contas, produtos, condicoes, cupom, depoimentos, antes_depois, faq] = await Promise.all([
+      listarItens(env), lerTextos(env), contasLigadas(env), listarProdutos(env), lerCondicoes(env), lerCupom(env), listarDepoimentos(env), listarPares(env), listarFaq(env),
     ]);
     const lalaia = { produtos: agruparProdutos(itens.filter(i => i.secao === 'lalaia'), produtos), condicoes, cupom };
-    return json({ usuario: { email }, secoes: SECOES, itens, textos, lalaia, depoimentos, antes_depois, instagram: { contas }, site_url: '/' });
+    return json({ usuario: { email }, secoes: SECOES, itens, textos, lalaia, depoimentos, antes_depois, faq, instagram: { contas }, site_url: '/' });
+  }
+
+  // ---------- Perguntas frequentes ----------
+  if (rota === '/faq' && metodo === 'POST') { exigirJson(request); return json({ faq: await criarFaq(env, await lerJson(request)) }, 201); }
+  const fq = rota.match(/^\/faq\/(faq_[\w-]+)(\/restaurar|\/mover)?$/);
+  if (fq) {
+    const [, id, acao] = fq;
+    if (!acao && metodo === 'PUT') { exigirJson(request); return json({ faq: await salvarFaq(env, id, await lerJson(request)) }); }
+    if (!acao && metodo === 'DELETE') return json({ faq: await removerFaq(env, id) });
+    if (acao === '/restaurar' && metodo === 'POST') return json({ faq: await restaurarFaq(env, id) });
+    if (acao === '/mover' && metodo === 'POST') { exigirJson(request); return json({ faq: await moverFaq(env, id, (await lerJson(request)).direcao) }); }
   }
 
   // ---------- Antes e depois ----------
@@ -200,11 +212,11 @@ async function tratar(request, env, url) {
   if (url.pathname.startsWith('/api/')) return api(request, env, url);
   if (url.pathname.startsWith('/fotos/') && request.method === 'GET') return foto(env, decodeURIComponent(url.pathname.slice('/fotos/'.length)));
   if (url.pathname === '/' && (request.method === 'GET' || request.method === 'HEAD')) {
-    const [itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois] = await Promise.all([
+    const [itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois, faq] = await Promise.all([
       listarItens(env), lerTextos(env), tolerante(listarProdutos(env), []), tolerante(lerCondicoes(env), null), tolerante(lerCupom(env), null),
-      tolerante(listarDepoimentos(env), []), tolerante(listarPares(env), []),
+      tolerante(listarDepoimentos(env), []), tolerante(listarPares(env), []), tolerante(listarFaq(env), []),
     ]);
-    return new Response(renderizarSite({ itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois, whatsappNumero: env.WHATSAPP_NUMERO }), {
+    return new Response(renderizarSite({ itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois, faq, whatsappNumero: env.WHATSAPP_NUMERO }), {
       headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
     });
   }

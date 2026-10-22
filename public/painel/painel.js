@@ -9,7 +9,7 @@ const MSG_GERAL = 'Algo não deu certo. Tente de novo em alguns minutos.';
 const MSG_DESLIGADO = 'Essa conta ainda não está ligada ao site. Peça para o Caio ligar.';
 const LIMITE_TEXTO = 220;
 const LIMITE_FOTO = 15 * 1024 * 1024;
-const TELAS = ['tela-carregando', 'tela-falha', 'tela-email', 'tela-codigo', 'tela-inicio', 'tela-secao', 'tela-depoimentos', 'tela-pares'];
+const TELAS = ['tela-carregando', 'tela-falha', 'tela-email', 'tela-codigo', 'tela-inicio', 'tela-secao', 'tela-depoimentos', 'tela-pares', 'tela-faq'];
 
 let estado = null;
 let telaAtual = 'tela-carregando';
@@ -113,6 +113,7 @@ function renderAtual() {
   if (telaAtual === 'tela-secao' && secaoAtual) renderSecao();
   if (telaAtual === 'tela-depoimentos') renderDepoimentos();
   if (telaAtual === 'tela-pares') renderPares();
+  if (telaAtual === 'tela-faq') renderFaq();
 }
 
 // Marca nos posts guardados (novidades e grade) em que seção eles estão no site.
@@ -338,6 +339,18 @@ function renderCartoes() {
     el('span', { class: 'ir', 'aria-hidden': 'true', text: 'Atualizar →' }));
   aplicarCor(cartaoPar, '#017F38');
   caixa.append(cartaoPar);
+  // Perguntas frequentes (R-06).
+  const fs = faqs();
+  const publicadas = fs.filter((f) => f.publicada).length;
+  const rascunhos = fs.filter((f) => !f.revisada).length;
+  const cartaoFaq = el('button', { class: 'cartao', type: 'button', 'data-secao': 'faq', onclick: abrirFaq },
+    el('span', { class: 'cartao-topo' },
+      el('span', { class: 'cartao-nome', text: 'Perguntas frequentes' }),
+      el('span', { class: 'qtd', text: plural(fs.length, 'pergunta', 'perguntas') })),
+    el('span', { class: 'cartao-preco', text: fs.length ? `${publicadas} no site${rascunhos ? ` · ${plural(rascunhos, 'rascunho para revisar', 'rascunhos para revisar')}` : ''}` : 'Nenhuma pergunta ainda. Toque para escrever a primeira.' }),
+    el('span', { class: 'ir', 'aria-hidden': 'true', text: 'Atualizar →' }));
+  aplicarCor(cartaoFaq, '#2A2730');
+  caixa.append(cartaoFaq);
 }
 
 async function carregarNovidades() {
@@ -516,8 +529,12 @@ $('#voltar-par').addEventListener('click', () => {
   if (history.state?.secao) history.back();
   else irInicio({ focarSecao: 'antes-depois' });
 });
+$('#voltar-faq').addEventListener('click', () => {
+  if (history.state?.secao) history.back();
+  else irInicio({ focarSecao: 'faq' });
+});
 
-const TELAS_PROPRIAS = { 'tela-depoimentos': 'depoimentos', 'tela-pares': 'antes-depois' };
+const TELAS_PROPRIAS = { 'tela-depoimentos': 'depoimentos', 'tela-pares': 'antes-depois', 'tela-faq': 'faq' };
 window.addEventListener('popstate', () => {
   if (TELAS_PROPRIAS[telaAtual]) {
     const cartao = TELAS_PROPRIAS[telaAtual];
@@ -1613,6 +1630,159 @@ $('#form-par').addEventListener('submit', async (ev) => {
     });
   } catch (e) {
     if (e.tipo !== 'sessao') mostrar('#par-erro', mensagemDe(e));
+  } finally {
+    livre(botao);
+  }
+});
+
+// ---------- Perguntas frequentes (R-06) ----------
+
+const faqs = () => estado?.faq || [];
+const GRUPOS_FAQ = { voce: 'Para você', lojas: 'Para lojas e escolas', lalaia: 'LALAIÁ' };
+const LIMITE_PERGUNTA = 140;
+const LIMITE_RESPOSTA = 600;
+let faqEditando = null;
+
+function abrirFaq() {
+  secaoAtual = null;
+  renderFaq();
+  window.scrollTo(0, 0);
+  mostrarTela('tela-faq');
+  history.pushState({ secao: 'faq' }, '');
+}
+
+function renderFaq({ foco } = {}) {
+  const lista = faqs();
+  $('#faq-qtd').textContent = `${lista.filter((f) => f.publicada).length} de ${lista.length} no site`;
+  const caixa = $('#faq-lista');
+  caixa.replaceChildren();
+  if (!lista.length) {
+    caixa.append(el('div', { class: 'vazio' }, el('p', { text: 'Nenhuma pergunta ainda. Toque em "Nova pergunta" para escrever a primeira.' })));
+    return;
+  }
+  lista.forEach((f, idx) => {
+    const selos = [
+      !f.revisada && el('span', { class: 'selo selo-rascunho', text: 'Rascunho: revisar' }),
+      f.publicada ? el('span', { class: 'selo selo-publicada', text: 'No site' }) : el('span', { class: 'selo selo-oculta', text: 'Fora do site · revise e publique' }),
+    ];
+    const cartao = el('div', { class: 'item faq' },
+      el('button', { class: 'nome', type: 'button', 'aria-label': `${f.pergunta}. Editar`, onclick: () => abrirPergunta(f) },
+        el('span', {}, ...selos),
+        el('span', { text: f.pergunta }),
+        el('em', { text: `${GRUPOS_FAQ[f.grupo] || f.grupo} · ${resumir(f.resposta, 80)}` })),
+      el('div', { class: 'acoes-item' },
+        el('button', { class: 'mini', type: 'button', 'data-id': f.id, 'data-dir': 'cima', disabled: idx === 0, 'aria-label': `Mostrar antes: ${f.pergunta}`, text: '↑', onclick: (ev) => moverFaq(f, 'cima', ev.currentTarget) }),
+        el('button', { class: 'mini', type: 'button', 'data-id': f.id, 'data-dir': 'baixo', disabled: idx === lista.length - 1, 'aria-label': `Mostrar depois: ${f.pergunta}`, text: '↓', onclick: (ev) => moverFaq(f, 'baixo', ev.currentTarget) })),
+      el('div', { class: 'linha-acoes' },
+        el('button', { class: 'publicar', type: 'button', text: f.publicada ? 'Tirar do site' : 'Publicar no site', onclick: (ev) => publicarFaq(f, !f.publicada, ev.currentTarget) }),
+        el('button', { class: 'editar', type: 'button', text: 'Editar', 'aria-label': `Editar: ${f.pergunta}`, onclick: () => abrirPergunta(f) }),
+        el('button', { class: 'tirar', type: 'button', text: 'Apagar', 'aria-label': `Apagar: ${f.pergunta}`, onclick: () => tirarFaq(f) })));
+    aplicarCor(cartao, f.publicada ? '#2A2730' : '#BDB6C8');
+    caixa.append(cartao);
+  });
+  if (foco) {
+    const mesma = caixa.querySelector(`[data-id="${CSS.escape(foco.id)}"][data-dir="${foco.dir}"]`);
+    const outra = caixa.querySelector(`[data-id="${CSS.escape(foco.id)}"][data-dir="${foco.dir === 'cima' ? 'baixo' : 'cima'}"]`);
+    (mesma && !mesma.disabled ? mesma : outra)?.focus();
+  }
+}
+
+async function publicarFaq(f, publicada, botao) {
+  botao.disabled = true;
+  try {
+    const r = await api(`/api/painel/faq/${enc(f.id)}`, { metodo: 'PUT', json: { publicada } });
+    estado.faq = faqs().map((x) => (x.id === f.id ? r.faq : x));
+    renderFaq();
+    renderCartoes();
+    mostrarToast(publicada ? 'Pergunta no site' : 'A pergunta saiu do site', { verSite: publicada });
+  } catch (e) {
+    botao.disabled = false;
+    if (e.tipo !== 'sessao') mostrarToast(mensagemDe(e), { erro: true });
+  }
+}
+
+async function moverFaq(f, direcao, botao) {
+  botao.disabled = true;
+  try {
+    const r = await api(`/api/painel/faq/${enc(f.id)}/mover`, { metodo: 'POST', json: { direcao } });
+    estado.faq = r.faq || estado.faq;
+    renderFaq({ foco: { id: f.id, dir: direcao } });
+    anunciar(`A pergunta agora aparece ${direcao === 'cima' ? 'antes' : 'depois'}.`);
+  } catch (e) {
+    botao.disabled = false;
+    if (e.tipo !== 'sessao') mostrarToast(mensagemDe(e), { erro: true });
+  }
+}
+
+function tirarFaq(f) {
+  abrirConfirmacaoTirar({
+    titulo: 'Apagar essa pergunta?',
+    texto: 'Ela some da lista e do site. Dá para desfazer logo em seguida.',
+    tirando: 'Apagando...',
+    apagar: () => api(`/api/painel/faq/${enc(f.id)}`, { metodo: 'DELETE', json: {} }),
+    saiu: 'Pergunta apagada',
+    desfazer: () => api(`/api/painel/faq/${enc(f.id)}/restaurar`, { metodo: 'POST', json: {} }),
+    voltou: 'Pronto, a pergunta voltou',
+    voltarFoco: $('#faq-titulo'),
+  });
+}
+
+function atualizarContadoresFaq() {
+  for (const [sel, cont, max] of [['#faq-pergunta', '#cont-faq-pergunta', LIMITE_PERGUNTA], ['#faq-resposta', '#cont-faq-resposta', LIMITE_RESPOSTA]]) {
+    const n = $(sel).value.length;
+    const c = $(cont);
+    c.textContent = `${n} de ${max} letras`;
+    c.classList.toggle('passou', n > max);
+  }
+}
+$('#faq-pergunta').addEventListener('input', atualizarContadoresFaq);
+$('#faq-resposta').addEventListener('input', atualizarContadoresFaq);
+
+function abrirPergunta(f = null) {
+  faqEditando = f;
+  const sel = $('#faq-grupo');
+  sel.replaceChildren(...Object.entries(GRUPOS_FAQ).map(([id, nome]) => el('option', { value: id, text: nome })));
+  $('#faq-dlg-titulo').textContent = f ? 'Editar pergunta' : 'Nova pergunta';
+  $('#faq-pergunta').value = f?.pergunta || '';
+  $('#faq-resposta').value = f?.resposta || '';
+  sel.value = f?.grupo || 'voce';
+  $('#faq-publicada').checked = Boolean(f?.publicada);
+  $('#faq-salvar').textContent = f ? 'Salvar alterações' : 'Salvar pergunta';
+  esconder('#faq-erro');
+  atualizarContadoresFaq();
+  abrirDialogo('#dlg-faq', { voltarFoco: f ? $('#faq-titulo') : $('#faq-nova') });
+  $('#faq-pergunta').focus();
+}
+$('#faq-nova').addEventListener('click', () => abrirPergunta(null));
+$('#dlg-faq').addEventListener('close', () => { faqEditando = null; });
+
+$('#form-faq').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const pergunta = $('#faq-pergunta').value.trim();
+  const resposta = $('#faq-resposta').value.trim();
+  const grupo = $('#faq-grupo').value;
+  const publicada = $('#faq-publicada').checked;
+  if (!pergunta) { mostrar('#faq-erro', 'Escreva a pergunta.'); $('#faq-pergunta').focus(); return; }
+  if (!resposta) { mostrar('#faq-erro', 'Escreva a resposta.'); $('#faq-resposta').focus(); return; }
+  if (pergunta.length > LIMITE_PERGUNTA) { mostrar('#faq-erro', `A pergunta pode ter até ${LIMITE_PERGUNTA} letras; esta tem ${pergunta.length}.`); return; }
+  if (resposta.length > LIMITE_RESPOSTA) { mostrar('#faq-erro', `A resposta pode ter até ${LIMITE_RESPOSTA} letras; esta tem ${resposta.length}.`); return; }
+  const botao = $('#faq-salvar');
+  ocupado(botao, 'Salvando...');
+  try {
+    if (faqEditando) {
+      const antes = faqEditando;
+      const corpo = { grupo, publicada };
+      if (pergunta !== antes.pergunta) corpo.pergunta = pergunta;
+      if (resposta !== antes.resposta) corpo.resposta = resposta;
+      await api(`/api/painel/faq/${enc(antes.id)}`, { metodo: 'PUT', json: corpo });
+    } else {
+      await api('/api/painel/faq', { metodo: 'POST', json: { pergunta, resposta, grupo, publicada } });
+    }
+    fecharDialogo('#dlg-faq');
+    await sincronizar();
+    mostrarToast(publicada ? 'Pergunta salva e no site' : 'Pergunta salva (fora do site)', { verSite: publicada });
+  } catch (e) {
+    if (e.tipo !== 'sessao') mostrar('#faq-erro', mensagemDe(e));
   } finally {
     livre(botao);
   }

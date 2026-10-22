@@ -1,8 +1,8 @@
 // Tirar do site (com desfazer) e mudar a ordem, para as tabelas que têm `ordem` e `removido_em`
-// e uma lista só (depoimentos, antes_depois). As fotos (itens) têm a própria versão, por seção.
+// e uma lista só (depoimentos, antes_depois, faq). As fotos (itens) têm a própria versão, por seção.
 import { ErroApi, agora } from './util.js';
 
-const TABELAS = new Set(['depoimentos', 'antes_depois']);
+const TABELAS = new Set(['depoimentos', 'antes_depois', 'faq']);
 
 export function ordenacao(tabela, paraSaida) {
   if (!TABELAS.has(tabela)) throw new Error(`tabela sem ordenação: ${tabela}`);

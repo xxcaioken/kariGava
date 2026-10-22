@@ -2,6 +2,7 @@ import conteudo from '../conteudo.json' with { type: 'json' };
 import { template } from './template.js';
 import { agruparProdutos, textoPreco, textoDisponibilidade } from './produtos.js';
 import { CONDICOES_VAZIAS, ROTULOS_CONDICOES, cupomVigente } from './config.js';
+import { agruparFaq } from './faq.js';
 
 // Nome de cor estilo cartela Pantone para cada serviço.
 // `var` é o nome da cor em public/site.css; `curto` vai no leque, `legenda` nos botões do celular.
@@ -48,7 +49,7 @@ export function textoDoPreco(preco, grupo) {
 }
 
 // Junta o conteúdo fixo (conteudo.json) com o que a Kari muda no painel (fotos e textos).
-export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos = [], condicoes, cupom, depoimentos = [], antesDepois = [], whatsappNumero } = {}) {
+export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos = [], condicoes, cupom, depoimentos = [], antesDepois = [], faq = [], whatsappNumero } = {}) {
   const porSecao = new Map();
   for (const it of itens) porSecao.set(it.secao, [...(porSecao.get(it.secao) || []), it]);
   const grupos = new Map(conteudo.grupos_servicos.map(g => [g.id, g.titulo]));
@@ -99,6 +100,7 @@ export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos 
     como_trabalhar: conteudo.como_trabalhar,
     depoimentos: listaDepoimentos,
     antes_depois: pares,
+    faq: agruparFaq(faq),
     sobre: { ...conteudo.sobre, fotos: porSecao.get('sobre') || [] },
     lalaia: { ...conteudo.lalaia, produtos, condicoes: listaCondicoes, cupom: cupomSite, wa: waLalaia(MENSAGENS_WA.lalaia) },
     ensino_realizado: conteudo.ensino_realizado,

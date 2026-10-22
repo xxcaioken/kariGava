@@ -81,6 +81,24 @@ export function template(d, esc) {
 
   const fotoSobre = d.sobre.fotos[0];
 
+  // Perguntas frequentes (R-06): só publicadas, por grupo, em <details> (sem JS, teclado); some sem pergunta.
+  const faq = d.faq.length ? `
+  <section class="secao" id="faq" aria-labelledby="titulo-faq">
+    <div class="wrap">
+      <div class="secao-cab">
+        <h2 id="titulo-faq">Perguntas frequentes</h2>
+        <p>O que mais me perguntam antes de chamar.</p>
+      </div>
+      <div class="faq-grupos">${d.faq.map(g => `
+        <div class="faq-grupo">
+          <h3 id="faq-${esc(g.id)}">${esc(g.titulo)}</h3>${g.perguntas.map(p => `
+          <details class="como faq-item"><summary>${esc(p.pergunta)}</summary><p>${esc(p.resposta)}</p></details>`).join('')}
+        </div>`).join('')}
+      </div>
+    </div>
+  </section>
+` : '';
+
   // Antes e depois (R-05): dentro da área de serviços, logo após a grade; só existe com par. As duas fotos lado a lado
   // em qualquer largura (a comparação é o conteúdo), rótulos sobrepostos e legenda abaixo.
   const fotoPar = (p, lado, rotulo) => `<figure class="par-foto"><img src="${esc(p[`${lado}_url`])}" alt="${esc(`${rotulo}: ${p.legenda || p.servico_nome}`)}" width="${esc(p[`largura_${lado}`])}" height="${esc(p[`altura_${lado}`])}" loading="lazy" decoding="async"><figcaption>${rotulo}</figcaption></figure>`;
@@ -259,7 +277,7 @@ ${depoimentos}
       </ul>
     </div>
   </section>
-</main>
+${faq}</main>
 
 <footer class="rodape" id="contato">
   <div class="faixa-cores" aria-hidden="true">${listras}</div>

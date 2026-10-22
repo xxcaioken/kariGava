@@ -796,3 +796,79 @@ test('R-05 antes e depois: par só com as duas fotos e consentimento, seção na
   html = (await chamar('/')).dados;
   assert.ok(!html.includes('id="antes-depois"'), 'sem pares ativos a seção some');
 });
+
+// ---------- S-09 · Perguntas frequentes (R-06) ----------
+const secaoFaq = html => {
+  const ini = html.indexOf('id="faq"');
+  return ini < 0 ? null : html.slice(ini, html.indexOf('<footer'));
+};
+const perguntasNoHtml = html => [...(secaoFaq(html) || '').matchAll(/<summary>([^<]*)<\/summary>/g)].map(m => m[1]);
+
+test('R-06 FAQ: 4 publicadas iniciais, publicar, editar, validações, ordem, tirar e desfazer', async () => {
+  let html = (await chamar('/')).dados;
+  assert.ok(html.indexOf('id="cursos"') < html.indexOf('id="faq"') && html.indexOf('id="faq"') < html.indexOf('<footer'), 'FAQ depois dos cursos e antes do rodapé');
+  const iniciais = perguntasNoHtml(html);
+  assert.equal(iniciais.length, 4, `4 publicadas iniciais: ${iniciais.join(' | ')}`);
+  assert.ok(iniciais.includes('Como funciona a encomenda na LALAIÁ?') && iniciais.includes('Enviam para todo o Brasil?') && iniciais.includes('Como é a Oficina de Look?') && iniciais.includes('Preciso comprar roupa nova?'));
+  assert.ok(!iniciais.includes('Atende online?'), 'despublicada não aparece');
+  const grupos = [...secaoFaq(html).matchAll(/<h3[^>]*>([^<]*)<\/h3>/g)].map(m => m[1]);
+  assert.deepEqual(grupos, ['Para você', 'LALAIÁ'], 'só grupos com pergunta publicada, na ordem do site');
+  assert.ok(secaoFaq(html).includes('<details class="como faq-item">'), 'reaproveita .como');
+
+  const estado = (await chamar('/api/painel/estado')).dados;
+  assert.equal(estado.faq.length, 8, 'estado devolve as 8');
+  assert.equal(estado.faq.filter(f => f.publicada).length, 4);
+  assert.ok(estado.faq.every(f => f.revisada === false), 'todas nascem como rascunho');
+  const online = estado.faq.find(f => f.pergunta === 'Atende online?');
+  assert.ok(online && online.publicada === false && online.grupo === 'voce');
+
+  // Publicar uma despublicada → aparece; editar a resposta reflete e marca como revisada.
+  const pub = await chamar(`/api/painel/faq/${online.id}`, { metodo: 'PUT', corpo: { publicada: true } });
+  assert.equal(pub.status, 200, JSON.stringify(pub.dados));
+  assert.equal(pub.dados.faq.publicada, true);
+  assert.equal(pub.dados.faq.revisada, false, 'só publicar não conta como revisão do texto');
+  html = (await chamar('/')).dados;
+  assert.ok(perguntasNoHtml(html).includes('Atende online?'));
+  const ed = await chamar(`/api/painel/faq/${online.id}`, { metodo: 'PUT', corpo: { resposta: 'Sim, por videochamada <b>sempre</b>.' } });
+  assert.equal(ed.status, 200);
+  assert.equal(ed.dados.faq.revisada, true);
+  html = (await chamar('/')).dados;
+  assert.ok(secaoFaq(html).includes('Sim, por videochamada &lt;b&gt;sempre&lt;/b&gt;.') && !secaoFaq(html).includes('<b>sempre</b>'), 'resposta escapada');
+
+  // Validações com mensagem.
+  for (const [corpo, re] of [[{ pergunta: 'a'.repeat(141) }, /140 letras.*141/], [{ resposta: 'a'.repeat(601) }, /600 letras.*601/], [{ pergunta: '' }, /pergunta/i], [{ grupo: 'x' }, /grupo/i], [{ publicada: 'sim' }, /./]]) {
+    const ruim = await chamar(`/api/painel/faq/${online.id}`, { metodo: 'PUT', corpo });
+    assert.equal(ruim.status, 400, JSON.stringify(corpo));
+    assert.equal(ruim.dados.erro, 'faq_invalida');
+    assert.match(ruim.dados.mensagem, re);
+  }
+
+  // Nova pergunta nasce despublicada e revisada (a Kari escreveu); publicada vai para o grupo certo.
+  const nova = await chamar('/api/painel/faq', { metodo: 'POST', corpo: { pergunta: 'Fazem vitrine de Natal?', resposta: 'Sim, com agenda a partir de outubro.', grupo: 'lojas' } });
+  assert.equal(nova.status, 201, JSON.stringify(nova.dados));
+  assert.equal(nova.dados.faq.publicada, false);
+  assert.equal(nova.dados.faq.revisada, true);
+  assert.ok(!perguntasNoHtml((await chamar('/')).dados).includes('Fazem vitrine de Natal?'));
+  assert.equal((await chamar(`/api/painel/faq/${nova.dados.faq.id}`, { metodo: 'PUT', corpo: { publicada: true } })).status, 200);
+  html = (await chamar('/')).dados;
+  assert.ok(perguntasNoHtml(html).includes('Fazem vitrine de Natal?'));
+  assert.deepEqual([...secaoFaq(html).matchAll(/<h3[^>]*>([^<]*)<\/h3>/g)].map(m => m[1]), ['Para você', 'Para lojas e escolas', 'LALAIÁ']);
+
+  // Ordem, tirar e desfazer.
+  const ids = (await chamar('/api/painel/estado')).dados.faq.map(f => f.id);
+  const mv = await chamar(`/api/painel/faq/${ids[1]}/mover`, { metodo: 'POST', corpo: { direcao: 'cima' } });
+  assert.equal(mv.status, 200);
+  assert.deepEqual(mv.dados.faq.map(f => f.id).slice(0, 2), [ids[1], ids[0]]);
+  assert.equal((await chamar(`/api/painel/faq/${ids[0]}`, { metodo: 'DELETE' })).status, 200);
+  assert.equal((await chamar('/api/painel/estado')).dados.faq.length, 8);
+  assert.equal((await chamar(`/api/painel/faq/${ids[0]}/restaurar`, { metodo: 'POST' })).status, 200);
+  assert.deepEqual((await chamar('/api/painel/estado')).dados.faq.map(f => f.id).slice(0, 2), [ids[1], ids[0]]);
+  assert.equal((await chamar('/api/painel/faq/faq_naoexiste', { metodo: 'DELETE' })).status, 404);
+
+  // Despublicar todas → sem id="faq"; depois volta ao estado inicial (4 publicadas) para os testes seguintes.
+  const todas = (await chamar('/api/painel/estado')).dados.faq;
+  for (const f of todas) assert.equal((await chamar(`/api/painel/faq/${f.id}`, { metodo: 'PUT', corpo: { publicada: false } })).status, 200);
+  assert.ok(!(await chamar('/')).dados.includes('id="faq"'), 'sem publicada a seção some');
+  for (const f of todas) if (iniciais.includes(f.pergunta)) await chamar(`/api/painel/faq/${f.id}`, { metodo: 'PUT', corpo: { publicada: true } });
+  assert.equal(perguntasNoHtml((await chamar('/')).dados).length, 4);
+});

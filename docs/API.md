@@ -143,6 +143,16 @@ Bloco "Antes e depois" dentro da área de serviços do site, logo após a grade;
 - `DELETE /api/painel/antes-depois/:id` → `{ "par": {...} }` (sai do site; pode desfazer) · `POST .../:id/restaurar` → `{ "par": {...} }` · `POST .../:id/mover` `{ "direcao": "cima" | "baixo" }` → `{ "antes_depois": [...] }`
 - Inexistente → `404 { erro: "nao_encontrado" }`.
 
+## Perguntas frequentes
+
+Seção "Perguntas frequentes" do site, depois dos cursos e antes do rodapé; mostra só as perguntas **publicadas**, agrupadas (Para você, Para lojas e escolas, LALAIÁ), e some sem nenhuma publicada. O site nasce com 8 perguntas escritas por nós (`scripts/faq-inicial.sql`): 4 publicadas, 4 como rascunho para a Kari revisar e ligar. O estado traz `faq`: `[ { "id": "faq_01", "ordem", "grupo": "voce" | "lojas" | "lalaia", "pergunta", "resposta", "publicada", "revisada" } ]`. `revisada` fica `true` quando a Kari editou o texto (o painel marca "Rascunho: revisar" nas que ainda não foram).
+
+- `POST /api/painel/faq` `{ "pergunta": "...", "resposta": "...", "grupo": "lojas", "publicada": false }` → `201 { "faq": {...} }` (sem `publicada`, nasce despublicada; nasce `revisada`, foi a Kari que escreveu)
+- `PUT /api/painel/faq/:id` `{ "pergunta", "resposta", "grupo", "publicada" }` (parcial) → `{ "faq": {...} }`. Mudar pergunta ou resposta marca `revisada`; só publicar não.
+  - Limites: pergunta 1 a 140 letras, resposta 1 a 600. Fora disso: `400 { erro: "faq_invalida", mensagem: "A pergunta pode ter até 140 letras; esta tem 141." }`. Grupo fora dos três ou `publicada` que não seja `true`/`false` → `400 faq_invalida`.
+- `DELETE /api/painel/faq/:id` → `{ "faq": {...} }` (sai da lista; pode desfazer) · `POST .../:id/restaurar` → `{ "faq": {...} }` · `POST .../:id/mover` `{ "direcao": "cima" | "baixo" }` → `{ "faq": [...] }`
+- Inexistente → `404 { erro: "nao_encontrado" }`.
+
 ## Site público
 
 - `GET /` → página gerada com o conteúdo atual (cache curto, limpo a cada mudança no painel).

@@ -147,6 +147,18 @@ main { padding: 20px 16px 120px; }
 .dep-foto-linha .btn { width: auto; min-height: 48px; }
 .dep-foto-linha .btn + .btn { margin-top: 0; }
 .dep-foto-previa { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; background: #fff; }
+/* Perguntas frequentes */
+.item.faq { grid-template-columns: 1fr auto; }
+.item.faq .nome { grid-column: 1; }
+.item.faq .nome em { display: block; font-style: normal; font-weight: 500; color: var(--tinta-suave); font-size: 14px; margin-top: 2px; }
+.item.faq .acoes-item { grid-column: 2; grid-row: 1; }
+.item.faq .linha-acoes { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center; }
+.item.faq .editar, .item.faq .publicar { border: 0; background: none; color: var(--roxo-forte); font-weight: 700; min-height: 44px; padding: 0; text-decoration: underline; text-underline-offset: 4px; }
+.item.faq .tirar { grid-column: auto; }
+.selo { display: inline-block; margin-right: 6px; padding: 2px 8px; border-radius: 999px; font-size: 13px; font-weight: 700; }
+.selo-rascunho { background: var(--mostarda-claro); color: #6B4700; }
+.selo-oculta { background: var(--fundo); color: var(--tinta-suave); }
+.selo-publicada { background: var(--verde-claro); color: #0B5129; }
 /* Antes e depois */
 .item.par { grid-template-columns: 96px 1fr auto; }
 .par-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; width: 96px; }

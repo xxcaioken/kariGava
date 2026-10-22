@@ -120,6 +120,24 @@
     </main>
   </section>
 
+  <!-- Perguntas frequentes -->
+  <section id="tela-faq" hidden>
+    <header class="topo">
+      <button class="voltar" id="voltar-faq" type="button">← Voltar</button>
+      <h1 id="faq-titulo" tabindex="-1">Perguntas frequentes</h1>
+    </header>
+    <main>
+      <div class="botoes-add">
+        <button class="btn" type="button" id="faq-nova">+ Nova pergunta</button>
+      </div>
+      <section aria-labelledby="titulo-faq-lista">
+        <h2 class="bloco-titulo" id="titulo-faq-lista">Perguntas <small id="faq-qtd"></small></h2>
+        <p class="bloco-sub">Só as publicadas aparecem no site. As marcadas "Rascunho: revisar" foram escritas por nós: leia, ajuste e publique.</p>
+        <div id="faq-lista"></div>
+      </section>
+    </main>
+  </section>
+
   <!-- Uma parte do site -->
   <section id="tela-secao" hidden>
     <header class="topo">
@@ -343,6 +361,32 @@
       <label class="marcar" id="par-consent-linha"><input type="checkbox" id="par-consent"><span>A cliente autorizou mostrar as fotos no site</span></label>
       <div class="erro" id="par-erro" role="alert" hidden></div>
       <button class="btn btn-verde" type="submit" id="par-salvar">Colocar no site</button>
+    </form>
+  </div>
+</dialog>
+
+<!-- Nova pergunta ou editar -->
+<dialog class="cheia" id="dlg-faq" aria-labelledby="faq-dlg-titulo">
+  <div class="rolagem">
+    <header class="topo">
+      <button class="voltar" type="button" data-fechar>← Voltar</button>
+      <h1 id="faq-dlg-titulo">Nova pergunta</h1>
+    </header>
+    <form class="celular-corpo" id="form-faq" novalidate>
+      <label class="campo"><span>Pergunta</span>
+        <input id="faq-pergunta" maxlength="140" autocomplete="off" aria-describedby="cont-faq-pergunta">
+        <span class="ajuda" id="cont-faq-pergunta"></span>
+      </label>
+      <label class="campo"><span>Resposta</span>
+        <textarea id="faq-resposta" maxlength="600" aria-describedby="cont-faq-resposta"></textarea>
+        <span class="ajuda" id="cont-faq-resposta"></span>
+      </label>
+      <label class="campo"><span>Grupo</span>
+        <select id="faq-grupo"></select>
+      </label>
+      <label class="marcar"><input type="checkbox" id="faq-publicada"><span>Mostrar no site</span></label>
+      <div class="erro" id="faq-erro" role="alert" hidden></div>
+      <button class="btn btn-verde" type="submit" id="faq-salvar">Salvar</button>
     </form>
   </div>
 </dialog>
