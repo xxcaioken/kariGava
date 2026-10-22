@@ -1,0 +1,38 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "site-kari",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/", "/api/*", "/fotos/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "site-kari",
+      // Preencher com o id de `wrangler d1 create site-kari` antes do primeiro deploy.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    { "binding": "FOTOS", "bucket_name": "site-kari-fotos" }
+  ],
+  // Só envia para endereços verificados no Email Routing do domínio (a Kari e o Caio).
+  "send_email": [
+    { "name": "EMAIL" }
+  ],
+  "triggers": {
+    // Toda segunda às 9h UTC: renova os tokens do Instagram.
+    "crons": ["0 9 * * 1"]
+  },
+  "vars": {
+    "EMAILS_PERMITIDOS": "",
+    "REMETENTE": "",
+    "WHATSAPP": "https://wa.me/message/X6FXMZWUW2EKM1",
+    "MODO_INSTAGRAM": "real"
+  }
+  // Segredos (wrangler secret put): SEGREDO_SESSAO, IG_APP_ID, IG_APP_SECRET
+}

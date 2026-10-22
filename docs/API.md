@@ -1,0 +1,94 @@
+# API do painel da Kari
+
+Servidor: um Cloudflare Worker (assets estáticos + D1 + R2 + cron). Tudo em JSON, UTF-8.
+Erros sempre no formato `{ "erro": "<codigo>", "mensagem": "<frase em PT-BR para mostrar na tela>" }`.
+O painel deve mostrar `mensagem` como está (já vem escrita para a Kari).
+
+## Seções do site
+
+| id | nome no painel | tipo |
+|---|---|---|
+| `lalaia` | LALAIÁ (produtos) | lalaia |
+| `consultoria` | Consultoria de estilo | servico |
+| `edicao` | Edição de guarda-roupa | servico |
+| `styling` | Styling e produção de moda | servico |
+| `vm` | Vitrines e visual merchandising | servico |
+| `oficina-look` | Oficina de Look | servico |
+| `ensino` | Cursos, oficinas e palestras | servico |
+| `sobre` | Sobre mim | sobre |
+
+Só seções `tipo: servico` têm textos editáveis (`resumo`, `para_quem`).
+A primeira foto (ordem 0) de cada serviço é a foto principal dele no site.
+
+## Login (código por e-mail)
+
+Sessão por cookie `kari_sessao` (HttpOnly, Secure, SameSite=Lax, 60 dias). Só e-mails da lista `EMAILS_PERMITIDOS`.
+
+- `POST /api/login/codigo` `{ "email": "..." }` → `200 { "ok": true }`
+  - Responde `ok` mesmo para e-mail fora da lista (não revela quem pode entrar), mas só envia código para a lista.
+  - `429 { erro: "muitas_tentativas", mensagem }` se pedir mais de 5 códigos em 15 min para o mesmo e-mail.
+- `POST /api/login/entrar` `{ "email": "...", "codigo": "123456" }` → `200 { "ok": true, "email": "..." }` + cookie
+  - `400 { erro: "codigo_invalido", mensagem: "Esse código não confere. Confira no seu e-mail e digite de novo." }`
+  - `400 { erro: "codigo_expirado", mensagem: "Esse código venceu. Peça um código novo." }` (validade 10 min, 5 tentativas)
+- `POST /api/login/sair` → `200 { "ok": true }` (apaga o cookie)
+
+Todas as rotas `/api/painel/*` exigem sessão: sem ela → `401 { erro: "sem_sessao" }` (o painel volta para a tela de e-mail).
+Rotas que mudam algo (POST/PUT/PATCH/DELETE) exigem `Content-Type: application/json` (ou multipart no envio de foto) e cabeçalho `Origin` igual ao do site; senão `403 { erro: "origem_invalida" }`.
+
+## Estado
+
+`GET /api/painel/estado` →
+```json
+{
+  "usuario": { "email": "kari@..." },
+  "secoes": [ { "id": "lalaia", "nome": "LALAIÁ (produtos)", "tipo": "lalaia", "cor": "#FEBC5C" } ],
+  "itens": [ { "id": "it_abc", "secao": "lalaia", "ordem": 0, "titulo": "BigScrunchie", "foto_url": "/fotos/ab12.jpg", "origem": "instagram", "ig_conta": "lalaia", "ig_id": "1789..." } ],
+  "textos": { "consultoria": { "titulo": "Consultoria de estilo", "resumo": "...", "para_quem": "..." } },
+  "instagram": { "contas": [ { "conta": "kari", "usuario": "@karienegavaw", "conectada": true }, { "conta": "lalaia", "usuario": "@lalaia.acessorios", "conectada": false } ] },
+  "site_url": "/"
+}
+```
+`itens` vêm ordenados por `secao`, depois `ordem`. `origem` é `instagram`, `celular` ou `inicial`.
+
+## Instagram
+
+- `GET /api/painel/instagram?conta=kari&depois=<cursor>` →
+  `{ "posts": [ { "conta": "kari", "ig_id": "...", "legenda": "...", "titulo_sugerido": "1ª linha da legenda, até 60 caracteres", "foto_url": "https://... (miniatura do Instagram)", "tipo": "IMAGE|VIDEO|CAROUSEL_ALBUM", "link": "https://instagram.com/p/...", "data": "2026-10-17T12:00:00+0000", "no_site": ["lalaia"] } ], "depois": "cursor ou null" }`
+  - 24 posts por página. Para vídeo, `foto_url` é a capa. `no_site` lista as seções onde esse post já está (vazio = em nenhuma).
+  - `409 { erro: "instagram_desconectado", mensagem: "Essa conta do Instagram ainda não está ligada ao site. Peça para o Caio ligar." }`
+  - `502 { erro: "instagram_fora", mensagem: "O Instagram não respondeu agora. Tente de novo em alguns minutos." }`
+- `GET /api/painel/instagram/novidades` → `{ "posts": [...] }` os 8 posts mais recentes das contas ligadas, misturados por data (mesmo formato).
+- Ligar conta (feito uma vez pelo Caio): `GET /api/painel/instagram/ligar?conta=kari` → redireciona para o Instagram → volta em `/api/instagram/retorno` → redireciona para `/painel/?instagram=ligado`.
+
+## Itens (fotos no site)
+
+- `POST /api/painel/itens` (JSON) `{ "secao": "lalaia", "titulo": "opcional (só vale quando é 1 post)", "instagram": [ { "conta": "lalaia", "ig_id": "..." } ] }`
+  → `201 { "itens": [ ...criados ] }` — aceita 1 ou vários posts; baixa a imagem do Instagram e guarda no site (R2). Novos itens entram no FIM da seção, na ordem enviada. Sem título, usa o `titulo_sugerido` do post.
+  - Post que já está nessa seção é ignorado (não duplica).
+- `POST /api/painel/itens` (multipart/form-data) campos `secao`, `titulo` (opcional), `foto` (jpg/png/webp até 15 MB) → `201 { "itens": [ item ] }`
+  - `400 { erro: "foto_invalida", mensagem: "Esse arquivo não é uma foto. Escolha uma foto da galeria." }`
+  - `413 { erro: "foto_grande", mensagem: "Essa foto é grande demais. Escolha outra ou tire um print dela." }`
+- `PATCH /api/painel/itens/:id` `{ "titulo": "..." }` → `{ "item": {...} }`
+- `DELETE /api/painel/itens/:id` → `{ "item": {...} }` (sai do site; pode desfazer)
+- `POST /api/painel/itens/:id/restaurar` → `{ "item": {...} }` (volta para a posição em que estava)
+- `POST /api/painel/itens/:id/mover` `{ "direcao": "cima" | "baixo" }` → `{ "itens": [ ...itens da seção na nova ordem ] }`
+- Qualquer `secao` desconhecida → `400 { erro: "secao_invalida" }`; item inexistente → `404 { erro: "nao_encontrado" }`.
+
+## Textos dos serviços
+
+- `PUT /api/painel/textos/:servicoId` `{ "resumo": "...", "para_quem": "..." }` → `{ "textos": { "titulo": "...", "resumo": "...", "para_quem": "..." } }`
+  - Limites: resumo 1 a 220 caracteres, para_quem 0 a 220. Fora disso: `400 { erro: "texto_invalido", mensagem: "O resumo precisa ter até 220 letras." }`
+
+## Site público
+
+- `GET /` → página gerada com o conteúdo atual (cache curto, limpo a cada mudança no painel).
+- `GET /fotos/:chave` → imagem guardada (cache longo, imutável).
+- `GET /painel/` → painel (HTML estático; ele mesmo decide se mostra o login ou o conteúdo chamando `/api/painel/estado`).
+
+## Rotina agendada (cron, 1x por semana)
+
+Renova os tokens do Instagram (válidos 60 dias; renováveis após 24 h).
+
+## Desenvolvimento local
+
+`npm run dev` sobe tudo com D1/R2 locais. Com `DEV_LOGIN=1` em `.dev.vars`, o código de login aparece no terminal em vez de ir por e-mail. Sem `IG_APP_ID`, o Instagram usa posts falsos (`MODO_INSTAGRAM=falso`) feitos com as fotos de `public/img/`.

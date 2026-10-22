@@ -1,0 +1,21 @@
+{
+  "name": "site-kari",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --local --port 8787",
+    "banco:local": "wrangler d1 migrations apply site-kari --local",
+    "banco:remoto": "wrangler d1 migrations apply site-kari --remote",
+    "seed": "node scripts/gerar-seed.mjs",
+    "test": "node --test 'test/unit/*.test.mjs'",
+    "test:e2e": "./scripts/resetar-local.sh && node --test 'test/e2e/*.test.mjs'",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.152.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "workerd@1.20261019.1": true
+  }
+}
