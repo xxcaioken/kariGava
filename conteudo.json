@@ -237,5 +237,206 @@
       "texto": "Tudo certinho antes de começar.",
       "rascunho": true
     }
-  ]
+  ],
+  "quiz": {
+    "titulo": "Qual é o seu momento de estilo?",
+    "intro": "8 perguntas rápidas, uma por tela. No fim, eu te digo por onde começar.",
+    "rascunho": true,
+    "resultados": [
+      {
+        "id": "edicao",
+        "nome": "Armário cheio, nada para vestir",
+        "servico": "edicao",
+        "texto": "Você tem roupa. O que falta é olhar peça por peça, tirar o que não serve mais e registrar combinações para o dia a dia. É a Edição de guarda-roupa."
+      },
+      {
+        "id": "consultoria",
+        "nome": "Quero me reconhecer",
+        "servico": "consultoria",
+        "texto": "O que você procura é se ver no espelho e pensar: sou eu. A Consultoria de estilo parte da sua história e do seu dia a dia, sem fórmula pronta."
+      },
+      {
+        "id": "styling",
+        "nome": "Preciso de produção",
+        "servico": "styling",
+        "texto": "Você tem uma ocasião com data e quer chegar certa. Styling e produção de moda: briefing, prova de looks e produção no dia."
+      },
+      {
+        "id": "vm",
+        "nome": "Minha loja precisa vender",
+        "servico": "vm",
+        "texto": "Seu desafio é a loja, não o seu armário. Vitrines e visual merchandising: diagnóstico, projeto de vitrine e exposição montada junto com a equipe."
+      }
+    ],
+    "perguntas": [
+      {
+        "pergunta": "Quando você abre o guarda-roupa de manhã, o que acontece?",
+        "opcoes": [
+          {
+            "texto": "Tem roupa demais e eu não sei o que vestir",
+            "resultado": "edicao"
+          },
+          {
+            "texto": "Nada parece ter a minha cara",
+            "resultado": "consultoria"
+          },
+          {
+            "texto": "Penso no look de uma foto, show ou evento que vem aí",
+            "resultado": "styling"
+          },
+          {
+            "texto": "Penso mais na vitrine da minha loja do que na minha roupa",
+            "resultado": "vm"
+          }
+        ]
+      },
+      {
+        "pergunta": "O que mais te incomoda hoje?",
+        "opcoes": [
+          {
+            "texto": "Peças que eu nunca uso ocupando espaço",
+            "resultado": "edicao"
+          },
+          {
+            "texto": "Sentir que me visto no automático",
+            "resultado": "consultoria"
+          },
+          {
+            "texto": "Montar produção sem alguém com olhar de fora",
+            "resultado": "styling"
+          },
+          {
+            "texto": "Gente entra na loja, olha e não compra",
+            "resultado": "vm"
+          }
+        ]
+      },
+      {
+        "pergunta": "Se tivesse uma tarde livre com a Kari, você preferia…",
+        "opcoes": [
+          {
+            "texto": "Abrir o armário e decidir peça por peça",
+            "resultado": "edicao"
+          },
+          {
+            "texto": "Conversar sobre quem eu sou e como quero ser vista",
+            "resultado": "consultoria"
+          },
+          {
+            "texto": "Provar looks para uma ocasião específica",
+            "resultado": "styling"
+          },
+          {
+            "texto": "Andar pela loja repensando exposição e vitrine",
+            "resultado": "vm"
+          }
+        ]
+      },
+      {
+        "pergunta": "Qual frase soa mais com você?",
+        "opcoes": [
+          {
+            "texto": "Tenho muita roupa e repito as mesmas três",
+            "resultado": "edicao"
+          },
+          {
+            "texto": "Quero me olhar no espelho e me reconhecer",
+            "resultado": "consultoria"
+          },
+          {
+            "texto": "Tenho um evento e quero chegar impecável",
+            "resultado": "styling"
+          },
+          {
+            "texto": "Minha vitrine não traduz a marca",
+            "resultado": "vm"
+          }
+        ]
+      },
+      {
+        "pergunta": "Comprar roupa, para você, é…",
+        "opcoes": [
+          {
+            "texto": "Mais uma peça que vai ficar parada",
+            "resultado": "edicao"
+          },
+          {
+            "texto": "Difícil: nunca sei o que combina comigo",
+            "resultado": "consultoria"
+          },
+          {
+            "texto": "Caçar aquela peça certa para a produção",
+            "resultado": "styling"
+          },
+          {
+            "texto": "Pensar no que vende e em como mostrar",
+            "resultado": "vm"
+          }
+        ]
+      },
+      {
+        "pergunta": "Quem vai ver o resultado?",
+        "opcoes": [
+          {
+            "texto": "Eu, todo dia, na hora de me vestir",
+            "resultado": "edicao"
+          },
+          {
+            "texto": "Eu, me sentindo mais eu",
+            "resultado": "consultoria"
+          },
+          {
+            "texto": "Câmera, palco ou plateia",
+            "resultado": "styling"
+          },
+          {
+            "texto": "Clientes passando na frente da loja",
+            "resultado": "vm"
+          }
+        ]
+      },
+      {
+        "pergunta": "Com o que você quer sair, no fim?",
+        "opcoes": [
+          {
+            "texto": "Um armário enxuto com combinações prontas",
+            "resultado": "edicao"
+          },
+          {
+            "texto": "Um mapa do meu estilo e do que me veste bem",
+            "resultado": "consultoria"
+          },
+          {
+            "texto": "Looks fechados para o dia da produção",
+            "resultado": "styling"
+          },
+          {
+            "texto": "Vitrine e loja montadas para vender",
+            "resultado": "vm"
+          }
+        ]
+      },
+      {
+        "pergunta": "Quando é para resolver isso?",
+        "opcoes": [
+          {
+            "texto": "Na próxima troca de estação",
+            "resultado": "edicao"
+          },
+          {
+            "texto": "Sem pressa, mas quero mudar de vez",
+            "resultado": "consultoria"
+          },
+          {
+            "texto": "Tem data marcada",
+            "resultado": "styling"
+          },
+          {
+            "texto": "Antes da próxima coleção chegar",
+            "resultado": "vm"
+          }
+        ]
+      }
+    ]
+  }
 }

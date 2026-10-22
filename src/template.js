@@ -186,6 +186,7 @@ export function template(d, esc) {
           <a class="btn" href="${wa}">${ICONE_WA} Chamar no WhatsApp</a>
           <a class="btn btn-linha" href="#servicos">Ver serviços</a>
         </div>
+        <p class="hero-quiz"><a href="/quiz">Não sabe por onde começar? Faça o quiz</a></p>
       </div>
 
       <div class="leque-area">
@@ -286,7 +287,8 @@ ${faq}</main>
     <a class="btn" href="${wa}">Chamar no WhatsApp</a>
     <div class="redes">
       <a href="${esc(d.marca.instagram.kari)}">@karienegavaw</a>
-      <a href="${esc(d.marca.instagram.lalaia)}">@lalaia.acessorios</a>${d.marca.gbp_url ? `
+      <a href="${esc(d.marca.instagram.lalaia)}">@lalaia.acessorios</a>
+      <a href="/quiz">Quiz: qual é o seu momento de estilo?</a>${d.marca.gbp_url ? `
       <a href="${esc(d.marca.gbp_url)}" rel="noopener">Avaliações no Google</a>` : ''}
     </div>
     <p class="rodape-fim">${esc(d.marca.nome)} · Styling &amp; Visual Merchandising · ${esc(d.marca.cidade)}<br>Foto do topo: ${esc(d.hero.credito_foto.replace(/^Foto: /, ''))}</p>

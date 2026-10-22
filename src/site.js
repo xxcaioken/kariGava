@@ -14,7 +14,7 @@ const AMOSTRAS = {
   vm: { kg: 'KG 05', nome: 'Verde Vitrine', cor: '#017F38', var: 'verde', escuro: false, curto: 'Vitrines', legenda: 'Vitrines e VM' },
   ensino: { kg: 'KG 06', nome: 'Grafite Aula', cor: '#2A2730', var: 'grafite', escuro: false, curto: 'Cursos', legenda: 'Cursos e palestras' },
 };
-const ORDEM_SERVICOS = ['consultoria', 'edicao', 'oficina-look', 'styling', 'vm', 'ensino'];
+export const ORDEM_SERVICOS = ['consultoria', 'edicao', 'oficina-look', 'styling', 'vm', 'ensino'];
 
 const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 export const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ESCAPES[c]);

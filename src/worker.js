@@ -6,6 +6,7 @@ import { listarPares, criarPar, editarPar, removerPar, restaurarPar, moverPar } 
 import { listarFaq, criarFaq, salvarFaq, removerFaq, restaurarFaq, moverFaq } from './faq.js';
 import { contasLigadas, listarPosts, urlLigar, concluirLigacao, renovarTokens, CONTAS } from './instagram.js';
 import { renderizarSite } from './site.js';
+import { renderizarQuiz } from './quiz.js';
 import { comCabecalhos } from './seguranca.js';
 import { listarProdutos, agruparProdutos, salvarProduto, renomearProduto } from './produtos.js';
 import { lerCondicoes, salvarCondicoes, lerCupom } from './config.js';
@@ -218,6 +219,11 @@ async function tratar(request, env, url) {
     ]);
     return new Response(renderizarSite({ itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois, faq, whatsappNumero: env.WHATSAPP_NUMERO }), {
       headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
+    });
+  }
+  if (url.pathname === '/quiz' && (request.method === 'GET' || request.method === 'HEAD')) {
+    return new Response(renderizarQuiz({ whatsappNumero: env.WHATSAPP_NUMERO }), {
+      headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300' },
     });
   }
   return env.ASSETS.fetch(request);

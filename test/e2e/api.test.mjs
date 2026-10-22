@@ -872,3 +872,32 @@ test('R-06 FAQ: 4 publicadas iniciais, publicar, editar, validações, ordem, ti
   for (const f of todas) if (iniciais.includes(f.pergunta)) await chamar(`/api/painel/faq/${f.id}`, { metodo: 'PUT', corpo: { publicada: true } });
   assert.equal(perguntasNoHtml((await chamar('/')).dados).length, 4);
 });
+
+// ---------- S-10 · Quiz (R-07) ----------
+test('R-07 quiz: página com 8 perguntas e noscript, quiz.js com os cabeçalhos, links no hero e no rodapé', async () => {
+  const { status, dados: html, r } = await chamar('/quiz');
+  assert.equal(status, 200);
+  assert.match(r.headers.get('content-type'), /text\/html/);
+  assert.ok(html.includes('<noscript>') && !html.includes('fonts.googleapis'), 'noscript e sem Google Fonts');
+  assert.equal((html.match(/class="quiz-lista-pergunta"/g) || []).length, 8, '8 perguntas no noscript');
+  const dados = JSON.parse(html.match(/<script type="application\/json" id="quiz-dados">([\s\S]*?)<\/script>/)[1]);
+  assert.equal(dados.perguntas.length, 8);
+  const numero = numeroWhatsAppDaConfig();
+  for (const res of dados.resultados) {
+    assert.ok(res.wa.startsWith(`https://wa.me/${numero}?text=`), res.wa);
+    assert.ok(decodificarTexto(res.wa).includes('fiz o quiz') && decodificarTexto(res.wa).includes(res.nome));
+  }
+  for (const [nome, valor] of Object.entries(CABECALHOS_SEGURANCA)) assert.equal(r.headers.get(nome), valor, `/quiz → ${nome}`);
+
+  const js = await fetch(BASE + '/quiz.js');
+  assert.equal(js.status, 200);
+  assert.match(js.headers.get('content-type'), /javascript/);
+  for (const [nome, valor] of Object.entries(CABECALHOS_SEGURANCA)) assert.equal(js.headers.get(nome), valor, `/quiz.js → ${nome}`);
+
+  const home = (await chamar('/')).dados;
+  const hero = home.slice(home.indexOf('class="hero"'), home.indexOf('id="servicos"'));
+  const linkHero = hero.match(/<a [^>]*href="\/quiz"[^>]*>([^<]*)<\/a>/);
+  assert.ok(linkHero, 'link do quiz no hero');
+  assert.ok(linkHero[1].includes('Faça o quiz') && !linkHero[0].includes('class="btn'), 'link de texto, não botão');
+  assert.ok(rodape(home).includes('href="/quiz"'), 'link do quiz no rodapé');
+});
