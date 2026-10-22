@@ -147,6 +147,19 @@ main { padding: 20px 16px 120px; }
 .dep-foto-linha .btn { width: auto; min-height: 48px; }
 .dep-foto-linha .btn + .btn { margin-top: 0; }
 .dep-foto-previa { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; background: #fff; }
+/* Antes e depois */
+.item.par { grid-template-columns: 96px 1fr auto; }
+.par-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; width: 96px; }
+.par-mini img { width: 100%; height: 60px; object-fit: cover; border-radius: 6px; background: var(--fundo); }
+.item.par .editar { grid-column: 2; justify-self: start; border: 0; background: none; color: var(--roxo-forte); font-weight: 700; min-height: 44px; padding: 0; text-decoration: underline; text-underline-offset: 4px; }
+.item.par .tirar { grid-column: 3; }
+.par-escolha { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 6px 0; }
+.par-caixa { position: relative; display: grid; place-items: center; aspect-ratio: 3 / 4; padding: 0; border: 2px dashed var(--linha); border-radius: 14px; background: #fff; overflow: hidden; }
+.par-caixa img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.par-caixa .par-rotulo { position: absolute; top: 8px; left: 8px; padding: 4px 8px; border-radius: 6px; background: var(--tinta); color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.par-caixa .par-vazio { padding: 0 12px; color: var(--tinta-suave); font-weight: 600; font-size: 15px; }
+.par-caixa.tem-foto { border-style: solid; }
+.par-caixa.tem-foto .par-vazio { display: none; }
 .vazio p { margin: 0; }
 .textos { margin-top: 30px; padding: 18px; border-radius: 18px; background: #fff; }
 .textos h2 { font-size: 20px; margin: 0 0 4px; }

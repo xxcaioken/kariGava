@@ -102,6 +102,24 @@
     </main>
   </section>
 
+  <!-- Antes e depois -->
+  <section id="tela-pares" hidden>
+    <header class="topo">
+      <button class="voltar" id="voltar-par" type="button">← Voltar</button>
+      <h1 id="par-titulo" tabindex="-1">Antes e depois</h1>
+    </header>
+    <main>
+      <div class="botoes-add">
+        <button class="btn" type="button" id="par-novo">+ Novo par de fotos</button>
+      </div>
+      <section aria-labelledby="titulo-par-lista">
+        <h2 class="bloco-titulo" id="titulo-par-lista">No site agora <small id="par-qtd"></small></h2>
+        <p class="bloco-sub" id="par-dica" hidden>O de cima aparece primeiro. Use as setas para mudar a ordem.</p>
+        <div id="par-lista"></div>
+      </section>
+    </main>
+  </section>
+
   <!-- Uma parte do site -->
   <section id="tela-secao" hidden>
     <header class="topo">
@@ -289,6 +307,42 @@
       <label class="marcar" id="dep-consent-linha" hidden><input type="checkbox" id="dep-consent"><span>A cliente autorizou usar a foto e o depoimento no site</span></label>
       <div class="erro" id="dep-erro" role="alert" hidden></div>
       <button class="btn btn-verde" type="submit" id="dep-salvar">Colocar no site</button>
+    </form>
+  </div>
+</dialog>
+
+<!-- Cadastrar ou editar um par antes/depois -->
+<dialog class="cheia" id="dlg-par" aria-labelledby="par-dlg-titulo">
+  <div class="rolagem">
+    <header class="topo">
+      <button class="voltar" type="button" data-fechar>← Voltar</button>
+      <h1 id="par-dlg-titulo">Novo par de fotos</h1>
+    </header>
+    <form class="celular-corpo" id="form-par" novalidate>
+      <div class="campo" id="par-fotos-area">
+        <span>As duas fotos</span>
+        <input type="file" id="par-arquivo-antes" accept="image/*" class="sr" tabindex="-1" aria-hidden="true">
+        <input type="file" id="par-arquivo-depois" accept="image/*" class="sr" tabindex="-1" aria-hidden="true">
+        <div class="par-escolha">
+          <button class="par-caixa" type="button" id="par-escolher-antes" aria-label="Escolher a foto de antes">
+            <img id="par-previa-antes" alt="" hidden><span class="par-rotulo">Antes</span><span class="par-vazio" id="par-vazio-antes">Toque para escolher</span>
+          </button>
+          <button class="par-caixa" type="button" id="par-escolher-depois" aria-label="Escolher a foto de depois">
+            <img id="par-previa-depois" alt="" hidden><span class="par-rotulo">Depois</span><span class="par-vazio" id="par-vazio-depois">Toque para escolher</span>
+          </button>
+        </div>
+        <span class="ajuda">Toque de novo para trocar. Para trocar as fotos de um par já salvo, tire-o do site e cadastre de novo.</span>
+      </div>
+      <label class="campo"><span>Legenda (opcional)</span>
+        <input id="par-legenda" maxlength="120" autocomplete="off" placeholder="Ex.: Vitrine de inverno da loja" aria-describedby="cont-par-legenda">
+        <span class="ajuda" id="cont-par-legenda"></span>
+      </label>
+      <label class="campo"><span>Serviço</span>
+        <select id="par-servico"></select>
+      </label>
+      <label class="marcar" id="par-consent-linha"><input type="checkbox" id="par-consent"><span>A cliente autorizou mostrar as fotos no site</span></label>
+      <div class="erro" id="par-erro" role="alert" hidden></div>
+      <button class="btn btn-verde" type="submit" id="par-salvar">Colocar no site</button>
     </form>
   </div>
 </dialog>

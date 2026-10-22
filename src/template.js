@@ -81,6 +81,26 @@ export function template(d, esc) {
 
   const fotoSobre = d.sobre.fotos[0];
 
+  // Antes e depois (R-05): dentro da área de serviços, logo após a grade; só existe com par. As duas fotos lado a lado
+  // em qualquer largura (a comparação é o conteúdo), rótulos sobrepostos e legenda abaixo.
+  const fotoPar = (p, lado, rotulo) => `<figure class="par-foto"><img src="${esc(p[`${lado}_url`])}" alt="${esc(`${rotulo}: ${p.legenda || p.servico_nome}`)}" width="${esc(p[`largura_${lado}`])}" height="${esc(p[`altura_${lado}`])}" loading="lazy" decoding="async"><figcaption>${rotulo}</figcaption></figure>`;
+  const antesDepois = d.antes_depois.length ? `
+      <div class="antes-depois" id="antes-depois" aria-labelledby="titulo-antes-depois">
+        <div class="secao-cab">
+          <h3 id="titulo-antes-depois">Antes e depois</h3>
+          <p>Vitrines, looks e armários que passaram pela minha mão.</p>
+        </div>
+        <ul class="pares">${d.antes_depois.map(p => `
+          <li class="par" style="--cor:var(--${p.cor})">
+            <div class="par-fotos">
+              ${fotoPar(p, 'antes', 'Antes')}
+              ${fotoPar(p, 'depois', 'Depois')}
+            </div>
+            <p class="par-legenda">${p.legenda ? `${esc(p.legenda)} ` : ''}<span class="rotulo">${esc(p.servico_nome)}</span></p>
+          </li>`).join('')}
+        </ul>
+      </div>` : '';
+
   // O que dizem (R-04): só existe no HTML quando há depoimento. Lista vertical, foto redonda ou inicial na cor da cartela.
   const depoimentos = d.depoimentos.length ? `
   <section class="secao depoimentos-secao" id="depoimentos" aria-labelledby="titulo-depoimentos">
@@ -179,7 +199,7 @@ export function template(d, esc) {
       </fieldset>
 
       <ul class="grade-servicos">${servicos}
-      </ul>
+      </ul>${antesDepois}
     </div>
   </section>
 

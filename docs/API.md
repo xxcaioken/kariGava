@@ -132,6 +132,17 @@ Seção "O que dizem" do site, entre "Como trabalhar comigo" e "Sobre"; só exis
 - `POST /api/painel/depoimentos/:id/mover` `{ "direcao": "cima" | "baixo" }` → `{ "depoimentos": [ ...na nova ordem ] }`
 - Inexistente → `404 { erro: "nao_encontrado" }`.
 
+## Antes e depois
+
+Bloco "Antes e depois" dentro da área de serviços do site, logo após a grade; só existe no HTML quando há par ativo. O estado traz `antes_depois`: `[ { "id": "ad_...", "ordem", "legenda", "servico": "vm" | "styling" | "edicao", "antes_url", "depois_url", "largura_antes", "altura_antes", "largura_depois", "altura_depois", "consentimento_em" } ]`.
+
+- `POST /api/painel/antes-depois` (só multipart/form-data) campos `antes` e `depois` (as duas fotos, jpg/png/webp até 15 MB cada; corpo todo até 24 MB), `largura_antes`, `altura_antes`, `largura_depois`, `altura_depois` (inteiros de 1 a 10000; viram `width`/`height` no site), `legenda` (até 120 letras, opcional), `servico` (`vm`, `styling` ou `edicao`) e `consentimento` (`true`, obrigatório) → `201 { "par": {...} }`
+  - Falta uma foto → `400 { erro: "foto_invalida", mensagem: "Falta a foto de Antes. O par precisa das duas fotos." }` (ou "de Depois"). Sem `consentimento` → `400 { erro: "foto_invalida", mensagem: "Marque que a cliente autorizou antes de publicar as fotos." }`. Legenda longa ou serviço fora dos três → `400 texto_invalido`. Tamanho inválido → `400 foto_invalida`; grande demais → `413 foto_grande`.
+  - Não existe par pela metade: o servidor valida as duas fotos, sobe as duas no R2 (`ad/<id>-antes.jpg`, `ad/<id>-depois.jpg`) e grava; falha em qualquer passo apaga o que subiu e responde `500 { erro: "erro_interno", mensagem: "Não deu para salvar o par. Tente de novo." }`. O id nasce no servidor: repetir o POST cria outro par.
+- `PATCH /api/painel/antes-depois/:id` `{ "legenda", "servico" }` (parcial) → `{ "par": {...} }`. As fotos não mudam: para trocar, tire o par e cadastre de novo.
+- `DELETE /api/painel/antes-depois/:id` → `{ "par": {...} }` (sai do site; pode desfazer) · `POST .../:id/restaurar` → `{ "par": {...} }` · `POST .../:id/mover` `{ "direcao": "cima" | "baixo" }` → `{ "antes_depois": [...] }`
+- Inexistente → `404 { erro: "nao_encontrado" }`.
+
 ## Site público
 
 - `GET /` → página gerada com o conteúdo atual (cache curto, limpo a cada mudança no painel).

@@ -48,7 +48,7 @@ export function textoDoPreco(preco, grupo) {
 }
 
 // Junta o conteúdo fixo (conteudo.json) com o que a Kari muda no painel (fotos e textos).
-export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos = [], condicoes, cupom, depoimentos = [], whatsappNumero } = {}) {
+export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos = [], condicoes, cupom, depoimentos = [], antesDepois = [], whatsappNumero } = {}) {
   const porSecao = new Map();
   for (const it of itens) porSecao.set(it.secao, [...(porSecao.get(it.secao) || []), it]);
   const grupos = new Map(conteudo.grupos_servicos.map(g => [g.id, g.titulo]));
@@ -80,6 +80,12 @@ export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos 
     return { ...d, servico_nome: servico?.titulo || '', cor: servico?.var || CORES[i % CORES.length], inicial: [...(d.nome || '?')][0].toUpperCase() };
   });
 
+  // Antes e depois (R-05): serviço vira nome e cor da cartela.
+  const pares = antesDepois.map(p => {
+    const servico = servicos.find(s => s.id === p.servico);
+    return { ...p, servico_nome: servico?.titulo || '', cor: servico?.var || 'grafite' };
+  });
+
   // Condições de "Como encomendar" (R-03): só as preenchidas vão para o site, na ordem dos rótulos.
   const cond = { ...CONDICOES_VAZIAS, ...(condicoes || {}) };
   const listaCondicoes = Object.entries(ROTULOS_CONDICOES).filter(([campo]) => cond[campo]).map(([campo, rotulo]) => ({ rotulo, texto: cond[campo] }));
@@ -92,6 +98,7 @@ export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos 
     grupos: conteudo.grupos_servicos,
     como_trabalhar: conteudo.como_trabalhar,
     depoimentos: listaDepoimentos,
+    antes_depois: pares,
     sobre: { ...conteudo.sobre, fotos: porSecao.get('sobre') || [] },
     lalaia: { ...conteudo.lalaia, produtos, condicoes: listaCondicoes, cupom: cupomSite, wa: waLalaia(MENSAGENS_WA.lalaia) },
     ensino_realizado: conteudo.ensino_realizado,

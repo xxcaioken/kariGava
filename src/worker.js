@@ -2,6 +2,7 @@ import { ErroApi, json, respostaDeErro, lerJson } from './util.js';
 import { pedirCodigo, entrar, cookieSair, exigirSessao } from './auth.js';
 import { SECOES, listarItens, lerTextos, salvarTextos, adicionarDoInstagram, adicionarDoCelular, renomear, remover, restaurar, mover, secoesPorPost, lerFotoDoForm } from './itens.js';
 import { listarDepoimentos, criarDepoimento, editarDepoimento, removerDepoimento, restaurarDepoimento, moverDepoimento } from './depoimentos.js';
+import { listarPares, criarPar, editarPar, removerPar, restaurarPar, moverPar } from './antesdepois.js';
 import { contasLigadas, listarPosts, urlLigar, concluirLigacao, renovarTokens, CONTAS } from './instagram.js';
 import { renderizarSite } from './site.js';
 import { comCabecalhos } from './seguranca.js';
@@ -75,11 +76,30 @@ async function api(request, env, url) {
   const rota = pathname.slice('/api/painel'.length);
 
   if (rota === '/estado' && metodo === 'GET') {
-    const [itens, textos, contas, produtos, condicoes, cupom, depoimentos] = await Promise.all([
-      listarItens(env), lerTextos(env), contasLigadas(env), listarProdutos(env), lerCondicoes(env), lerCupom(env), listarDepoimentos(env),
+    const [itens, textos, contas, produtos, condicoes, cupom, depoimentos, antes_depois] = await Promise.all([
+      listarItens(env), lerTextos(env), contasLigadas(env), listarProdutos(env), lerCondicoes(env), lerCupom(env), listarDepoimentos(env), listarPares(env),
     ]);
     const lalaia = { produtos: agruparProdutos(itens.filter(i => i.secao === 'lalaia'), produtos), condicoes, cupom };
-    return json({ usuario: { email }, secoes: SECOES, itens, textos, lalaia, depoimentos, instagram: { contas }, site_url: '/' });
+    return json({ usuario: { email }, secoes: SECOES, itens, textos, lalaia, depoimentos, antes_depois, instagram: { contas }, site_url: '/' });
+  }
+
+  // ---------- Antes e depois ----------
+  if (rota === '/antes-depois' && metodo === 'POST') {
+    const form = await lerMultipart(request);
+    const fotoDoForm = async lado => {
+      const f = await lerFotoDoForm(form, lado, { obrigatoria: false });
+      return f && { ...f, largura: form.get(`largura_${lado}`), altura: form.get(`altura_${lado}`) };
+    };
+    const [antes, depois] = await Promise.all([fotoDoForm('antes'), fotoDoForm('depois')]);
+    return json({ par: await criarPar(env, { legenda: form.get('legenda'), servico: form.get('servico'), consentimento: form.get('consentimento'), antes, depois }) }, 201);
+  }
+  const ad = rota.match(/^\/antes-depois\/(ad_[\w-]+)(\/restaurar|\/mover)?$/);
+  if (ad) {
+    const [, id, acao] = ad;
+    if (!acao && metodo === 'PATCH') { exigirJson(request); return json({ par: await editarPar(env, id, await lerJson(request)) }); }
+    if (!acao && metodo === 'DELETE') return json({ par: await removerPar(env, id) });
+    if (acao === '/restaurar' && metodo === 'POST') return json({ par: await restaurarPar(env, id) });
+    if (acao === '/mover' && metodo === 'POST') { exigirJson(request); return json({ antes_depois: await moverPar(env, id, (await lerJson(request)).direcao) }); }
   }
 
   // ---------- Depoimentos ----------
@@ -180,11 +200,11 @@ async function tratar(request, env, url) {
   if (url.pathname.startsWith('/api/')) return api(request, env, url);
   if (url.pathname.startsWith('/fotos/') && request.method === 'GET') return foto(env, decodeURIComponent(url.pathname.slice('/fotos/'.length)));
   if (url.pathname === '/' && (request.method === 'GET' || request.method === 'HEAD')) {
-    const [itens, textos, produtos, condicoes, cupom, depoimentos] = await Promise.all([
+    const [itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois] = await Promise.all([
       listarItens(env), lerTextos(env), tolerante(listarProdutos(env), []), tolerante(lerCondicoes(env), null), tolerante(lerCupom(env), null),
-      tolerante(listarDepoimentos(env), []),
+      tolerante(listarDepoimentos(env), []), tolerante(listarPares(env), []),
     ]);
-    return new Response(renderizarSite({ itens, textos, produtos, condicoes, cupom, depoimentos, whatsappNumero: env.WHATSAPP_NUMERO }), {
+    return new Response(renderizarSite({ itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois, whatsappNumero: env.WHATSAPP_NUMERO }), {
       headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
     });
   }

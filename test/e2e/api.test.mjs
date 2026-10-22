@@ -706,3 +706,93 @@ test('R-04 depoimentos: seção só quando existe, foto com consentimento, valid
   assert.ok(!html.includes('id="depoimentos"'), 'sem depoimentos ativos a seção some');
   assert.deepEqual((await chamar('/api/painel/estado')).dados.depoimentos, []);
 });
+
+// ---------- S-08 · Antes e depois (R-05) ----------
+const secaoAntesDepois = html => {
+  const ini = html.indexOf('id="antes-depois"');
+  return ini < 0 ? null : html.slice(ini, html.indexOf('id="como-trabalhar"'));
+};
+function formPar({ antes, depois, ...campos }) {
+  const form = new FormData();
+  for (const [k, v] of Object.entries(campos)) form.set(k, String(v));
+  if (antes) form.set('antes', antes, 'antes.jpg');
+  if (depois) form.set('depois', depois, 'depois.jpg');
+  return form;
+}
+
+test('R-05 antes e depois: par só com as duas fotos e consentimento, seção na área de serviços, legenda, ordem, tirar e desfazer', async () => {
+  let html = (await chamar('/')).dados;
+  assert.ok(!html.includes('id="antes-depois"'), 'sem pares a seção não existe');
+  assert.deepEqual((await chamar('/api/painel/estado')).dados.antes_depois, [], 'estado devolve antes_depois');
+
+  const jpgA = new Blob([readFileSync(new URL('../../public/img/atelie-busto.jpg', import.meta.url))], { type: 'image/jpeg' });
+  const jpgD = new Blob([readFileSync(new URL('../../public/img/sapatos-vermelhos.jpg', import.meta.url))], { type: 'image/jpeg' });
+  const base = { legenda: 'Vitrine de inverno da <b>loja</b>', servico: 'vm', consentimento: 'true', largura_antes: 1200, altura_antes: 1600, largura_depois: 1200, altura_depois: 1600 };
+
+  // Falta uma das fotos → 400 dizendo qual.
+  const semDepois = await chamar('/api/painel/antes-depois', { metodo: 'POST', form: formPar({ ...base, antes: jpgA }) });
+  assert.equal(semDepois.status, 400);
+  assert.equal(semDepois.dados.erro, 'foto_invalida');
+  assert.match(semDepois.dados.mensagem, /Falta a foto de Depois/);
+  const semAntes = await chamar('/api/painel/antes-depois', { metodo: 'POST', form: formPar({ ...base, depois: jpgD }) });
+  assert.equal(semAntes.status, 400);
+  assert.match(semAntes.dados.mensagem, /Falta a foto de Antes/);
+  // Sem consentimento → 400 (uc4a).
+  const semConsent = await chamar('/api/painel/antes-depois', { metodo: 'POST', form: formPar({ ...base, consentimento: '', antes: jpgA, depois: jpgD }) });
+  assert.equal(semConsent.status, 400);
+  assert.equal(semConsent.dados.erro, 'foto_invalida');
+  assert.match(semConsent.dados.mensagem, /autorizou/);
+  // Serviço fora dos 3 permitidos, legenda longa, tamanho inválido.
+  assert.equal((await chamar('/api/painel/antes-depois', { metodo: 'POST', form: formPar({ ...base, servico: 'consultoria', antes: jpgA, depois: jpgD }) })).status, 400);
+  const legendaLonga = await chamar('/api/painel/antes-depois', { metodo: 'POST', form: formPar({ ...base, legenda: 'a'.repeat(121), antes: jpgA, depois: jpgD }) });
+  assert.equal(legendaLonga.status, 400);
+  assert.match(legendaLonga.dados.mensagem, /120 letras.*121/);
+  assert.equal((await chamar('/api/painel/antes-depois', { metodo: 'POST', form: formPar({ ...base, largura_depois: 0, antes: jpgA, depois: jpgD }) })).status, 400);
+  assert.equal((await chamar('/api/painel/estado')).dados.antes_depois.length, 0, 'nenhum 400 criou par');
+
+  // Par completo → 201; seção dentro de #servicos, logo depois da grade; 2 <img> com alt, lazy, width/height do envio.
+  const r1 = await chamar('/api/painel/antes-depois', { metodo: 'POST', form: formPar({ ...base, antes: jpgA, depois: jpgD }) });
+  assert.equal(r1.status, 201, JSON.stringify(r1.dados));
+  const p1 = r1.dados.par;
+  assert.match(p1.antes_url, /^\/fotos\/ad\/.*-antes\.jpg$/);
+  assert.match(p1.depois_url, /^\/fotos\/ad\/.*-depois\.jpg$/);
+  assert.match(p1.consentimento_em, /^\d{4}-/);
+  assert.equal((await fetch(BASE + p1.antes_url)).status, 200);
+  assert.equal((await fetch(BASE + p1.depois_url)).status, 200);
+  html = (await chamar('/')).dados;
+  let secao = secaoAntesDepois(html);
+  assert.ok(secao, 'seção aparece');
+  assert.ok(html.indexOf('class="grade-servicos"') < html.indexOf('id="antes-depois"') && html.indexOf('id="antes-depois"') < html.indexOf('id="como-trabalhar"'), 'depois da grade de serviços, antes de como trabalhar');
+  const imgs = secao.match(/<img [^>]*>/g) || [];
+  const imgAntes = imgs.find(t => t.includes(p1.antes_url)), imgDepois = imgs.find(t => t.includes(p1.depois_url));
+  assert.ok(imgAntes && imgDepois, 'as duas fotos');
+  assert.ok(imgAntes.includes('alt="Antes: Vitrine de inverno da &lt;b&gt;loja&lt;/b&gt;"') && imgAntes.includes('loading="lazy"') && imgAntes.includes('width="1200"') && imgAntes.includes('height="1600"'), imgAntes);
+  assert.ok(imgDepois.includes('alt="Depois: Vitrine de inverno da &lt;b&gt;loja&lt;/b&gt;"'), imgDepois);
+  assert.ok(secao.includes('Vitrine de inverno da &lt;b&gt;loja&lt;/b&gt;') && !secao.includes('<b>loja</b>'), 'legenda escapada');
+  assert.ok(secao.includes('Vitrines e visual merchandising'), 'serviço');
+
+  // Legenda editável (PATCH), ordem, tirar e desfazer como nos itens.
+  const r2 = await chamar('/api/painel/antes-depois', { metodo: 'POST', form: formPar({ ...base, legenda: 'Look de festa', servico: 'styling', antes: jpgA, depois: jpgD }) });
+  assert.equal(r2.status, 201);
+  const p2 = r2.dados.par;
+  const ed = await chamar(`/api/painel/antes-depois/${p1.id}`, { metodo: 'PATCH', corpo: { legenda: 'Vitrine de inverno', servico: 'edicao' } });
+  assert.equal(ed.status, 200, JSON.stringify(ed.dados));
+  assert.equal(ed.dados.par.legenda, 'Vitrine de inverno');
+  assert.equal((await chamar(`/api/painel/antes-depois/${p1.id}`, { metodo: 'PATCH', corpo: { legenda: 'a'.repeat(121) } })).status, 400);
+  secao = secaoAntesDepois((await chamar('/')).dados);
+  assert.ok(secao.includes('alt="Antes: Vitrine de inverno"') && secao.includes('Edição de guarda-roupa'));
+  const mv = await chamar(`/api/painel/antes-depois/${p2.id}/mover`, { metodo: 'POST', corpo: { direcao: 'cima' } });
+  assert.equal(mv.status, 200);
+  assert.deepEqual(mv.dados.antes_depois.map(p => p.id), [p2.id, p1.id]);
+  secao = secaoAntesDepois((await chamar('/')).dados);
+  assert.ok(secao.indexOf('Look de festa') < secao.indexOf('Vitrine de inverno'), 'site segue a ordem');
+  assert.equal((await chamar(`/api/painel/antes-depois/${p2.id}`, { metodo: 'DELETE' })).status, 200);
+  assert.deepEqual((await chamar('/api/painel/estado')).dados.antes_depois.map(p => p.id), [p1.id]);
+  assert.equal((await chamar(`/api/painel/antes-depois/${p2.id}/restaurar`, { metodo: 'POST' })).status, 200);
+  assert.deepEqual((await chamar('/api/painel/estado')).dados.antes_depois.map(p => p.id), [p2.id, p1.id], 'volta para a posição');
+  assert.equal((await chamar('/api/painel/antes-depois/ad_naoexiste', { metodo: 'DELETE' })).status, 404);
+
+  for (const p of [p1, p2]) await chamar(`/api/painel/antes-depois/${p.id}`, { metodo: 'DELETE' });
+  html = (await chamar('/')).dados;
+  assert.ok(!html.includes('id="antes-depois"'), 'sem pares ativos a seção some');
+});

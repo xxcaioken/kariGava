@@ -9,7 +9,7 @@ const MSG_GERAL = 'Algo não deu certo. Tente de novo em alguns minutos.';
 const MSG_DESLIGADO = 'Essa conta ainda não está ligada ao site. Peça para o Caio ligar.';
 const LIMITE_TEXTO = 220;
 const LIMITE_FOTO = 15 * 1024 * 1024;
-const TELAS = ['tela-carregando', 'tela-falha', 'tela-email', 'tela-codigo', 'tela-inicio', 'tela-secao', 'tela-depoimentos'];
+const TELAS = ['tela-carregando', 'tela-falha', 'tela-email', 'tela-codigo', 'tela-inicio', 'tela-secao', 'tela-depoimentos', 'tela-pares'];
 
 let estado = null;
 let telaAtual = 'tela-carregando';
@@ -112,6 +112,7 @@ function renderAtual() {
   if (telaAtual === 'tela-inicio') { renderCartoes(); renderNovidades(); }
   if (telaAtual === 'tela-secao' && secaoAtual) renderSecao();
   if (telaAtual === 'tela-depoimentos') renderDepoimentos();
+  if (telaAtual === 'tela-pares') renderPares();
 }
 
 // Marca nos posts guardados (novidades e grade) em que seção eles estão no site.
@@ -320,6 +321,23 @@ function renderCartoes() {
     el('span', { class: 'ir', 'aria-hidden': 'true', text: 'Atualizar →' }));
   aplicarCor(cartaoDep, '#E5196E');
   caixa.append(cartaoDep);
+  // Antes e depois (R-05): pares de fotos, com a própria tela.
+  const ps = pares();
+  const miniPares = el('span', { class: 'miniaturas' });
+  if (ps.length) {
+    ps.slice(0, 2).forEach((p) => miniPares.append(el('img', { src: p.antes_url, alt: '', loading: 'lazy' }), el('img', { src: p.depois_url, alt: '', loading: 'lazy' })));
+    if (ps.length > 2) miniPares.append(el('span', { class: 'mais', text: `+${ps.length - 2}` }));
+  } else {
+    miniPares.append(el('span', { class: 'sem', text: 'Vitrines, looks e armários antes e depois da sua mão. Toque para cadastrar o primeiro par.' }));
+  }
+  const cartaoPar = el('button', { class: 'cartao', type: 'button', 'data-secao': 'antes-depois', onclick: abrirPares },
+    el('span', { class: 'cartao-topo' },
+      el('span', { class: 'cartao-nome', text: 'Antes e depois' }),
+      el('span', { class: 'qtd', text: plural(ps.length, 'par', 'pares') })),
+    miniPares,
+    el('span', { class: 'ir', 'aria-hidden': 'true', text: 'Atualizar →' }));
+  aplicarCor(cartaoPar, '#017F38');
+  caixa.append(cartaoPar);
 }
 
 async function carregarNovidades() {
@@ -494,12 +512,18 @@ $('#voltar-dep').addEventListener('click', () => {
   if (history.state?.secao) history.back();
   else irInicio({ focarSecao: 'depoimentos' });
 });
+$('#voltar-par').addEventListener('click', () => {
+  if (history.state?.secao) history.back();
+  else irInicio({ focarSecao: 'antes-depois' });
+});
 
+const TELAS_PROPRIAS = { 'tela-depoimentos': 'depoimentos', 'tela-pares': 'antes-depois' };
 window.addEventListener('popstate', () => {
-  if (telaAtual === 'tela-depoimentos') {
+  if (TELAS_PROPRIAS[telaAtual]) {
+    const cartao = TELAS_PROPRIAS[telaAtual];
     const aberto = document.querySelector('dialog[open]');
-    if (aberto) { aberto.close(); history.pushState({ secao: 'depoimentos' }, ''); return; }
-    irInicio({ focarSecao: 'depoimentos' });
+    if (aberto) { aberto.close(); history.pushState({ secao: cartao }, ''); return; }
+    irInicio({ focarSecao: cartao });
     return;
   }
   if (telaAtual !== 'tela-secao') return;
@@ -1407,6 +1431,188 @@ $('#form-depoimento').addEventListener('submit', async (ev) => {
     });
   } catch (e) {
     if (e.tipo !== 'sessao') mostrar('#dep-erro', mensagemDe(e));
+  } finally {
+    livre(botao);
+  }
+});
+
+// ---------- Antes e depois (R-05) ----------
+
+const pares = () => estado?.antes_depois || [];
+const LIMITE_LEGENDA = 120;
+const SERVICOS_PAR = ['vm', 'styling', 'edicao'];
+let parEditando = null;
+const parArquivos = { antes: null, depois: null };
+const parUrls = { antes: null, depois: null };
+
+function abrirPares() {
+  secaoAtual = null;
+  renderPares();
+  window.scrollTo(0, 0);
+  mostrarTela('tela-pares');
+  history.pushState({ secao: 'antes-depois' }, '');
+}
+
+function renderPares({ foco } = {}) {
+  const lista = pares();
+  $('#par-qtd').textContent = plural(lista.length, 'par', 'pares');
+  $('#par-dica').hidden = lista.length < 2;
+  const caixa = $('#par-lista');
+  caixa.replaceChildren();
+  if (!lista.length) {
+    caixa.append(el('div', { class: 'vazio' }, el('p', { text: 'Nenhum par ainda. Toque em "Novo par de fotos" para cadastrar o primeiro.' })));
+    return;
+  }
+  lista.forEach((p, idx) => {
+    const nome = p.legenda || nomeSecao(p.servico);
+    const cartao = el('div', { class: 'item par' },
+      el('span', { class: 'par-mini' }, el('img', { src: p.antes_url, alt: 'Antes', loading: 'lazy' }), el('img', { src: p.depois_url, alt: 'Depois', loading: 'lazy' })),
+      el('button', { class: 'nome', type: 'button', 'aria-label': `${nome}. Editar`, onclick: () => abrirPar(p) },
+        el('span', { text: nome }),
+        el('small', { text: p.legenda ? nomeSecao(p.servico) : 'Sem legenda' })),
+      el('div', { class: 'acoes-item' },
+        el('button', { class: 'mini', type: 'button', 'data-id': p.id, 'data-dir': 'cima', disabled: idx === 0, 'aria-label': `Mostrar antes: ${nome}`, text: '↑', onclick: (ev) => moverPar(p, 'cima', ev.currentTarget) }),
+        el('button', { class: 'mini', type: 'button', 'data-id': p.id, 'data-dir': 'baixo', disabled: idx === lista.length - 1, 'aria-label': `Mostrar depois: ${nome}`, text: '↓', onclick: (ev) => moverPar(p, 'baixo', ev.currentTarget) })),
+      el('button', { class: 'editar', type: 'button', text: 'Editar legenda', 'aria-label': `Editar legenda: ${nome}`, onclick: () => abrirPar(p) }),
+      el('button', { class: 'tirar', type: 'button', text: 'Tirar do site', 'aria-label': `Tirar do site: ${nome}`, onclick: () => tirarPar(p) }));
+    aplicarCor(cartao, secao(p.servico)?.cor || '#017F38');
+    caixa.append(cartao);
+  });
+  if (foco) {
+    const mesma = caixa.querySelector(`[data-id="${CSS.escape(foco.id)}"][data-dir="${foco.dir}"]`);
+    const outra = caixa.querySelector(`[data-id="${CSS.escape(foco.id)}"][data-dir="${foco.dir === 'cima' ? 'baixo' : 'cima'}"]`);
+    (mesma && !mesma.disabled ? mesma : outra)?.focus();
+  }
+}
+
+async function moverPar(p, direcao, botao) {
+  botao.disabled = true;
+  try {
+    const r = await api(`/api/painel/antes-depois/${enc(p.id)}/mover`, { metodo: 'POST', json: { direcao } });
+    estado.antes_depois = r.antes_depois || estado.antes_depois;
+    renderPares({ foco: { id: p.id, dir: direcao } });
+    anunciar(`O par agora aparece ${direcao === 'cima' ? 'antes' : 'depois'}.`);
+  } catch (e) {
+    botao.disabled = false;
+    if (e.tipo !== 'sessao') mostrarToast(mensagemDe(e), { erro: true });
+  }
+}
+
+function tirarPar(p) {
+  abrirConfirmacaoTirar({
+    titulo: 'Tirar esse par do site?',
+    texto: 'As duas fotos somem do site. Dá para desfazer logo em seguida.',
+    tirando: 'Tirando...',
+    apagar: () => api(`/api/painel/antes-depois/${enc(p.id)}`, { metodo: 'DELETE', json: {} }),
+    saiu: 'O par saiu do site',
+    desfazer: () => api(`/api/painel/antes-depois/${enc(p.id)}/restaurar`, { metodo: 'POST', json: {} }),
+    voltou: 'Pronto, o par voltou para o site',
+    voltarFoco: $('#par-titulo'),
+  });
+}
+
+function limparFotosPar() {
+  for (const lado of ['antes', 'depois']) {
+    if (parUrls[lado]) { URL.revokeObjectURL(parUrls[lado]); parUrls[lado] = null; }
+    parArquivos[lado] = null;
+    $(`#par-arquivo-${lado}`).value = '';
+    const previa = $(`#par-previa-${lado}`);
+    previa.removeAttribute('src');
+    previa.hidden = true;
+    $(`#par-escolher-${lado}`).classList.remove('tem-foto');
+  }
+}
+
+function atualizarContadorPar() {
+  const n = $('#par-legenda').value.length;
+  const c = $('#cont-par-legenda');
+  c.textContent = `${n} de ${LIMITE_LEGENDA} letras`;
+  c.classList.toggle('passou', n > LIMITE_LEGENDA);
+}
+$('#par-legenda').addEventListener('input', atualizarContadorPar);
+
+function abrirPar(p = null) {
+  parEditando = p;
+  const sel = $('#par-servico');
+  sel.replaceChildren(...SERVICOS_PAR.map((id) => el('option', { value: id, text: nomeSecao(id) })));
+  $('#par-dlg-titulo').textContent = p ? 'Editar legenda do par' : 'Novo par de fotos';
+  $('#par-legenda').value = p?.legenda || '';
+  sel.value = p?.servico || 'vm';
+  $('#par-salvar').textContent = p ? 'Salvar alterações' : 'Colocar no site';
+  $('#par-fotos-area').hidden = Boolean(p);   // as fotos não mudam na edição
+  $('#par-consent-linha').hidden = Boolean(p);
+  $('#par-consent').checked = false;
+  limparFotosPar();
+  esconder('#par-erro');
+  atualizarContadorPar();
+  abrirDialogo('#dlg-par', { voltarFoco: p ? $('#par-titulo') : $('#par-novo') });
+  (p ? $('#par-legenda') : $('#par-escolher-antes')).focus();
+}
+$('#par-novo').addEventListener('click', () => abrirPar(null));
+for (const lado of ['antes', 'depois']) {
+  $(`#par-escolher-${lado}`).addEventListener('click', () => { $(`#par-arquivo-${lado}`).value = ''; $(`#par-arquivo-${lado}`).click(); });
+  $(`#par-arquivo-${lado}`).addEventListener('change', () => {
+    const arquivo = $(`#par-arquivo-${lado}`).files?.[0];
+    if (!arquivo) return;
+    const pareceFoto = (arquivo.type || '').startsWith('image/') || /\.(jpe?g|png|webp|heic|heif)$/i.test(arquivo.name || '');
+    if (!pareceFoto) { mostrar('#par-erro', 'Esse arquivo não é uma foto. Escolha uma foto da galeria.'); return; }
+    if (arquivo.size > LIMITE_FOTO) { mostrar('#par-erro', 'Essa foto é grande demais. Escolha outra ou tire um print dela.'); return; }
+    parArquivos[lado] = arquivo;
+    if (parUrls[lado]) URL.revokeObjectURL(parUrls[lado]);
+    parUrls[lado] = URL.createObjectURL(arquivo);
+    const previa = $(`#par-previa-${lado}`);
+    previa.onerror = () => { previa.hidden = true; };
+    previa.src = parUrls[lado];
+    previa.hidden = false;
+    $(`#par-escolher-${lado}`).classList.add('tem-foto');
+    esconder('#par-erro');
+  });
+}
+$('#dlg-par').addEventListener('close', () => { limparFotosPar(); parEditando = null; });
+
+$('#form-par').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const legenda = $('#par-legenda').value.trim();
+  const servico = $('#par-servico').value;
+  if (legenda.length > LIMITE_LEGENDA) { mostrar('#par-erro', `A legenda pode ter até ${LIMITE_LEGENDA} letras; esta tem ${legenda.length}.`); return; }
+  if (!parEditando) {
+    if (!parArquivos.antes) { mostrar('#par-erro', 'Falta a foto de Antes. O par precisa das duas fotos.'); $('#par-escolher-antes').focus(); return; }
+    if (!parArquivos.depois) { mostrar('#par-erro', 'Falta a foto de Depois. O par precisa das duas fotos.'); $('#par-escolher-depois').focus(); return; }
+    if (!$('#par-consent').checked) { mostrar('#par-erro', 'Marque que a cliente autorizou antes de publicar as fotos.'); $('#par-consent').focus(); return; }
+  }
+  const botao = $('#par-salvar');
+  ocupado(botao, 'Salvando...');
+  try {
+    if (parEditando) {
+      await api(`/api/painel/antes-depois/${enc(parEditando.id)}`, { metodo: 'PATCH', json: { legenda, servico } });
+      fecharDialogo('#dlg-par');
+      await sincronizar();
+      mostrarToast('Par salvo', { verSite: true });
+      return;
+    }
+    const form = new FormData();
+    form.append('legenda', legenda);
+    form.append('servico', servico);
+    form.append('consentimento', 'true');
+    for (const lado of ['antes', 'depois']) {
+      const { arquivo, largura, altura } = await reduzirFoto(parArquivos[lado]);
+      if (largura && altura) { form.append(`largura_${lado}`, String(largura)); form.append(`altura_${lado}`, String(altura)); }
+      form.append(lado, arquivo, arquivo === parArquivos[lado] ? (parArquivos[lado].name || `${lado}.jpg`) : `${lado}.jpg`);
+    }
+    const r = await api('/api/painel/antes-depois', { metodo: 'POST', form });
+    const criado = r.par;
+    fecharDialogo('#dlg-par');
+    await sincronizar();
+    mostrarToast('Par no site', {
+      verSite: true,
+      desfazer: async () => {
+        await api(`/api/painel/antes-depois/${enc(criado.id)}`, { metodo: 'DELETE', json: {} });
+        await sincronizar();
+        mostrarToast('Pronto, o par saiu do site');
+      },
+    });
+  } catch (e) {
+    if (e.tipo !== 'sessao') mostrar('#par-erro', mensagemDe(e));
   } finally {
     livre(botao);
   }

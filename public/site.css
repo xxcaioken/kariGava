@@ -177,6 +177,17 @@ p { margin: 0; }
 .passo p { color: var(--tinta-suave); margin-top: 4px; }
 
 /* Sobre */
+/* Antes e depois (R-05): fotos lado a lado em qualquer largura, caixa 3:4, rótulo sobreposto */
+.antes-depois { margin-top: 56px; padding-top: 40px; border-top: 1px solid var(--linha); }
+.antes-depois .secao-cab h3 { font-size: clamp(30px, 5vw, 48px); line-height: 1; letter-spacing: -.04em; }
+.pares { display: grid; gap: 28px; list-style: none; margin: 0; padding: 0; }
+.par-fotos { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.par-foto { position: relative; margin: 0; }
+.par-foto img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--raio); background: #fff; }
+.par-foto figcaption { position: absolute; top: 8px; left: 8px; padding: 5px 9px; border-radius: 4px; background: var(--tinta); color: #fff; font: 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.par-legenda { margin-top: 10px; font-size: 16px; }
+.par-legenda .rotulo { display: block; margin-top: 4px; }
+
 /* O que dizem (R-04): lista vertical, um depoimento por bloco */
 .depoimentos-secao { border-top: 1px solid var(--linha); }
 .depoimentos { display: grid; gap: 18px; list-style: none; margin: 0; padding: 0; }
@@ -291,6 +302,7 @@ p { margin: 0; }
   .secao { padding: 110px 0; }
   .secao-cab { grid-template-columns: 1fr 1fr; align-items: end; margin-bottom: 40px; }
   .depoimentos { grid-template-columns: 1fr 1fr; gap: 0 48px; }
+  .pares { grid-template-columns: 1fr 1fr; gap: 32px 40px; }
   .grade-servicos, .produtos { grid-template-columns: repeat(3, 1fr); gap: 24px; }
   .sobre-grade { grid-template-columns: 5fr 7fr; gap: 64px; }
   .lalaia-cab { grid-template-columns: 1fr 1fr; align-items: end; }
