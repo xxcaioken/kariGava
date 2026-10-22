@@ -2,7 +2,7 @@
 // Uso: BASE=http://127.0.0.1:8787 LOG=/caminho/do/log/do/wrangler npm run test:e2e
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8787';
 const LOG = process.env.LOG;
@@ -221,4 +221,32 @@ test('sair encerra a sessão', async () => {
   assert.match(r.r.headers.get('set-cookie'), /Max-Age=0/);
   cookie = '';
   assert.equal((await chamar('/api/painel/estado')).status, 401);
+});
+
+// ---------- R-10 · O site carrega rápido no celular ----------
+test('R-10 fontes locais: site e painel sem Google Fonts, WOFF2 servidas pelo site', async () => {
+  const home = await chamar('/');
+  assert.equal(home.status, 200);
+  assert.doesNotMatch(home.dados, /fonts\.googleapis\.com|fonts\.gstatic\.com/);
+  assert.equal((home.dados.match(/rel="preload" as="font"/g) || []).length, 2, 'duas WOFF2 acima da dobra com preload');
+  assert.match(home.dados, /href="\/fontes\.css"/);
+
+  const painel = await chamar('/painel/');
+  assert.equal(painel.status, 200);
+  assert.doesNotMatch(painel.dados, /fonts\.googleapis\.com|fonts\.gstatic\.com/);
+  assert.match(painel.dados, /href="\/fontes\.css"/);
+
+  const css = await chamar('/fontes.css');
+  assert.equal(css.status, 200);
+  assert.match(css.dados, /font-display:\s*swap/);
+  for (const familia of ['Familjen Grotesk', 'Fragment Mono', 'Onest']) assert.ok(css.dados.includes(`font-family: "${familia}"`), familia);
+
+  for (const arquivo of ['familjen-grotesk-latin.woff2', 'familjen-grotesk-italic-latin.woff2', 'fragment-mono-latin.woff2', 'onest-latin.woff2']) {
+    const f = await fetch(`${BASE}/fontes/${arquivo}`);
+    assert.equal(f.status, 200, arquivo);
+    assert.match(f.headers.get('content-type') || '', /font\/woff2/, arquivo);
+    assert.ok(Number(f.headers.get('content-length') || (await f.arrayBuffer()).byteLength) > 1000, `${arquivo} não está vazia`);
+  }
+
+  assert.ok(existsSync(new URL('../../docs/DESIGN.md', import.meta.url)), 'docs/DESIGN.md documenta os tokens');
 });
