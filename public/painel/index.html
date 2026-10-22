@@ -153,6 +153,22 @@
             <input id="cond-gbp" type="url" inputmode="url" autocomplete="off" placeholder="https://g.page/r/..." aria-describedby="ajuda-gbp">
             <span class="ajuda" id="ajuda-gbp">Cole o link do seu perfil da empresa no Google. Com ele, o rodapé do site ganha "Avaliações no Google".</span>
           </label>
+          <fieldset class="grupo-campos">
+            <legend>Cupom de primeira encomenda</legend>
+            <p class="ajuda">Ligado, o site mostra "Primeira encomenda? Diga o código … no WhatsApp e ganhe …%" na LALAIÁ, e os botões já chegam com o código na mensagem.</p>
+            <label class="marcar"><input type="checkbox" id="cupom-ativo"><span>Mostrar o cupom no site</span></label>
+            <label class="campo"><span>Código</span>
+              <input id="cupom-codigo" maxlength="20" autocomplete="off" autocapitalize="characters" placeholder="Ex.: BEMVINDA" aria-describedby="ajuda-cupom-codigo">
+              <span class="ajuda" id="ajuda-cupom-codigo">Até 20 letras ou números, sem espaço. O site mostra em maiúsculas.</span>
+            </label>
+            <label class="campo"><span>Desconto (%)</span>
+              <input id="cupom-desconto" type="number" inputmode="numeric" min="1" max="99" step="1" placeholder="Ex.: 10">
+            </label>
+            <label class="campo"><span>Vale até (opcional)</span>
+              <input id="cupom-validade" type="date" aria-describedby="ajuda-cupom-validade">
+              <span class="ajuda" id="ajuda-cupom-validade">Depois dessa data o cupom some do site sozinho. Sem data, vale até você desligar.</span>
+            </label>
+          </fieldset>
           <div class="erro" id="erro-condicoes" role="alert" hidden></div>
           <button class="btn btn-verde" type="submit" id="salvar-condicoes">Salvar condições</button>
         </form>

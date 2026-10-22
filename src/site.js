@@ -1,7 +1,7 @@
 import conteudo from '../conteudo.json' with { type: 'json' };
 import { template } from './template.js';
 import { agruparProdutos, textoPreco, textoDisponibilidade } from './produtos.js';
-import { CONDICOES_VAZIAS, ROTULOS_CONDICOES } from './config.js';
+import { CONDICOES_VAZIAS, ROTULOS_CONDICOES, cupomVigente } from './config.js';
 
 // Nome de cor estilo cartela Pantone para cada serviço.
 // `var` é o nome da cor em public/site.css; `curto` vai no leque, `legenda` nos botões do celular.
@@ -48,11 +48,14 @@ export function textoDoPreco(preco, grupo) {
 }
 
 // Junta o conteúdo fixo (conteudo.json) com o que a Kari muda no painel (fotos e textos).
-export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos = [], condicoes, whatsappNumero } = {}) {
+export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos = [], condicoes, cupom, whatsappNumero } = {}) {
   const porSecao = new Map();
   for (const it of itens) porSecao.set(it.secao, [...(porSecao.get(it.secao) || []), it]);
   const grupos = new Map(conteudo.grupos_servicos.map(g => [g.id, g.titulo]));
   const wa = mensagem => linkWa(whatsappNumero, mensagem);
+  // Cupom (R-08): só vigente vai para o site; ligado, os botões da LALAIÁ já chegam com o código na mensagem.
+  const cupomSite = cupomVigente(cupom) ? { codigo: cupom.codigo, desconto: cupom.desconto } : null;
+  const waLalaia = mensagem => wa(cupomSite ? `${mensagem} · cupom ${cupomSite.codigo}` : mensagem);
 
   const servicos = ORDEM_SERVICOS.map(id => conteudo.servicos.find(s => s.id === id)).filter(Boolean).map(s => ({
     ...s,
@@ -68,7 +71,7 @@ export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos 
   // Só produtos com foto vão para o site; os dados de um produto sem fotos ficam guardados (ENG-20).
   const produtos = agruparProdutos(porSecao.get('lalaia') || [], linhasProdutos)
     .filter(p => p.fotos.length)
-    .map(p => ({ ...p, preco_texto: textoPreco(p.preco), disponibilidade_texto: textoDisponibilidade(p), wa: wa(MENSAGENS_WA.produto(p.titulo)) }));
+    .map(p => ({ ...p, preco_texto: textoPreco(p.preco), disponibilidade_texto: textoDisponibilidade(p), wa: waLalaia(MENSAGENS_WA.produto(p.titulo)) }));
 
   // Condições de "Como encomendar" (R-03): só as preenchidas vão para o site, na ordem dos rótulos.
   const cond = { ...CONDICOES_VAZIAS, ...(condicoes || {}) };
@@ -82,7 +85,7 @@ export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos 
     grupos: conteudo.grupos_servicos,
     como_trabalhar: conteudo.como_trabalhar,
     sobre: { ...conteudo.sobre, fotos: porSecao.get('sobre') || [] },
-    lalaia: { ...conteudo.lalaia, produtos, condicoes: listaCondicoes, wa: wa(MENSAGENS_WA.lalaia) },
+    lalaia: { ...conteudo.lalaia, produtos, condicoes: listaCondicoes, cupom: cupomSite, wa: waLalaia(MENSAGENS_WA.lalaia) },
     ensino_realizado: conteudo.ensino_realizado,
   };
 }

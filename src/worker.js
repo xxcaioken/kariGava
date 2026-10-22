@@ -5,7 +5,7 @@ import { contasLigadas, listarPosts, urlLigar, concluirLigacao, renovarTokens, C
 import { renderizarSite } from './site.js';
 import { comCabecalhos } from './seguranca.js';
 import { listarProdutos, agruparProdutos, salvarProduto, renomearProduto } from './produtos.js';
-import { lerCondicoes, salvarCondicoes } from './config.js';
+import { lerCondicoes, salvarCondicoes, lerCupom } from './config.js';
 
 // Blocos novos da home nunca derrubam a página inteira: erro vira log + valor padrão, e a seção some (ENG-07).
 const tolerante = (promessa, padrao) => promessa.catch(e => { console.error(e?.stack || e); return padrao; });
@@ -64,15 +64,15 @@ async function api(request, env, url) {
   const rota = pathname.slice('/api/painel'.length);
 
   if (rota === '/estado' && metodo === 'GET') {
-    const [itens, textos, contas, produtos, condicoes] = await Promise.all([listarItens(env), lerTextos(env), contasLigadas(env), listarProdutos(env), lerCondicoes(env)]);
-    const lalaia = { produtos: agruparProdutos(itens.filter(i => i.secao === 'lalaia'), produtos), condicoes };
+    const [itens, textos, contas, produtos, condicoes, cupom] = await Promise.all([listarItens(env), lerTextos(env), contasLigadas(env), listarProdutos(env), lerCondicoes(env), lerCupom(env)]);
+    const lalaia = { produtos: agruparProdutos(itens.filter(i => i.secao === 'lalaia'), produtos), condicoes, cupom };
     return json({ usuario: { email }, secoes: SECOES, itens, textos, lalaia, instagram: { contas }, site_url: '/' });
   }
 
   // ---------- Como encomendar: condições da LALAIÁ ----------
   if (rota === '/lalaia/condicoes' && metodo === 'PUT') {
     exigirJson(request);
-    return json({ condicoes: await salvarCondicoes(env, await lerJson(request)) });
+    return json(await salvarCondicoes(env, await lerJson(request)));
   }
 
   // ---------- Produtos da LALAIÁ ----------
@@ -147,10 +147,10 @@ async function tratar(request, env, url) {
   if (url.pathname.startsWith('/api/')) return api(request, env, url);
   if (url.pathname.startsWith('/fotos/') && request.method === 'GET') return foto(env, decodeURIComponent(url.pathname.slice('/fotos/'.length)));
   if (url.pathname === '/' && (request.method === 'GET' || request.method === 'HEAD')) {
-    const [itens, textos, produtos, condicoes] = await Promise.all([
-      listarItens(env), lerTextos(env), tolerante(listarProdutos(env), []), tolerante(lerCondicoes(env), null),
+    const [itens, textos, produtos, condicoes, cupom] = await Promise.all([
+      listarItens(env), lerTextos(env), tolerante(listarProdutos(env), []), tolerante(lerCondicoes(env), null), tolerante(lerCupom(env), null),
     ]);
-    return new Response(renderizarSite({ itens, textos, produtos, condicoes, whatsappNumero: env.WHATSAPP_NUMERO }), {
+    return new Response(renderizarSite({ itens, textos, produtos, condicoes, cupom, whatsappNumero: env.WHATSAPP_NUMERO }), {
       headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
     });
   }

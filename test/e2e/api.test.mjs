@@ -525,3 +525,80 @@ test('R-03 condições e como encomendar', async () => {
   assert.ok(!bloco.includes('class="condicoes') && bloco.includes('Correios'));
   assert.deepEqual((await chamar('/api/painel/estado')).dados.lalaia.condicoes, { pagamento: '', frete: '', prazo_padrao: '', troca: '', gbp_url: '' });
 });
+
+// ---------- S-06 · Cupom de primeira encomenda (R-08) ----------
+const blocoLalaia = html => html.slice(html.indexOf('id="lalaia"'), html.indexOf('id="como-encomendar"'));
+const textosWaDaLalaia = html => {
+  const secao = html.slice(html.indexOf('id="lalaia"'), html.indexOf('id="cursos"'));
+  return [...secao.matchAll(/href="(https:\/\/wa\.me\/[^"]+)"/g)].map(m => decodificarTexto(m[1]));
+};
+const diaRelativo = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+const CUPOM_PADRAO = { ativo: false, codigo: '', desconto: null, valido_ate: '' };
+
+test('R-08 cupom de primeira encomenda: linha na LALAIÁ, sufixo no WhatsApp, validade e validações', async () => {
+  let html = (await chamar('/')).dados;
+  assert.ok(!blocoLalaia(html).includes('código') && !blocoLalaia(html).includes('id="cupom"'), 'padrão: sem cupom');
+  assert.deepEqual((await chamar('/api/painel/estado')).dados.lalaia.cupom, CUPOM_PADRAO, 'estado devolve lalaia.cupom desligado');
+  const textosAntes = textosWaDaLalaia(html);
+  assert.ok(textosAntes.length >= 4 && textosAntes.every(t => !t.includes('cupom')), 'sem sufixo por padrão');
+
+  // Liga: código vira maiúsculas; linha dentro da LALAIÁ, antes de #como-encomendar; sufixo nos botões da LALAIÁ.
+  const liga = await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { cupom: { ativo: true, codigo: 'bemvinda', desconto: 10 } } });
+  assert.equal(liga.status, 200, JSON.stringify(liga.dados));
+  assert.deepEqual(liga.dados.cupom, { ativo: true, codigo: 'BEMVINDA', desconto: 10, valido_ate: '' });
+  html = (await chamar('/')).dados;
+  let lalaia = blocoLalaia(html);
+  assert.ok(lalaia.includes('id="cupom"') && lalaia.includes('BEMVINDA') && lalaia.includes('10%'), 'linha do cupom');
+  assert.ok(lalaia.indexOf('class="produtos"') < lalaia.indexOf('id="cupom"'), 'cupom fica depois dos produtos, logo acima de como encomendar');
+  const textosLigado = textosWaDaLalaia(html);
+  assert.ok(textosLigado.every(t => t.endsWith(' · cupom BEMVINDA')), `todos os botões da LALAIÁ com sufixo: ${JSON.stringify(textosLigado)}`);
+  // (o teste de R-03 já renomeou "BigScrunchie (a Xuxona)" para "Xuxona")
+  assert.ok(textosLigado.some(t => /^Oi Kari, quero encomendar Xuxona · cupom BEMVINDA$/.test(t)), `mensagem do produto preservada: ${JSON.stringify(textosLigado)}`);
+  const servicos = html.slice(html.indexOf('id="servicos"'), html.indexOf('id="como-trabalhar"'));
+  assert.ok([...servicos.matchAll(/href="(https:\/\/wa\.me\/[^"]+)"/g)].every(m => !decodificarTexto(m[1]).includes('cupom')), 'serviços sem sufixo');
+
+  // Desliga (parcial): some do site e do sufixo, mas o código fica guardado.
+  assert.equal((await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { cupom: { ativo: false } } })).status, 200);
+  html = (await chamar('/')).dados;
+  assert.ok(!blocoLalaia(html).includes('BEMVINDA') && textosWaDaLalaia(html).every(t => !t.includes('cupom')), 'desligado');
+  assert.equal((await chamar('/api/painel/estado')).dados.lalaia.cupom.codigo, 'BEMVINDA');
+
+  // Validade (uc5a): vencido some; futuro mostra.
+  assert.equal((await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { cupom: { ativo: true, valido_ate: diaRelativo(-2) } } })).status, 200);
+  html = (await chamar('/')).dados;
+  assert.ok(!blocoLalaia(html).includes('BEMVINDA') && textosWaDaLalaia(html).every(t => !t.includes('cupom')), 'vencido não aparece nem no sufixo');
+  assert.equal((await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { cupom: { valido_ate: diaRelativo(2) } } })).status, 200);
+  html = (await chamar('/')).dados;
+  assert.ok(blocoLalaia(html).includes('BEMVINDA') && textosWaDaLalaia(html).every(t => t.endsWith(' · cupom BEMVINDA')), 'dentro da validade');
+
+  // Validações com mensagem para a Kari.
+  const casos = [
+    [{ valido_ate: '31/12/2026' }, /dia\/mês\/ano/],
+    [{ valido_ate: '2026-02-30' }, /dia\/mês\/ano/],
+    [{ desconto: 150 }, /1 a 99/],
+    [{ desconto: 0 }, /1 a 99/],
+    [{ desconto: 10.5 }, /1 a 99/],
+    [{ codigo: 'A'.repeat(21) }, /20 letras/],
+    [{ codigo: 'BEM VINDA' }, /20 letras/],
+    [{ codigo: 'OLÁ' }, /20 letras/],
+    [{ ativo: 'sim' }, /./],
+    [{ ativo: true, codigo: null }, /código/],
+  ];
+  for (const [cupom, re] of casos) {
+    const ruim = await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { cupom } });
+    assert.equal(ruim.status, 400, JSON.stringify(cupom));
+    assert.equal(ruim.dados.erro, 'cupom_invalido', JSON.stringify(cupom));
+    assert.match(ruim.dados.mensagem, re, JSON.stringify(cupom));
+  }
+  assert.equal((await chamar('/api/painel/estado')).dados.lalaia.cupom.desconto, 10, 'os 400 não mexeram em nada');
+
+  // Cupom e condição no mesmo PUT; null zera o cupom.
+  const junto = await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { frete: 'Correios', cupom: { desconto: 15 } } });
+  assert.equal(junto.status, 200);
+  assert.equal(junto.dados.condicoes.frete, 'Correios');
+  assert.equal(junto.dados.cupom.desconto, 15);
+  assert.equal((await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { frete: null, cupom: null } })).status, 200);
+  assert.deepEqual((await chamar('/api/painel/estado')).dados.lalaia.cupom, CUPOM_PADRAO);
+  html = (await chamar('/')).dados;
+  assert.ok(!blocoLalaia(html).includes('id="cupom"') && textosWaDaLalaia(html).every(t => !t.includes('cupom')));
+});

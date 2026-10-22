@@ -296,7 +296,8 @@ function renderCartoes() {
     if (s.id === 'lalaia') {
       const lista = (estado.lalaia?.produtos || []).filter((p) => p.fotos.length);
       const semPreco = lista.filter((p) => !p.preco).length;
-      linhaPreco = el('span', { class: 'cartao-preco', text: lista.length ? `${plural(lista.length, 'produto', 'produtos')} · ${semPreco ? `${semPreco} sem preço` : 'todos com preço'}` : 'Nenhum produto ainda' });
+      const produtosTexto = lista.length ? `${plural(lista.length, 'produto', 'produtos')} · ${semPreco ? `${semPreco} sem preço` : 'todos com preço'}` : 'Nenhum produto ainda';
+      linhaPreco = el('span', { class: 'cartao-preco', text: `${produtosTexto} · Cupom ${situacaoDoCupom(estado.lalaia?.cupom)}` });
     }
     const cartao = el('button', { class: 'cartao', type: 'button', 'data-secao': s.id, onclick: () => abrirSecao(s.id) },
       el('span', { class: 'cartao-topo' },
@@ -786,13 +787,39 @@ const CAMPOS_CONDICOES = [
   ['troca', '#cond-troca', '#cont-cond-troca'],
 ];
 const condicoesAtuais = () => estado?.lalaia?.condicoes || {};
+const cupomAtual = () => estado?.lalaia?.cupom || { ativo: false, codigo: '', desconto: null, valido_ate: '' };
+
+// Hoje no formato AAAA-MM-DD do celular da Kari, para comparar com `valido_ate` como texto.
+function hojeLocal() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+const dataCurta = iso => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+
+// "ligado", "desligado" ou "vencido em dd/mm", para o cartão em "Partes do site".
+function situacaoDoCupom(c) {
+  if (!c?.ativo) return 'desligado';
+  if (c.valido_ate && c.valido_ate < hojeLocal()) return `vencido em ${dataCurta(c.valido_ate)}`;
+  return 'ligado';
+}
 
 function preencherCondicoes() {
   const c = condicoesAtuais();
   for (const [campo, sel] of CAMPOS_CONDICOES) $(sel).value = c[campo] || '';
   $('#cond-gbp').value = c.gbp_url || '';
+  const cupom = cupomAtual();
+  $('#cupom-ativo').checked = Boolean(cupom.ativo);
+  $('#cupom-codigo').value = cupom.codigo || '';
+  $('#cupom-desconto').value = cupom.desconto ?? '';
+  $('#cupom-validade').value = cupom.valido_ate || '';
   esconder('#erro-condicoes');
   atualizarContadoresCondicoes();
+}
+
+function cupomDoFormulario() {
+  const codigo = $('#cupom-codigo').value.trim().toUpperCase();
+  const desconto = $('#cupom-desconto').value.trim();
+  return { ativo: $('#cupom-ativo').checked, codigo: codigo || null, desconto: desconto ? Number(desconto) : null, valido_ate: $('#cupom-validade').value || null };
 }
 
 function atualizarContadoresCondicoes() {
@@ -808,7 +835,10 @@ for (const [, sel] of CAMPOS_CONDICOES) $(sel).addEventListener('input', atualiz
 function condicoesMudaram() {
   if (telaAtual !== 'tela-secao' || $('#condicoes').hidden) return false;
   const c = condicoesAtuais();
-  return CAMPOS_CONDICOES.some(([campo, sel]) => $(sel).value !== (c[campo] || '')) || $('#cond-gbp').value !== (c.gbp_url || '');
+  const cupom = cupomAtual();
+  const f = cupomDoFormulario();
+  return CAMPOS_CONDICOES.some(([campo, sel]) => $(sel).value !== (c[campo] || '')) || $('#cond-gbp').value !== (c.gbp_url || '')
+    || f.ativo !== Boolean(cupom.ativo) || (f.codigo || '') !== (cupom.codigo || '') || f.desconto !== (cupom.desconto ?? null) || (f.valido_ate || '') !== (cupom.valido_ate || '');
 }
 
 $('#form-condicoes').addEventListener('submit', async (ev) => {
@@ -826,11 +856,23 @@ $('#form-condicoes').addEventListener('submit', async (ev) => {
     return;
   }
   corpo.gbp_url = gbp || null;
+  corpo.cupom = cupomDoFormulario();
+  if (corpo.cupom.ativo && (!corpo.cupom.codigo || !corpo.cupom.desconto)) {
+    mostrar('#erro-condicoes', 'Para ligar o cupom, preencha o código e o desconto.');
+    $(corpo.cupom.codigo ? '#cupom-desconto' : '#cupom-codigo').focus();
+    return;
+  }
+  if (corpo.cupom.codigo && !/^[A-Z0-9]{1,20}$/.test(corpo.cupom.codigo)) {
+    mostrar('#erro-condicoes', 'O código do cupom tem até 20 letras ou números, sem espaços nem acentos.');
+    $('#cupom-codigo').focus();
+    return;
+  }
   const botao = $('#salvar-condicoes');
   ocupado(botao, 'Salvando...');
   try {
     const r = await api('/api/painel/lalaia/condicoes', { metodo: 'PUT', json: corpo });
-    estado.lalaia = { ...(estado.lalaia || {}), condicoes: r.condicoes };
+    estado.lalaia = { ...(estado.lalaia || {}), condicoes: r.condicoes, cupom: r.cupom };
+    renderCartoes();
     esconder('#erro-condicoes');
     if (secaoAtual === 'lalaia') preencherCondicoes();
     mostrarToast('Condições salvas', { verSite: true });

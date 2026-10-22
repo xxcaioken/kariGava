@@ -198,7 +198,8 @@ export function template(d, esc) {
       </div>
       <ul class="detalhes">${d.lalaia.detalhes.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
       <ul class="produtos">${produtos}
-      </ul>
+      </ul>${d.lalaia.cupom ? `
+      <p class="cupom" id="cupom"><strong>Primeira encomenda?</strong> Diga o código <code>${esc(d.lalaia.cupom.codigo)}</code> no WhatsApp e ganhe ${esc(d.lalaia.cupom.desconto)}%.</p>` : ''}
       <div class="como-encomendar" id="como-encomendar">
         <h3>Como encomendar</h3>
         <ol class="passos">${passosLalaia}

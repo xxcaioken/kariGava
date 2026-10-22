@@ -104,6 +104,17 @@ O site fecha o bloco da LALAIÁ com "Como encomendar" (`id="como-encomendar"`): 
   - `gbp_url`: URL `https://` válida, até 300 letras, ou vazia. Senão: `400 { erro: "condicao_invalida", mensagem: "Cole o link do seu perfil no Google (começa com https://)." }`. Preenchida, o rodapé do site ganha o link "Avaliações no Google" ao lado dos Instagrams.
   - No site, os rótulos são Pagamento, Frete, Prazo e Trocas, nessa ordem; o texto é escapado.
   - Exemplo: `curl -X PUT "$BASE/api/painel/lalaia/condicoes" -H 'content-type: application/json' -H "origin: $BASE" -b "kari_sessao=..." -d '{"pagamento":"Pix à vista ou cartão em até 3x","frete":null}'`
+  - A resposta traz também o cupom: `{ "condicoes": {...}, "cupom": {...} }`.
+
+## Cupom de primeira encomenda
+
+Vai no mesmo `PUT /api/painel/lalaia/condicoes`, no campo `cupom` (chave `cupom` da tabela `config`). O estado traz `lalaia.cupom`: `{ "ativo": false, "codigo": "", "desconto": null, "valido_ate": "" }` por padrão.
+
+- `PUT /api/painel/lalaia/condicoes` `{ "cupom": { "ativo": true, "codigo": "bemvinda", "desconto": 10, "valido_ate": "2026-12-31" } }` → `{ "condicoes": {...}, "cupom": { "ativo": true, "codigo": "BEMVINDA", "desconto": 10, "valido_ate": "2026-12-31" } }`
+  - PUT parcial dentro de `cupom`: campo ausente mantém, `null` limpa; `"cupom": null` zera o cupom inteiro. `codigo` vira maiúsculas e precisa casar `^[A-Z0-9]{1,20}$`; `desconto` inteiro de 1 a 99; `valido_ate` data `AAAA-MM-DD` real ou vazia (sem data, vale até desligar). Ligar exige código e desconto.
+  - Fora disso: `400 { erro: "cupom_invalido", mensagem }` ("O desconto vai de 1 a 99%.", "O código tem até 20 letras ou números, sem espaços nem acentos.", "Use uma data no formato dia/mês/ano.", "Para ligar o cupom, preencha o código."). Nada é gravado num 400.
+  - No site, com o cupom **vigente** (ligado, com código e desconto, e `valido_ate` vazia ou ainda não passada no horário de Brasília): a linha "Primeira encomenda? Diga o código BEMVINDA no WhatsApp e ganhe 10%." aparece na LALAIÁ, entre os produtos e "Como encomendar", e os botões de WhatsApp da LALAIÁ (produtos e o botão do bloco) ganham o sufixo ` · cupom BEMVINDA` na mensagem. Desligado ou vencido: nada muda no site. Os botões dos serviços nunca levam o cupom.
+  - O painel mostra "Cupom · ligado / desligado / vencido em dd/mm" no cartão da LALAIÁ em "Partes do site".
 
 ## Site público
 

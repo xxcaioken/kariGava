@@ -60,9 +60,77 @@ export function validarCondicoes(atual, campos) {
   return novo;
 }
 
-export async function salvarCondicoes(env, campos) {
-  const novo = validarCondicoes(await lerCondicoes(env), campos);
-  const { gbp_url, ...textos } = novo;
-  await env.DB.batch([gravarConfig(env, 'condicoes', textos), gravarConfig(env, 'gbp_url', gbp_url)]);
+// ---------- Cupom de primeira encomenda (R-08) ----------
+export const CUPOM_PADRAO = Object.freeze({ ativo: false, codigo: '', desconto: null, valido_ate: '' });
+const MSG_DATA = 'Use uma data no formato dia/mês/ano.';
+
+export async function lerCupom(env) {
+  const c = await lerConfig(env, 'cupom', {});
+  return {
+    ativo: c?.ativo === true,
+    codigo: typeof c?.codigo === 'string' ? c.codigo : '',
+    desconto: Number.isInteger(c?.desconto) ? c.desconto : null,
+    valido_ate: typeof c?.valido_ate === 'string' ? c.valido_ate : '',
+  };
+}
+
+// "AAAA-MM-DD" que existe no calendário (2026-02-30 não).
+function dataValida(texto) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(texto)) return false;
+  const d = new Date(`${texto}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === texto;
+}
+
+// Data de hoje em Florianópolis, no formato de `valido_ate`, para comparar como texto.
+export function hojeNoBrasil(agoraMs = Date.now()) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(agoraMs));
+}
+
+// Ligado, com código e desconto, e sem data vencida (a data vale até o fim do dia).
+export function cupomVigente(cupom, hoje = hojeNoBrasil()) {
+  return Boolean(cupom && cupom.ativo && cupom.codigo && Number.isInteger(cupom.desconto) && (!cupom.valido_ate || cupom.valido_ate >= hoje));
+}
+
+// PUT parcial: ausente mantém, null no cupom inteiro zera. Puro, para testar sem banco.
+export function validarCupom(atual, campos) {
+  if (campos === null) return { ...CUPOM_PADRAO };
+  if (!campos || typeof campos !== 'object' || Array.isArray(campos)) throw new ErroApi(400, 'cupom_invalido', 'Mande o cupom com ativo, codigo, desconto e valido_ate.');
+  const novo = { ...CUPOM_PADRAO, ...atual };
+  for (const [campo, valor] of Object.entries(campos)) {
+    const vazio = valor === null || valor === undefined || valor === '';
+    if (campo === 'ativo') {
+      if (typeof valor !== 'boolean') throw new ErroApi(400, 'cupom_invalido', 'O cupom só pode estar ligado ou desligado.');
+      novo.ativo = valor;
+    } else if (campo === 'codigo') {
+      if (vazio) { novo.codigo = ''; continue; }
+      const codigo = typeof valor === 'string' ? valor.trim().toUpperCase() : '';
+      if (!/^[A-Z0-9]{1,20}$/.test(codigo)) throw new ErroApi(400, 'cupom_invalido', 'O código tem até 20 letras ou números, sem espaços nem acentos.');
+      novo.codigo = codigo;
+    } else if (campo === 'desconto') {
+      if (vazio) { novo.desconto = null; continue; }
+      if (!Number.isInteger(valor) || valor < 1 || valor > 99) throw new ErroApi(400, 'cupom_invalido', 'O desconto vai de 1 a 99%.');
+      novo.desconto = valor;
+    } else if (campo === 'valido_ate') {
+      if (vazio) { novo.valido_ate = ''; continue; }
+      if (typeof valor !== 'string' || !dataValida(valor)) throw new ErroApi(400, 'cupom_invalido', MSG_DATA);
+      novo.valido_ate = valor;
+    } else {
+      throw new ErroApi(400, 'cupom_invalido', `Não existe o campo "${campo}" no cupom. Os campos são: ativo, codigo, desconto e valido_ate.`);
+    }
+  }
+  if (novo.ativo && !novo.codigo) throw new ErroApi(400, 'cupom_invalido', 'Para ligar o cupom, preencha o código.');
+  if (novo.ativo && !novo.desconto) throw new ErroApi(400, 'cupom_invalido', 'Para ligar o cupom, preencha o desconto.');
   return novo;
+}
+
+// PUT /api/painel/lalaia/condicoes: condições, gbp_url e cupom no mesmo corpo, gravados num só batch.
+export async function salvarCondicoes(env, campos) {
+  if (!campos || typeof campos !== 'object' || Array.isArray(campos)) throw new ErroApi(400, 'condicao_invalida', 'Mande as condições como campos de texto.');
+  const { cupom: camposCupom, ...resto } = campos;
+  const [atual, cupomAtual] = await Promise.all([lerCondicoes(env), lerCupom(env)]);
+  const condicoes = validarCondicoes(atual, resto);
+  const cupom = 'cupom' in campos ? validarCupom(cupomAtual, camposCupom) : cupomAtual;
+  const { gbp_url, ...textos } = condicoes;
+  await env.DB.batch([gravarConfig(env, 'condicoes', textos), gravarConfig(env, 'gbp_url', gbp_url), gravarConfig(env, 'cupom', cupom)]);
+  return { condicoes, cupom };
 }

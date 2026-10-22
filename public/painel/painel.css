@@ -57,6 +57,12 @@ h1:focus, h2:focus { outline: none; }
 .campo input:focus, .campo textarea:focus { border-color: var(--roxo); outline: none; }
 .campo .ajuda { display: block; font-weight: 400; color: var(--tinta-suave); font-size: 15px; margin-top: 6px; }
 .campo .ajuda.passou { color: #8E140D; font-weight: 700; }
+.grupo-campos { margin: 6px 0 18px; padding: 16px; border: 2px solid var(--linha); border-radius: 16px; background: var(--fundo); }
+.grupo-campos legend { padding: 0 6px; font-weight: 700; }
+.grupo-campos > .ajuda { margin: 0 0 14px; color: var(--tinta-suave); font-size: 15px; }
+.grupo-campos .campo:last-child { margin-bottom: 0; }
+.marcar { display: flex; align-items: center; gap: 12px; min-height: 44px; margin-bottom: 14px; font-weight: 700; }
+.marcar input { width: 26px; height: 26px; margin: 0; accent-color: var(--verde); }
 .erro { display: block; margin: -4px 0 16px; padding: 12px 14px; border-radius: 12px; background: var(--vermelho-claro); color: #8E140D; font-weight: 600; }
 .codigo { letter-spacing: .4em; text-align: center; font-weight: 800; font-size: 26px !important; }
 

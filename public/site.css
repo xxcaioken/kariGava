@@ -206,6 +206,9 @@ p { margin: 0; }
 .produto .preco strong { color: var(--tinta); }
 .produto .disponibilidade { font: 13px/1.4 var(--mono); color: var(--tinta-suave); }
 .produto a { margin-top: auto; padding-top: 8px; font-weight: 600; text-underline-offset: 4px; min-height: 44px; display: inline-flex; align-items: center; }
+/* Cupom de primeira encomenda (R-08): uma linha da LALAIÁ, nunca faixa do site todo */
+.cupom { margin-top: 28px; padding: 16px 18px; border: 2px dashed var(--mostarda); border-radius: var(--raio); font-size: 17px; line-height: 1.5; }
+.cupom code { font: 15px/1 var(--mono); letter-spacing: .08em; padding: 4px 8px; border-radius: 4px; background: var(--mostarda); color: var(--tinta); }
 /* Como encomendar (R-03): fecha o bloco LALAIÁ com os 3 passos e as condições preenchidas */
 .como-encomendar { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--linha); }
 .como-encomendar > h3 { font-size: 26px; margin-bottom: 4px; }
