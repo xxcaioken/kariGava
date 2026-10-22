@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Painel da Kari · Protótipo 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --roxo: #8D51FF;
+    --roxo-forte: #6A2FE0;
+    --roxo-claro: #F1EAFF;
+    --verde: #017F38;
+    --verde-claro: #E3F4EA;
+    --mostarda: #FEBC5C;
+    --vermelho: #C52118;
+    --vermelho-claro: #FCE9E7;
+    --tinta: #17141F;
+    --tinta-suave: #4F4A58;
+    --linha: #DDD8E4;
+    --fundo: #F6F4F9;
+    --branco: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: #E9E5EF; color: var(--tinta); font: 17px/1.45 "Onest", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  img { display: block; max-width: 100%; }
+  button, input, textarea { font: inherit; color: inherit; }
+  button, label.btn { cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--roxo); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  .app { position: relative; max-width: 480px; min-height: 100vh; margin: 0 auto; background: var(--fundo); box-shadow: 0 0 40px rgba(0,0,0,.08); }
+  .selo { display: block; padding: 6px 16px; background: var(--tinta); color: #fff; font-size: 13px; font-weight: 600; text-align: center; letter-spacing: .02em; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 56px; padding: 0 22px; border: 0; border-radius: 16px; background: var(--roxo-forte); color: #fff; font-size: 18px; font-weight: 700; text-decoration: none; width: 100%; }
+  .btn:active { transform: scale(.98); }
+  .btn:disabled { background: #BDB6C8; color: #fff; cursor: not-allowed; }
+  .btn-verde { background: var(--verde); }
+  .btn-claro { background: var(--branco); color: var(--tinta); box-shadow: inset 0 0 0 2px var(--linha); }
+  .btn-perigo { background: var(--vermelho); }
+  .link { background: none; border: 0; padding: 12px 4px; min-height: 48px; color: var(--roxo-forte); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+
+  /* Login */
+  .login { padding: 40px 24px 32px; }
+  .login .marca { font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin: 24px 0 4px; }
+  .login .marca span { color: var(--roxo); }
+  .login h1 { font-size: 26px; line-height: 1.2; margin: 28px 0 10px; }
+  .login p { color: var(--tinta-suave); margin: 0 0 24px; }
+  .campo { display: block; margin-bottom: 18px; }
+  .campo span { display: block; font-weight: 700; margin-bottom: 8px; }
+  .campo input, .campo textarea { width: 100%; min-height: 56px; padding: 14px 16px; border: 2px solid var(--linha); border-radius: 14px; background: #fff; font-size: 18px; }
+  .campo textarea { min-height: 110px; resize: vertical; line-height: 1.4; }
+  .campo input:focus, .campo textarea:focus { border-color: var(--roxo); outline: none; }
+  .campo .ajuda { display: block; font-weight: 400; color: var(--tinta-suave); font-size: 15px; margin-top: 6px; }
+  .erro { display: block; margin: -8px 0 16px; padding: 12px 14px; border-radius: 12px; background: var(--vermelho-claro); color: #8E140D; font-weight: 600; }
+  .codigo { letter-spacing: .4em; text-align: center; font-weight: 800; font-size: 26px !important; }
+
+  /* Topo */
+  .topo { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 8px; min-height: 64px; padding: 8px 16px; background: var(--branco); border-bottom: 1px solid var(--linha); }
+  .topo h1 { flex: 1; font-size: 20px; margin: 0; line-height: 1.2; }
+  .voltar { min-height: 48px; min-width: 48px; padding: 0 12px 0 6px; border: 0; border-radius: 12px; background: var(--fundo); font-weight: 700; }
+  .avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--mostarda); }
+
+  main { padding: 20px 16px 48px; }
+  .ola { font-size: 28px; line-height: 1.15; margin: 4px 0 6px; letter-spacing: -.01em; }
+  .dica { margin: 0 0 18px; color: var(--tinta-suave); }
+
+  /* Cartões das seções */
+  .cartao { display: block; width: 100%; text-align: left; padding: 16px; margin-bottom: 12px; border: 0; border-radius: 18px; background: #fff; box-shadow: 0 1px 0 var(--linha), 0 4px 14px rgba(23,20,31,.04); border-left: 8px solid var(--cor, var(--roxo)); }
+  .cartao-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .cartao h2 { font-size: 20px; margin: 0; }
+  .cartao .qtd { font-size: 15px; color: var(--tinta-suave); white-space: nowrap; }
+  .miniaturas { display: flex; gap: 6px; margin: 12px 0 10px; min-height: 64px; }
+  .miniaturas img { width: 52px; height: 64px; object-fit: cover; border-radius: 8px; }
+  .miniaturas .mais { display: grid; place-items: center; width: 52px; height: 64px; border-radius: 8px; background: var(--fundo); font-weight: 800; color: var(--tinta-suave); }
+  .miniaturas .sem { display: flex; align-items: center; color: var(--tinta-suave); font-size: 16px; }
+  .cartao .ir { font-weight: 800; color: var(--roxo-forte); }
+
+  /* Seção */
+  .botoes-add { display: grid; gap: 10px; margin-bottom: 26px; }
+  .bloco-titulo { font-size: 19px; margin: 0 0 10px; display: flex; justify-content: space-between; align-items: baseline; }
+  .bloco-titulo small { font-size: 15px; font-weight: 500; color: var(--tinta-suave); }
+  .item { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; padding: 10px; margin-bottom: 8px; border-radius: 14px; background: #fff; box-shadow: 0 1px 0 var(--linha); }
+  .item img { width: 64px; height: 80px; object-fit: cover; border-radius: 8px; }
+  .item .nome { font-weight: 700; line-height: 1.25; }
+  .item .acoes-item { display: flex; gap: 4px; }
+  .mini { min-width: 48px; min-height: 48px; border: 2px solid var(--linha); border-radius: 12px; background: #fff; font-size: 20px; font-weight: 700; }
+  .mini:disabled { opacity: .35; }
+  .tirar { grid-column: 2 / -1; justify-self: start; border: 0; background: none; color: var(--vermelho); font-weight: 700; min-height: 44px; padding: 0; text-decoration: underline; text-underline-offset: 4px; }
+  .vazio { padding: 20px; border: 2px dashed var(--linha); border-radius: 14px; text-align: center; color: var(--tinta-suave); }
+  .vazio p { margin: 0; }
+  .textos { margin-top: 30px; padding: 18px; border-radius: 18px; background: #fff; }
+  .textos h2 { font-size: 19px; margin: 0 0 4px; }
+  .textos > p { margin: 0 0 16px; color: var(--tinta-suave); }
+
+  /* Escolher do Instagram (tela cheia) */
+  .tela-cheia { position: fixed; inset: 0; z-index: 10; display: flex; justify-content: center; background: rgba(23,20,31,.55); }
+  .tela-cheia > div { position: relative; width: min(480px, 100%); height: 100%; overflow-y: auto; background: var(--fundo); padding-bottom: 120px; }
+  .contas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 12px 16px; background: #fff; border-bottom: 1px solid var(--linha); }
+  .conta { min-height: 48px; border: 2px solid var(--linha); border-radius: 999px; background: #fff; font-weight: 700; font-size: 16px; }
+  .conta[aria-selected="true"] { background: var(--tinta); border-color: var(--tinta); color: #fff; }
+  .grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .post { position: relative; padding: 0; border: 0; background: #ccc; aspect-ratio: 4/5; overflow: hidden; }
+  .post img { width: 100%; height: 100%; object-fit: cover; transition: transform .15s; }
+  .post[aria-pressed="true"] img { transform: scale(.88); }
+  .post[aria-pressed="true"] { background: var(--roxo-forte); }
+  .post .marca-sel { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; border: 3px solid #fff; background: rgba(0,0,0,.25); color: #fff; font-weight: 800; display: grid; place-items: center; font-size: 16px; }
+  .post[aria-pressed="true"] .marca-sel { background: var(--roxo-forte); }
+  .post:disabled { cursor: not-allowed; }
+  .post:disabled img { opacity: .4; }
+  .post .etq { position: absolute; left: 6px; bottom: 6px; padding: 4px 8px; border-radius: 999px; background: var(--verde); color: #fff; font-size: 13px; font-weight: 700; }
+  .barra-fim { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: min(480px, 100%); padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: #fff; border-top: 1px solid var(--linha); z-index: 11; }
+  .barra-fim p { margin: 0 0 8px; font-weight: 700; text-align: center; }
+
+  /* Foto do celular */
+  .previa { width: 100%; max-height: 46vh; object-fit: contain; border-radius: 14px; background: #fff; margin-bottom: 16px; }
+
+  /* Aviso */
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); width: min(448px, calc(100% - 32px)); display: flex; align-items: center; gap: 8px; padding: 10px 10px 10px 16px; border-radius: 16px; background: var(--tinta); color: #fff; z-index: 30; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+  .toast p { flex: 1; margin: 0; font-weight: 700; min-height: 48px; display: flex; align-items: center; }
+  .toast button { min-height: 48px; padding: 0 12px; border: 0; border-radius: 10px; background: rgba(255,255,255,.12); color: var(--mostarda); font-weight: 800; }
+
+  dialog { width: min(420px, calc(100% - 32px)); border: 0; border-radius: 20px; padding: 24px; }
+  dialog::backdrop { background: rgba(23,20,31,.55); }
+  dialog h2 { margin: 0 0 8px; font-size: 22px; }
+  dialog p { margin: 0 0 20px; color: var(--tinta-suave); }
+  dialog .btn + .btn { margin-top: 10px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<div class="app">
+  <span class="selo">Protótipo · nada aqui é salvo de verdade</span>
+
+  <!-- Login -->
+  <section class="login" id="tela-email">
+    <div class="marca">Kari <span>Gava</span></div>
+    <h1>Entrar no painel do site</h1>
+    <p>Daqui você atualiza as fotos e os textos do seu site.</p>
+    <form id="form-email" novalidate>
+      <label class="campo"><span>Seu e-mail</span><input type="email" id="email" autocomplete="email" inputmode="email" placeholder="voce@email.com"></label>
+      <span class="erro" id="erro-email" hidden></span>
+      <button class="btn" type="submit">Receber código</button>
+    </form>
+  </section>
+
+  <section class="login" id="tela-codigo" hidden>
+    <div class="marca">Kari <span>Gava</span></div>
+    <h1>Confira seu e-mail</h1>
+    <p>Mandamos um código de 6 números para <strong id="email-mostrado"></strong>.</p>
+    <form id="form-codigo" novalidate>
+      <label class="campo"><span>Código</span><input id="codigo" class="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label>
+      <span class="erro" id="erro-codigo" hidden></span>
+      <button class="btn" type="submit">Entrar</button>
+    </form>
+    <button class="link" id="trocar-email" type="button">Usar outro e-mail</button>
+  </section>
+
+  <!-- Início -->
+  <div id="tela-inicio" hidden>
+    <header class="topo"><h1>Painel do site</h1><img class="avatar" src="../public/img/kari-perfil.jpg" alt=""></header>
+    <main>
+      <h2 class="ola">Oi, Kari!<br>O que você quer atualizar hoje?</h2>
+      <p class="dica">Toque numa parte do site para trocar as fotos ou os textos.</p>
+      <div id="cartoes"></div>
+    </main>
+  </div>
+
+  <!-- Uma seção -->
+  <div id="tela-secao" hidden>
+    <header class="topo"><button class="voltar" id="voltar">← Voltar</button><h1 id="secao-titulo"></h1></header>
+    <main>
+      <div class="botoes-add">
+        <button class="btn" id="abrir-instagram">+ Trazer do Instagram</button>
+        <label class="btn btn-claro" for="arquivo">+ Foto do celular</label>
+        <input class="sr" type="file" id="arquivo" accept="image/*">
+      </div>
+      <h2 class="bloco-titulo">No site agora <small id="secao-qtd"></small></h2>
+      <p class="dica" id="secao-dica">A foto de cima aparece primeiro.</p>
+      <div id="secao-itens"></div>
+
+      <section class="textos" id="textos" hidden>
+        <h2>Editar textos</h2>
+        <p>Assim aparece no site, no cartão deste serviço.</p>
+        <label class="campo"><span>Frase de apresentação</span><textarea id="txt-resumo"></textarea></label>
+        <label class="campo"><span>Para quem é</span><textarea id="txt-para"></textarea></label>
+        <span class="erro" id="erro-texto" hidden>A frase de apresentação não pode ficar vazia. Escreva pelo menos uma frase curta.</span>
+        <button class="btn btn-verde" id="salvar-textos">Salvar alterações</button>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- Escolher do Instagram -->
+<div class="tela-cheia" id="escolher" hidden role="dialog" aria-modal="true" aria-labelledby="escolher-titulo">
+  <div>
+    <header class="topo"><button class="voltar" id="fechar-escolher">← Voltar</button><h1 id="escolher-titulo">Escolha as fotos</h1></header>
+    <div class="contas" role="tablist" id="contas">
+      <button class="conta" role="tab" data-conta="kari" aria-selected="true">@karienegavaw</button>
+      <button class="conta" role="tab" data-conta="lalaia" aria-selected="false">@lalaia.acessorios</button>
+    </div>
+    <div class="grade" id="grade"></div>
+    <div class="barra-fim">
+      <p id="contador" aria-live="polite">Toque nas fotos que você quer trazer</p>
+      <button class="btn btn-verde" id="adicionar" disabled>Adicionar fotos</button>
+    </div>
+  </div>
+</div>
+
+<!-- Foto do celular -->
+<div class="tela-cheia" id="celular" hidden role="dialog" aria-modal="true" aria-labelledby="celular-titulo">
+  <div>
+    <header class="topo"><button class="voltar" id="fechar-celular">← Voltar</button><h1 id="celular-titulo">Foto do celular</h1></header>
+    <main>
+      <img class="previa" id="previa" alt="Foto escolhida">
+      <label class="campo"><span>Nome no site (opcional)</span><input id="celular-nome" maxlength="60"><span class="ajuda">Aparece embaixo da foto.</span></label>
+      <button class="btn btn-verde" id="colocar-celular">Colocar no site</button>
+      <button class="link" id="trocar-foto" type="button">Escolher outra foto</button>
+    </main>
+  </div>
+</div>
+
+<dialog id="confirmar">
+  <h2>Tirar esta foto do site?</h2>
+  <p>Ela sai só do site. No seu Instagram e no seu celular ela continua do mesmo jeito.</p>
+  <button class="btn btn-perigo" id="confirmar-sim">Sim, tirar do site</button>
+  <button class="btn btn-claro" id="confirmar-nao">Cancelar</button>
+</dialog>
+
+<div class="toast" id="toast" role="status" hidden>
+  <p id="toast-texto"></p>
+  <button id="toast-desfazer" type="button">Desfazer</button>
+</div>
+
+<script>
+const SECOES = [
+  { id: 'lalaia', nome: 'LALAIÁ (produtos)', cor: 'var(--vermelho)' },
+  { id: 'consultoria', nome: 'Consultoria de estilo', cor: 'var(--roxo)', servico: true,
+    resumo: 'Para se reconhecer no espelho e vestir quem você é, sem fórmula pronta.',
+    para: 'Mulheres que sentem que o guarda-roupa não conversa mais com elas.' },
+  { id: 'edicao', nome: 'Edição de guarda-roupa', cor: 'var(--roxo)', servico: true,
+    resumo: 'Peça por peça, no seu armário: o que fica, o que sai e o que ganha combinação nova.',
+    para: 'Quem tem o armário cheio e a sensação de não ter o que vestir. Também atendo adolescentes, sempre com a vontade delas no centro.' },
+  { id: 'styling', nome: 'Styling e produção de moda', cor: 'var(--verde)', servico: true,
+    resumo: 'Looks e produções para ensaios, shows, campanhas e conteúdo de moda.',
+    para: 'Artistas, fotógrafos, marcas e criadores de conteúdo.' },
+  { id: 'vm', nome: 'Vitrines e visual merchandising', cor: 'var(--verde)', servico: true,
+    resumo: 'Consultoria de VM e varejo de moda: vitrine, exposição e loja que fazem a peça vender.',
+    para: 'Lojas de moda e acessórios.' },
+  { id: 'oficina-look', nome: 'Oficina de Look', cor: 'var(--roxo)', servico: true,
+    resumo: 'Encontros em grupo para aprender a montar looks com o que você já tem.',
+    para: 'Grupos de amigas, empresas e eventos.' },
+  { id: 'ensino', nome: 'Cursos e palestras', cor: 'var(--mostarda)', servico: true,
+    resumo: 'Aulas sobre moda, visual merchandising, expografia e acessórios de cabeça.',
+    para: 'Faculdades, escolas de moda e eventos.' },
+  { id: 'sobre', nome: 'Sobre mim', cor: 'var(--tinta)' }
+];
+const secao = id => SECOES.find(s => s.id === id);
+
+const POSTS = [
+  { id: 'p1', conta: 'kari', img: '../public/img/kari-stylist-toia.jpg', legenda: 'Oi gente! Eu sou a Kari!' },
+  { id: 'p2', conta: 'kari', img: '../public/img/kari-look-blazer.jpg', legenda: 'Como desencaretar um look: broches + cor nos pés' },
+  { id: 'p3', conta: 'kari', img: '../public/img/sapatos-vermelhos.jpg', legenda: 'Barra barroca' },
+  { id: 'p4', conta: 'kari', img: '../public/img/oficina-turma.jpg', legenda: 'Oficina de VM e expografia na UDESC' },
+  { id: 'p5', conta: 'kari', img: '../public/img/kari-stylist-toia.jpg', legenda: 'Oi gente! Fotos da produção com a Toia' },
+  { id: 'p6', conta: 'kari', img: '../public/img/atelie-busto.jpg', legenda: 'Bastidores do curso' },
+  { id: 'p7', conta: 'kari', img: '../public/img/modateca-curso.jpg', legenda: 'Curso: Criação de Acessórios de Cabeça' },
+  { id: 'p8', conta: 'kari', img: '../public/img/modateca-palestra.jpg', legenda: 'Palestra Moda e Adornos de Cabeça' },
+  { id: 'p9', conta: 'kari', img: '../public/img/kari-oculos.jpg', legenda: 'Eu amei brincar' },
+  { id: 'p10', conta: 'kari', img: '../public/img/kari-brasil.jpg', legenda: 'Meu Brasil brasileiro' },
+  { id: 'l1', conta: 'lalaia', img: '../public/img/lalaia-scrunchie.jpg', legenda: 'BigScrunchie na cor Bege' },
+  { id: 'l2', conta: 'lalaia', img: '../public/img/lalaia-laco-organza.jpg', legenda: 'Laço de organza' },
+  { id: 'l3', conta: 'lalaia', img: '../public/img/lalaia-perolas.jpg', legenda: 'Elegantão' },
+  { id: 'l4', conta: 'lalaia', img: '../public/img/lalaia-flor-vermelha.jpg', legenda: 'Bem Xuxona' },
+  { id: 'l5', conta: 'lalaia', img: '../public/img/lalaia-babado-vermelho.jpg', legenda: 'Babados vermelhos' },
+  { id: 'l6', conta: 'lalaia', img: '../public/img/lalaia-caixa.jpg', legenda: 'Aquele barulhinho bom' }
+];
+const post = id => POSTS.find(p => p.id === id);
+
+// Fotos no site: src vem do post do Instagram ou do celular
+let noSite = [
+  { uid: 1, secao: 'lalaia', postId: 'l3', src: '../public/img/lalaia-perolas.jpg', nome: 'Laço de pérolas' },
+  { uid: 2, secao: 'lalaia', postId: 'l4', src: '../public/img/lalaia-flor-vermelha.jpg', nome: 'Flor vermelha' },
+  { uid: 3, secao: 'lalaia', postId: 'l6', src: '../public/img/lalaia-caixa.jpg', nome: 'Embalagem' },
+  { uid: 4, secao: 'consultoria', postId: 'p2', src: '../public/img/kari-look-blazer.jpg', nome: 'Look com broche' },
+  { uid: 5, secao: 'vm', postId: 'p6', src: '../public/img/atelie-busto.jpg', nome: 'Bastidores' },
+  { uid: 6, secao: 'ensino', postId: 'p7', src: '../public/img/modateca-curso.jpg', nome: 'Curso Acessórios de Cabeça' },
+  { uid: 7, secao: 'ensino', postId: 'p4', src: '../public/img/oficina-turma.jpg', nome: 'Oficina de VM na UDESC' },
+  { uid: 8, secao: 'sobre', postId: 'p9', src: '../public/img/kari-oculos.jpg', nome: 'Eu amei brincar' }
+];
+let proximoUid = 9;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+
+// ---------- Login ----------
+$('#form-email').addEventListener('submit', e => {
+  e.preventDefault();
+  const v = $('#email').value.trim(), erro = $('#erro-email');
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) {
+    erro.textContent = v ? 'Esse e-mail parece incompleto. Confira se tem @ e o final, como .com' : 'Escreva seu e-mail para receber o código.';
+    erro.hidden = false; $('#email').focus(); return;
+  }
+  erro.hidden = true;
+  $('#email-mostrado').textContent = v;
+  $('#tela-email').hidden = true; $('#tela-codigo').hidden = false; $('#codigo').focus();
+});
+$('#trocar-email').addEventListener('click', () => { $('#tela-codigo').hidden = true; $('#tela-email').hidden = false; $('#email').focus(); });
+$('#form-codigo').addEventListener('submit', e => {
+  e.preventDefault();
+  const v = $('#codigo').value.replace(/\D/g, ''), erro = $('#erro-codigo');
+  if (v.length !== 6) { erro.textContent = 'O código tem 6 números. Confira no seu e-mail e digite de novo.'; erro.hidden = false; $('#codigo').focus(); return; }
+  $('#tela-codigo').hidden = true;
+  irInicio();
+});
+
+// ---------- Início ----------
+function irInicio() {
+  $('#tela-secao').hidden = true;
+  $('#tela-inicio').hidden = false;
+  $('#cartoes').innerHTML = SECOES.map(s => {
+    const itens = noSite.filter(n => n.secao === s.id);
+    const thumbs = itens.slice(0, 4).map(n => `<img src="${n.src}" alt="">`).join('') + (itens.length > 4 ? `<span class="mais">+${itens.length - 4}</span>` : '');
+    return `<button class="cartao" data-abrir="${s.id}" style="--cor:${s.cor}">
+      <span class="cartao-topo"><h2>${s.nome}</h2><span class="qtd">${plural(itens.length, 'foto', 'fotos')}</span></span>
+      <span class="miniaturas">${thumbs || '<span class="sem">Ainda sem fotos. Toque para colocar.</span>'}</span>
+      <span class="ir">Atualizar →</span></button>`;
+  }).join('');
+  window.scrollTo(0, 0);
+}
+$('#cartoes').addEventListener('click', e => { const b = e.target.closest('[data-abrir]'); if (b) abrirSecao(b.dataset.abrir); });
+
+// ---------- Seção ----------
+let atual = null;
+function abrirSecao(id) {
+  atual = secao(id);
+  $('#tela-inicio').hidden = true; $('#tela-secao').hidden = false;
+  $('#secao-titulo').textContent = atual.nome;
+  $('#textos').hidden = !atual.servico;
+  if (atual.servico) { $('#txt-resumo').value = atual.resumo; $('#txt-para').value = atual.para; $('#erro-texto').hidden = true; }
+  renderSecao();
+  window.scrollTo(0, 0);
+  $('#voltar').focus();
+}
+function renderSecao() {
+  const itens = noSite.filter(n => n.secao === atual.id);
+  $('#secao-qtd').textContent = plural(itens.length, 'foto', 'fotos');
+  $('#secao-dica').hidden = itens.length < 2;
+  $('#secao-itens').innerHTML = itens.length ? itens.map((n, i) => `
+    <div class="item">
+      <img src="${n.src}" alt="">
+      <div class="nome">${esc(n.nome || 'Sem nome')}</div>
+      <div class="acoes-item">
+        <button class="mini" data-subir="${n.uid}" ${i === 0 ? 'disabled' : ''} aria-label="Mostrar antes">↑</button>
+        <button class="mini" data-descer="${n.uid}" ${i === itens.length - 1 ? 'disabled' : ''} aria-label="Mostrar depois">↓</button>
+      </div>
+      <button class="tirar" data-tirar="${n.uid}">Tirar do site</button>
+    </div>`).join('')
+    : `<div class="vazio"><p>Nenhuma foto aqui ainda. Use os botões acima para trazer do Instagram ou do celular.</p></div>`;
+}
+$('#voltar').addEventListener('click', irInicio);
+
+$('#secao-itens').addEventListener('click', e => {
+  const subir = e.target.closest('[data-subir]'), descer = e.target.closest('[data-descer]'), tirar = e.target.closest('[data-tirar]');
+  if (subir || descer) {
+    const uid = +(subir ? subir.dataset.subir : descer.dataset.descer);
+    const mesma = noSite.filter(n => n.secao === atual.id);
+    const i = mesma.findIndex(n => n.uid === uid), j = subir ? i - 1 : i + 1;
+    if (j < 0 || j >= mesma.length) return;
+    const a = noSite.indexOf(mesma[i]), b = noSite.indexOf(mesma[j]);
+    [noSite[a], noSite[b]] = [noSite[b], noSite[a]];
+    renderSecao();
+    const alvo = document.querySelector(`[data-${subir ? 'subir' : 'descer'}="${uid}"]`);
+    (alvo && !alvo.disabled ? alvo : document.querySelector(`[data-tirar="${uid}"]`)).focus();
+  }
+  if (tirar) { paraTirar = +tirar.dataset.tirar; $('#confirmar').showModal(); }
+});
+
+let paraTirar = null;
+$('#confirmar-nao').addEventListener('click', () => $('#confirmar').close());
+$('#confirmar-sim').addEventListener('click', () => {
+  const idx = noSite.findIndex(n => n.uid === paraTirar);
+  const [removido] = noSite.splice(idx, 1);
+  $('#confirmar').close();
+  renderSecao();
+  mostrarToast('A foto saiu do site', () => { noSite.splice(idx, 0, removido); renderSecao(); mostrarToast('Pronto, a foto voltou para o site'); });
+});
+
+// ---------- Textos ----------
+$('#salvar-textos').addEventListener('click', () => {
+  const r = $('#txt-resumo').value.trim();
+  if (!r) { $('#erro-texto').hidden = false; $('#txt-resumo').focus(); return; }
+  $('#erro-texto').hidden = true;
+  atual.resumo = r; atual.para = $('#txt-para').value.trim();
+  mostrarToast('Alterações salvas');
+});
+
+// ---------- Trazer do Instagram ----------
+let conta = 'kari';
+let escolhidos = new Set();
+$('#abrir-instagram').addEventListener('click', () => {
+  escolhidos = new Set();
+  conta = atual.id === 'lalaia' ? 'lalaia' : 'kari';
+  marcarConta();
+  $('#escolher-titulo').textContent = `Fotos para ${atual.nome}`;
+  renderGrade();
+  $('#escolher').hidden = false;
+  document.body.style.overflow = 'hidden';
+  $('#fechar-escolher').focus();
+});
+function fecharEscolher() { $('#escolher').hidden = true; document.body.style.overflow = ''; $('#abrir-instagram').focus(); }
+$('#fechar-escolher').addEventListener('click', fecharEscolher);
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (!$('#escolher').hidden) fecharEscolher();
+  if (!$('#celular').hidden) fecharCelular();
+});
+function marcarConta() { document.querySelectorAll('.conta').forEach(c => c.setAttribute('aria-selected', c.dataset.conta === conta)); }
+$('#contas').addEventListener('click', e => {
+  const b = e.target.closest('[data-conta]'); if (!b) return;
+  conta = b.dataset.conta; marcarConta(); renderGrade();
+});
+function renderGrade() {
+  $('#grade').innerHTML = POSTS.filter(p => p.conta === conta).map(p => {
+    const ja = noSite.some(n => n.secao === atual.id && n.postId === p.id);
+    const sel = escolhidos.has(p.id);
+    return `<button class="post" data-post="${p.id}" aria-pressed="${sel}" ${ja ? 'disabled' : ''} aria-label="${esc(p.legenda)}${ja ? ', já está aqui' : ''}">
+      <img src="${p.img}" alt="" loading="lazy">
+      ${ja ? '<span class="etq">Já está aqui</span>' : `<span class="marca-sel">${sel ? '✓' : ''}</span>`}</button>`;
+  }).join('');
+  atualizarContador();
+}
+$('#grade').addEventListener('click', e => {
+  const b = e.target.closest('[data-post]'); if (!b || b.disabled) return;
+  const id = b.dataset.post;
+  escolhidos.has(id) ? escolhidos.delete(id) : escolhidos.add(id);
+  const sel = escolhidos.has(id);
+  b.setAttribute('aria-pressed', sel);
+  b.querySelector('.marca-sel').textContent = sel ? '✓' : '';
+  atualizarContador();
+});
+function atualizarContador() {
+  const n = escolhidos.size;
+  $('#contador').textContent = n ? (n === 1 ? '1 foto escolhida' : `${n} fotos escolhidas`) : 'Toque nas fotos que você quer trazer';
+  $('#adicionar').disabled = !n;
+  $('#adicionar').textContent = n ? `Adicionar ${n === 1 ? '1 foto' : n + ' fotos'}` : 'Adicionar fotos';
+}
+$('#adicionar').addEventListener('click', () => {
+  const novos = [...escolhidos].map(id => ({ uid: proximoUid++, secao: atual.id, postId: id, src: post(id).img, nome: post(id).legenda }));
+  noSite = [...novos, ...noSite];
+  fecharEscolher();
+  renderSecao();
+  const uids = novos.map(n => n.uid);
+  mostrarToast(`${novos.length === 1 ? '1 foto colocada' : novos.length + ' fotos colocadas'} no site`, () => {
+    noSite = noSite.filter(n => !uids.includes(n.uid)); renderSecao(); mostrarToast('Pronto, as fotos saíram do site');
+  });
+});
+
+// ---------- Foto do celular ----------
+let fotoCelular = null;
+$('#arquivo').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  if (!f.type.startsWith('image/')) { mostrarToast('Esse arquivo não é uma foto. Escolha uma imagem da galeria.'); e.target.value = ''; return; }
+  if (fotoCelular) URL.revokeObjectURL(fotoCelular);
+  fotoCelular = URL.createObjectURL(f);
+  $('#previa').src = fotoCelular;
+  $('#celular-nome').value = '';
+  $('#celular-titulo').textContent = `Foto para ${atual.nome}`;
+  $('#celular').hidden = false;
+  document.body.style.overflow = 'hidden';
+  $('#celular-nome').focus();
+});
+function fecharCelular() { $('#celular').hidden = true; document.body.style.overflow = ''; $('#arquivo').value = ''; }
+$('#fechar-celular').addEventListener('click', fecharCelular);
+$('#trocar-foto').addEventListener('click', () => $('#arquivo').click());
+$('#colocar-celular').addEventListener('click', () => {
+  const novo = { uid: proximoUid++, secao: atual.id, postId: null, src: fotoCelular, nome: $('#celular-nome').value.trim() };
+  noSite.unshift(novo);
+  fotoCelular = null;
+  fecharCelular();
+  renderSecao();
+  mostrarToast('Foto colocada no site', () => { noSite = noSite.filter(n => n.uid !== novo.uid); renderSecao(); mostrarToast('Pronto, a foto saiu do site'); });
+});
+
+// ---------- Aviso ----------
+let timerToast;
+function mostrarToast(texto, desfazer) {
+  clearTimeout(timerToast);
+  $('#toast-texto').textContent = texto;
+  $('#toast-desfazer').hidden = !desfazer;
+  $('#toast-desfazer').onclick = desfazer || null;
+  $('#toast').hidden = false;
+  timerToast = setTimeout(() => { $('#toast').hidden = true; }, 7000);
+}
+</script>
+</body>
+</html>

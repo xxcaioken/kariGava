@@ -1,0 +1,4 @@
+DEV_LOGIN=1
+SEGREDO_SESSAO=segredo-local-so-para-desenvolvimento-123
+EMAILS_PERMITIDOS=kari@exemplo.com,caio@exemplo.com
+MODO_INSTAGRAM=falso
