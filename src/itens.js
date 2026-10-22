@@ -100,12 +100,14 @@ function tipoDaImagem(bytes) {
   return null;
 }
 
-export async function adicionarDoCelular(env, form) {
-  const secao = String(form.get('secao') || '');
-  validarSecao(secao);
-  const titulo = limparTitulo(form.get('titulo'));
-  const foto = form.get('foto');
-  if (!foto || typeof foto === 'string') throw new ErroApi(400, 'foto_invalida', 'Esse arquivo não é uma foto. Escolha uma foto da galeria.');
+// Lê e confere uma foto de um multipart (celular): tipo pelos bytes, tamanho máximo, HEIC recusado com explicação.
+// Devolve { bytes, tipo } ou lança 400 foto_invalida / 413 foto_grande. Com `obrigatoria: false`, campo vazio devolve null.
+export async function lerFotoDoForm(form, campo = 'foto', { obrigatoria = true } = {}) {
+  const foto = form.get(campo);
+  if (!foto || typeof foto === 'string' || foto.size === 0) {
+    if (!obrigatoria) return null;
+    throw new ErroApi(400, 'foto_invalida', 'Esse arquivo não é uma foto. Escolha uma foto da galeria.');
+  }
   if (foto.size > MAX_FOTO) throw new ErroApi(413, 'foto_grande', 'Essa foto é grande demais. Escolha outra ou tire um print dela.');
   const bytes = await foto.arrayBuffer();
   const tipo = tipoDaImagem(bytes);
@@ -113,6 +115,14 @@ export async function adicionarDoCelular(env, form) {
     throw new ErroApi(400, 'foto_invalida', 'Essa foto está num formato que o site não mostra. No iPhone, tire um print dela e envie o print.');
   }
   if (!tipo) throw new ErroApi(400, 'foto_invalida', 'Esse arquivo não é uma foto. Escolha uma foto da galeria.');
+  return { bytes, tipo };
+}
+
+export async function adicionarDoCelular(env, form) {
+  const secao = String(form.get('secao') || '');
+  validarSecao(secao);
+  const titulo = limparTitulo(form.get('titulo'));
+  const { bytes, tipo } = await lerFotoDoForm(form);
   const id = novoId('it');
   const chave = `celular/${id}.${tipo.split('/')[1].replace('jpeg', 'jpg')}`;
   await env.FOTOS.put(chave, bytes, { httpMetadata: { contentType: tipo } });

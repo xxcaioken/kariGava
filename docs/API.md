@@ -116,6 +116,22 @@ Vai no mesmo `PUT /api/painel/lalaia/condicoes`, no campo `cupom` (chave `cupom`
   - No site, com o cupom **vigente** (ligado, com código e desconto, e `valido_ate` vazia ou ainda não passada no horário de Brasília): a linha "Primeira encomenda? Diga o código BEMVINDA no WhatsApp e ganhe 10%." aparece na LALAIÁ, entre os produtos e "Como encomendar", e os botões de WhatsApp da LALAIÁ (produtos e o botão do bloco) ganham o sufixo ` · cupom BEMVINDA` na mensagem. Desligado ou vencido: nada muda no site. Os botões dos serviços nunca levam o cupom.
   - O painel mostra "Cupom · ligado / desligado / vencido em dd/mm" no cartão da LALAIÁ em "Partes do site".
 
+## Depoimentos
+
+Seção "O que dizem" do site, entre "Como trabalhar comigo" e "Sobre"; só existe no HTML quando há depoimento ativo. O estado traz `depoimentos`: `[ { "id": "dep_...", "ordem": 0, "nome", "de_onde", "texto", "servico", "foto_url": "/fotos/dep/dep_....jpg" | null, "largura", "altura", "consentimento_em": "2026-10-22T..." | null } ]`, ordenados.
+
+- `POST /api/painel/depoimentos` (JSON) `{ "nome": "Mariana", "de_onde": "Florianópolis", "texto": "...", "servico": "consultoria", "consentimento": true }` → `201 { "depoimento": {...} }`
+- `POST /api/painel/depoimentos` (multipart/form-data) campos `nome`, `de_onde`, `texto`, `servico`, `consentimento` (`true`), `foto` (jpg/png/webp até 15 MB; corpo todo até 24 MB), `largura` e `altura` (tamanho da foto enviada, inteiros de 1 a 10000; viram `width`/`height` no site) → `201 { "depoimento": {...} }`
+  - Limites: nome 1 a 80, de_onde 0 a 80, texto 1 a 400 letras, `servico` um id de `conteudo.servicos` ou vazio. Fora disso: `400 { erro: "texto_invalido", mensagem: "O depoimento pode ter até 400 letras; este tem 401." }`.
+  - **Com foto, `consentimento` é obrigatório** (a Kari marca que a cliente autorizou usar a foto e o depoimento): sem ele → `400 { erro: "texto_invalido", mensagem: "Marque que a cliente autorizou antes de publicar a foto." }`. Sem foto o campo é opcional; marcado, fica em `consentimento_em`.
+  - Foto que não é imagem, HEIC ou sem `largura`/`altura` válidas → `400 foto_invalida`; grande demais → `413 foto_grande`.
+  - Ordem no servidor: valida tudo → guarda a foto no R2 (`dep/<id>.jpg`) → grava no banco. Se gravar falhar, a foto é apagada e a resposta é `500 { erro: "erro_interno", mensagem: "Não deu para salvar o depoimento. Tente de novo." }`. O id nasce no servidor: repetir o POST cria outro depoimento (o painel desabilita o botão durante o envio).
+- `PATCH /api/painel/depoimentos/:id` `{ "nome", "de_onde", "texto", "servico" }` (parcial) → `{ "depoimento": {...} }`. A foto não muda por aqui: para trocar, tire e cadastre de novo.
+- `DELETE /api/painel/depoimentos/:id` → `{ "depoimento": {...} }` (sai do site; pode desfazer)
+- `POST /api/painel/depoimentos/:id/restaurar` → `{ "depoimento": {...} }` (volta para a posição em que estava)
+- `POST /api/painel/depoimentos/:id/mover` `{ "direcao": "cima" | "baixo" }` → `{ "depoimentos": [ ...na nova ordem ] }`
+- Inexistente → `404 { erro: "nao_encontrado" }`.
+
 ## Site público
 
 - `GET /` → página gerada com o conteúdo atual (cache curto, limpo a cada mudança no painel).

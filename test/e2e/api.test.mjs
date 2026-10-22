@@ -602,3 +602,107 @@ test('R-08 cupom de primeira encomenda: linha na LALAIÁ, sufixo no WhatsApp, va
   html = (await chamar('/')).dados;
   assert.ok(!blocoLalaia(html).includes('id="cupom"') && textosWaDaLalaia(html).every(t => !t.includes('cupom')));
 });
+
+// ---------- S-07 · Depoimentos (R-04) ----------
+const secaoDepoimentos = html => {
+  const ini = html.indexOf('id="depoimentos"');
+  return ini < 0 ? null : html.slice(ini, html.indexOf('id="sobre"'));
+};
+function formDepoimento(campos, foto) {
+  const form = new FormData();
+  for (const [k, v] of Object.entries(campos)) form.set(k, String(v));
+  if (foto) form.set('foto', foto, 'foto.jpg');
+  return form;
+}
+
+test('R-04 depoimentos: seção só quando existe, foto com consentimento, validações, editar, ordem, tirar e desfazer', async () => {
+  let html = (await chamar('/')).dados;
+  assert.ok(!html.includes('id="depoimentos"'), 'sem depoimentos a seção não existe');
+  assert.deepEqual((await chamar('/api/painel/estado')).dados.depoimentos, [], 'estado devolve depoimentos');
+
+  // JSON, sem foto: nome, de onde, texto escapado e serviço; avatar é a inicial.
+  const r1 = await chamar('/api/painel/depoimentos', { metodo: 'POST', corpo: { nome: 'Mariana', de_onde: 'Florianópolis', texto: 'Saí da consultoria <b>outra</b> pessoa.', servico: 'consultoria' } });
+  assert.equal(r1.status, 201, JSON.stringify(r1.dados));
+  const d1 = r1.dados.depoimento;
+  assert.equal(d1.foto_url, null);
+  assert.equal(d1.consentimento_em, null);
+  html = (await chamar('/')).dados;
+  let secao = secaoDepoimentos(html);
+  assert.ok(secao, 'seção aparece');
+  assert.ok(html.indexOf('id="como-trabalhar"') < html.indexOf('id="depoimentos"') && html.indexOf('id="depoimentos"') < html.indexOf('id="sobre"'), 'entre como trabalhar e sobre');
+  assert.ok(secao.includes('Saí da consultoria &lt;b&gt;outra&lt;/b&gt; pessoa.') && !secao.includes('<b>outra</b>'), 'texto escapado');
+  assert.ok(secao.includes('Mariana') && secao.includes('Florianópolis') && secao.includes('Consultoria de estilo'), 'nome, de onde e serviço');
+  assert.ok(!secao.includes('<img') && secao.includes('>M<'), 'sem foto: inicial');
+
+  // Multipart com foto: exige consentimento (uc4a) e largura/altura (ENG-21).
+  const jpg = new Blob([readFileSync(new URL('../../public/img/lalaia-caixa.jpg', import.meta.url))], { type: 'image/jpeg' });
+  const semConsent = await chamar('/api/painel/depoimentos', { metodo: 'POST', form: formDepoimento({ nome: 'Paula', texto: 'Amei a edição.', largura: 480, altura: 360 }, jpg) });
+  assert.equal(semConsent.status, 400);
+  assert.equal(semConsent.dados.erro, 'texto_invalido');
+  assert.match(semConsent.dados.mensagem, /autorizou/);
+  const semTamanho = await chamar('/api/painel/depoimentos', { metodo: 'POST', form: formDepoimento({ nome: 'Paula', texto: 'Amei a edição.', consentimento: 'true', largura: 0, altura: 360 }, jpg) });
+  assert.equal(semTamanho.status, 400);
+  assert.equal(semTamanho.dados.erro, 'foto_invalida');
+  const naoFoto = await chamar('/api/painel/depoimentos', { metodo: 'POST', form: formDepoimento({ nome: 'Paula', texto: 'Amei a edição.', consentimento: 'true', largura: 480, altura: 360 }, new Blob(['não sou foto'], { type: 'image/jpeg' })) });
+  assert.equal(naoFoto.status, 400);
+  assert.equal(naoFoto.dados.erro, 'foto_invalida');
+  const r2 = await chamar('/api/painel/depoimentos', { metodo: 'POST', form: formDepoimento({ nome: 'Paula', de_onde: 'Palhoça', texto: 'Amei a edição.', servico: 'edicao', consentimento: 'true', largura: 480, altura: 360 }, jpg) });
+  assert.equal(r2.status, 201, JSON.stringify(r2.dados));
+  const d2 = r2.dados.depoimento;
+  assert.match(d2.foto_url, /^\/fotos\/dep\//);
+  assert.match(d2.consentimento_em, /^\d{4}-\d{2}-\d{2}T/);
+  assert.equal((await fetch(BASE + d2.foto_url)).status, 200, 'foto guardada no R2');
+  html = (await chamar('/')).dados;
+  secao = secaoDepoimentos(html);
+  const img = secao.match(/<img [^>]*>/g)?.find(t => t.includes(d2.foto_url));
+  assert.ok(img, 'foto do depoimento');
+  assert.ok(img.includes('loading="lazy"') && img.includes('width="480"') && img.includes('height="360"'), img);
+
+  // Validações com mensagem.
+  const grande = await chamar('/api/painel/depoimentos', { metodo: 'POST', corpo: { nome: 'Ana', texto: 'a'.repeat(401) } });
+  assert.equal(grande.status, 400);
+  assert.equal(grande.dados.erro, 'texto_invalido');
+  assert.match(grande.dados.mensagem, /400 letras.*401/);
+  for (const corpo of [{ nome: '', texto: 'Oi' }, { nome: 'Ana', texto: '' }, { nome: 'Ana', texto: 'Oi', servico: 'xyz' }, { nome: 'a'.repeat(81), texto: 'Oi' }]) {
+    const ruim = await chamar('/api/painel/depoimentos', { metodo: 'POST', corpo });
+    assert.equal(ruim.status, 400, JSON.stringify(corpo));
+    assert.equal(ruim.dados.erro, 'texto_invalido');
+    assert.ok(ruim.dados.mensagem?.length > 10);
+  }
+  // Consentimento sem foto é opcional, mas fica registrado se marcado.
+  const r3 = await chamar('/api/painel/depoimentos', { metodo: 'POST', corpo: { nome: 'Carla', texto: 'Vitrine nova, vendas também.', servico: 'vm', consentimento: true } });
+  assert.equal(r3.status, 201);
+  assert.match(r3.dados.depoimento.consentimento_em, /^\d{4}/);
+  const d3 = r3.dados.depoimento;
+
+  // Editar (PATCH parcial): texto e serviço; nome fica.
+  const ed = await chamar(`/api/painel/depoimentos/${d1.id}`, { metodo: 'PATCH', corpo: { texto: 'Texto editado.', servico: '' } });
+  assert.equal(ed.status, 200, JSON.stringify(ed.dados));
+  assert.equal(ed.dados.depoimento.nome, 'Mariana');
+  assert.equal(ed.dados.depoimento.servico, '');
+  html = (await chamar('/')).dados;
+  assert.ok(secaoDepoimentos(html).includes('Texto editado.') && !secaoDepoimentos(html).includes('Consultoria de estilo'));
+  assert.equal((await chamar(`/api/painel/depoimentos/${d1.id}`, { metodo: 'PATCH', corpo: { texto: 'a'.repeat(401) } })).status, 400);
+
+  // Ordem, tirar e desfazer, como nas fotos.
+  const mv = await chamar(`/api/painel/depoimentos/${d3.id}/mover`, { metodo: 'POST', corpo: { direcao: 'cima' } });
+  assert.equal(mv.status, 200);
+  assert.deepEqual(mv.dados.depoimentos.map(d => d.id), [d1.id, d3.id, d2.id]);
+  assert.deepEqual(mv.dados.depoimentos.map(d => d.ordem), [0, 1, 2]);
+  html = (await chamar('/')).dados;
+  secao = secaoDepoimentos(html);
+  assert.ok(secao.indexOf('Carla') < secao.indexOf('Paula'), 'site segue a ordem');
+  const tirado = await chamar(`/api/painel/depoimentos/${d3.id}`, { metodo: 'DELETE' });
+  assert.equal(tirado.status, 200);
+  assert.deepEqual((await chamar('/api/painel/estado')).dados.depoimentos.map(d => d.id), [d1.id, d2.id]);
+  assert.ok(!secaoDepoimentos((await chamar('/')).dados).includes('Carla'));
+  assert.equal((await chamar(`/api/painel/depoimentos/${d3.id}/restaurar`, { metodo: 'POST' })).status, 200);
+  assert.deepEqual((await chamar('/api/painel/estado')).dados.depoimentos.map(d => d.id), [d1.id, d3.id, d2.id], 'volta para a posição');
+  assert.equal((await chamar('/api/painel/depoimentos/dep_naoexiste', { metodo: 'DELETE' })).status, 404);
+
+  // Tirando todos, a seção some do HTML.
+  for (const d of [d1, d2, d3]) await chamar(`/api/painel/depoimentos/${d.id}`, { metodo: 'DELETE' });
+  html = (await chamar('/')).dados;
+  assert.ok(!html.includes('id="depoimentos"'), 'sem depoimentos ativos a seção some');
+  assert.deepEqual((await chamar('/api/painel/estado')).dados.depoimentos, []);
+});

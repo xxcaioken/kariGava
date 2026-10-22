@@ -9,7 +9,7 @@ const MSG_GERAL = 'Algo não deu certo. Tente de novo em alguns minutos.';
 const MSG_DESLIGADO = 'Essa conta ainda não está ligada ao site. Peça para o Caio ligar.';
 const LIMITE_TEXTO = 220;
 const LIMITE_FOTO = 15 * 1024 * 1024;
-const TELAS = ['tela-carregando', 'tela-falha', 'tela-email', 'tela-codigo', 'tela-inicio', 'tela-secao'];
+const TELAS = ['tela-carregando', 'tela-falha', 'tela-email', 'tela-codigo', 'tela-inicio', 'tela-secao', 'tela-depoimentos'];
 
 let estado = null;
 let telaAtual = 'tela-carregando';
@@ -111,6 +111,7 @@ async function sincronizar() {
 function renderAtual() {
   if (telaAtual === 'tela-inicio') { renderCartoes(); renderNovidades(); }
   if (telaAtual === 'tela-secao' && secaoAtual) renderSecao();
+  if (telaAtual === 'tela-depoimentos') renderDepoimentos();
 }
 
 // Marca nos posts guardados (novidades e grade) em que seção eles estão no site.
@@ -309,6 +310,16 @@ function renderCartoes() {
     aplicarCor(cartao, s.cor);
     caixa.append(cartao);
   }
+  // Depoimentos (R-04) não são fotos de seção: cartão próprio, com a própria tela.
+  const deps = depoimentos();
+  const cartaoDep = el('button', { class: 'cartao', type: 'button', 'data-secao': 'depoimentos', onclick: abrirDepoimentos },
+    el('span', { class: 'cartao-topo' },
+      el('span', { class: 'cartao-nome', text: 'Depoimentos' }),
+      el('span', { class: 'qtd', text: plural(deps.length, 'depoimento', 'depoimentos') })),
+    el('span', { class: 'cartao-preco', text: deps.length ? resumir(deps.map((d) => d.nome).join(', '), 60) : 'O que as clientes dizem de você. Toque para cadastrar o primeiro.' }),
+    el('span', { class: 'ir', 'aria-hidden': 'true', text: 'Atualizar →' }));
+  aplicarCor(cartaoDep, '#E5196E');
+  caixa.append(cartaoDep);
 }
 
 async function carregarNovidades() {
@@ -479,8 +490,18 @@ $('#voltar').addEventListener('click', () => {
   if (history.state?.secao) history.back(); // o popstate abaixo faz a volta
   else sairDaSecao();
 });
+$('#voltar-dep').addEventListener('click', () => {
+  if (history.state?.secao) history.back();
+  else irInicio({ focarSecao: 'depoimentos' });
+});
 
 window.addEventListener('popstate', () => {
+  if (telaAtual === 'tela-depoimentos') {
+    const aberto = document.querySelector('dialog[open]');
+    if (aberto) { aberto.close(); history.pushState({ secao: 'depoimentos' }, ''); return; }
+    irInicio({ focarSecao: 'depoimentos' });
+    return;
+  }
   if (telaAtual !== 'tela-secao') return;
   const aberto = document.querySelector('dialog[open]');
   if (aberto) { aberto.close(); history.pushState({ secao: secaoAtual }, ''); return; }
@@ -640,29 +661,41 @@ async function mover(item, direcao) {
   }
 }
 
-// Tirar do site
-let tirarItem = null;
+// Tirar do site (fotos e depoimentos usam o mesmo diálogo; muda o que é tirado e o que o desfazer faz)
+let tirarPedido = null;
 function abrirTirar(item) {
-  tirarItem = item;
+  abrirConfirmacaoTirar({
+    titulo: 'Tirar essa foto do site?',
+    texto: 'Ela some do site, mas continua no seu Instagram e no seu celular.',
+    tirando: 'Tirando...',
+    apagar: async () => { await api(`/api/painel/itens/${enc(item.id)}`, { metodo: 'DELETE', json: {} }); marcarItem(item, false); },
+    saiu: 'A foto saiu do site',
+    desfazer: async () => { await api(`/api/painel/itens/${enc(item.id)}/restaurar`, { metodo: 'POST', json: {} }); marcarItem(item, true); },
+    voltou: 'Pronto, a foto voltou para o site',
+    voltarFoco: $('#secao-titulo'),
+  });
+}
+function abrirConfirmacaoTirar(pedido) {
+  tirarPedido = pedido;
+  $('#tirar-titulo').textContent = pedido.titulo;
+  $('#tirar-texto').textContent = pedido.texto;
   esconder('#tirar-erro');
-  abrirDialogo('#dlg-tirar', { voltarFoco: $('#secao-titulo') });
+  abrirDialogo('#dlg-tirar', { voltarFoco: pedido.voltarFoco });
 }
 
 $('#tirar-sim').addEventListener('click', async () => {
   const botao = $('#tirar-sim');
-  const item = tirarItem;
-  ocupado(botao, 'Tirando...');
+  const p = tirarPedido;
+  ocupado(botao, p.tirando);
   try {
-    await api(`/api/painel/itens/${enc(item.id)}`, { metodo: 'DELETE', json: {} });
+    await p.apagar();
     fecharDialogo('#dlg-tirar');
-    marcarItem(item, false);
     await sincronizar();
-    mostrarToast('A foto saiu do site', {
+    mostrarToast(p.saiu, {
       desfazer: async () => {
-        await api(`/api/painel/itens/${enc(item.id)}/restaurar`, { metodo: 'POST', json: {} });
-        marcarItem(item, true);
+        await p.desfazer();
         await sincronizar();
-        mostrarToast('Pronto, a foto voltou para o site');
+        mostrarToast(p.voltou);
       },
     });
   } catch (e) {
@@ -1123,31 +1156,34 @@ $('#dlg-celular').addEventListener('close', () => {
   celArquivo = null;
 });
 
-// Foto de celular chega com 3 a 8 MB; o site só precisa de 1600 px no lado maior.
+// Foto de celular chega com 3 a 8 MB; o site só precisa de 1600 px no lado maior (480 px para o avatar do depoimento).
 // Também endireita fotos tiradas com o celular de lado (orientação EXIF).
+// Devolve { arquivo, largura, altura }; largura/altura ficam null quando o navegador não lê o formato (o servidor explica o que fazer).
 const LADO_MAXIMO = 1600;
-async function reduzirFoto(arquivo) {
+async function reduzirFoto(arquivo, ladoMaximo = LADO_MAXIMO) {
   let bitmap;
   try {
     bitmap = await createImageBitmap(arquivo, { imageOrientation: 'from-image' });
   } catch {
-    return arquivo; // formato que o navegador não lê: o servidor explica o que fazer
+    return { arquivo, largura: null, altura: null };
   }
-  const escala = Math.min(1, LADO_MAXIMO / Math.max(bitmap.width, bitmap.height));
+  const escala = Math.min(1, ladoMaximo / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(bitmap.width * escala);
   canvas.height = Math.round(bitmap.height * escala);
   canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const original = { largura: bitmap.width, altura: bitmap.height };
   bitmap.close();
   const blob = await new Promise(ok => canvas.toBlob(ok, 'image/jpeg', 0.85));
-  return blob && blob.size < arquivo.size ? blob : arquivo;
+  if (blob && (blob.size < arquivo.size || escala < 1)) return { arquivo: blob, largura: canvas.width, altura: canvas.height };
+  return { arquivo, ...original };
 }
 
 $('#cel-ok').addEventListener('click', async () => {
   if (!celArquivo) { mostrar('#cel-erro', 'Escolha uma foto da galeria primeiro.'); return; }
   const botao = $('#cel-ok');
   ocupado(botao, 'Colocando no site...');
-  const foto = await reduzirFoto(celArquivo);
+  const { arquivo: foto } = await reduzirFoto(celArquivo);
   const form = new FormData();
   form.append('secao', secaoAtual);
   form.append('titulo', $('#cel-nome').value.trim());
@@ -1169,6 +1205,210 @@ $('#cel-ok').addEventListener('click', async () => {
   } catch (e) {
     livre(botao);
     if (e.tipo !== 'sessao') mostrar('#cel-erro', mensagemDe(e));
+  }
+});
+
+// ---------- Depoimentos (R-04) ----------
+
+const depoimentos = () => estado?.depoimentos || [];
+const LIMITE_DEPOIMENTO = 400;
+const LADO_AVATAR = 480;
+let depEditando = null;   // depoimento em edição (null = novo)
+let depArquivo = null;    // foto escolhida (File)
+let depUrl = null;
+
+function abrirDepoimentos() {
+  secaoAtual = null;
+  renderDepoimentos();
+  window.scrollTo(0, 0);
+  mostrarTela('tela-depoimentos');
+  history.pushState({ secao: 'depoimentos' }, '');
+}
+
+function renderDepoimentos({ foco } = {}) {
+  const lista = depoimentos();
+  $('#dep-qtd').textContent = plural(lista.length, 'depoimento', 'depoimentos');
+  $('#dep-dica').hidden = lista.length < 2;
+  const caixa = $('#dep-lista');
+  caixa.replaceChildren();
+  if (!lista.length) {
+    caixa.append(el('div', { class: 'vazio' }, el('p', { text: 'Nenhum depoimento ainda. Toque em "Novo depoimento" para cadastrar o primeiro.' })));
+    return;
+  }
+  lista.forEach((d, idx) => {
+    const servico = d.servico ? nomeSecao(d.servico) : '';
+    const avatar = d.foto_url
+      ? el('img', { src: d.foto_url, alt: '', loading: 'lazy' })
+      : el('span', { class: 'dep-inicial', 'aria-hidden': 'true', text: [...(d.nome || '?')][0].toUpperCase() });
+    const cartao = el('div', { class: 'item dep' },
+      avatar,
+      el('button', { class: 'nome', type: 'button', 'aria-label': `${d.nome}. Editar`, onclick: () => abrirDepoimento(d) },
+        el('span', { text: d.nome + (d.de_onde ? `, ${d.de_onde}` : '') }),
+        el('em', { text: resumir(d.texto, 90) }),
+        servico && el('small', { text: servico })),
+      el('div', { class: 'acoes-item' },
+        el('button', { class: 'mini', type: 'button', 'data-id': d.id, 'data-dir': 'cima', disabled: idx === 0, 'aria-label': `Mostrar antes: ${d.nome}`, text: '↑', onclick: (ev) => moverDepoimento(d, 'cima', ev.currentTarget) }),
+        el('button', { class: 'mini', type: 'button', 'data-id': d.id, 'data-dir': 'baixo', disabled: idx === lista.length - 1, 'aria-label': `Mostrar depois: ${d.nome}`, text: '↓', onclick: (ev) => moverDepoimento(d, 'baixo', ev.currentTarget) })),
+      el('button', { class: 'editar', type: 'button', text: 'Editar', 'aria-label': `Editar: ${d.nome}`, onclick: () => abrirDepoimento(d) }),
+      el('button', { class: 'tirar', type: 'button', text: 'Tirar do site', 'aria-label': `Tirar do site: ${d.nome}`, onclick: () => tirarDepoimento(d) }));
+    aplicarCor(cartao, secao(d.servico)?.cor || '#E5196E');
+    caixa.append(cartao);
+  });
+  if (foco) {
+    const mesma = caixa.querySelector(`[data-id="${CSS.escape(foco.id)}"][data-dir="${foco.dir}"]`);
+    const outra = caixa.querySelector(`[data-id="${CSS.escape(foco.id)}"][data-dir="${foco.dir === 'cima' ? 'baixo' : 'cima'}"]`);
+    (mesma && !mesma.disabled ? mesma : outra)?.focus();
+  }
+}
+
+async function moverDepoimento(d, direcao, botao) {
+  botao.disabled = true;
+  try {
+    const r = await api(`/api/painel/depoimentos/${enc(d.id)}/mover`, { metodo: 'POST', json: { direcao } });
+    estado.depoimentos = r.depoimentos || estado.depoimentos;
+    renderDepoimentos({ foco: { id: d.id, dir: direcao } });
+    anunciar(`${d.nome} agora aparece ${direcao === 'cima' ? 'antes' : 'depois'}.`);
+  } catch (e) {
+    botao.disabled = false;
+    if (e.tipo !== 'sessao') mostrarToast(mensagemDe(e), { erro: true });
+  }
+}
+
+function tirarDepoimento(d) {
+  abrirConfirmacaoTirar({
+    titulo: `Tirar o depoimento de ${d.nome} do site?`,
+    texto: 'Ele some do site. Dá para desfazer logo em seguida.',
+    tirando: 'Tirando...',
+    apagar: () => api(`/api/painel/depoimentos/${enc(d.id)}`, { metodo: 'DELETE', json: {} }),
+    saiu: 'O depoimento saiu do site',
+    desfazer: () => api(`/api/painel/depoimentos/${enc(d.id)}/restaurar`, { metodo: 'POST', json: {} }),
+    voltou: 'Pronto, o depoimento voltou para o site',
+    voltarFoco: $('#dep-titulo'),
+  });
+}
+
+function preencherServicos() {
+  const sel = $('#dep-servico');
+  sel.replaceChildren(el('option', { value: '', text: 'Sem serviço' }));
+  for (const s of estado.secoes.filter((x) => x.tipo === 'servico')) sel.append(el('option', { value: s.id, text: s.nome }));
+}
+
+function limparFotoDep() {
+  if (depUrl) { URL.revokeObjectURL(depUrl); depUrl = null; }
+  depArquivo = null;
+  $('#dep-arquivo').value = '';
+  const previa = $('#dep-previa');
+  previa.removeAttribute('src');
+  previa.hidden = true;
+  $('#dep-sem-foto').hidden = true;
+  $('#dep-escolher').textContent = 'Escolher foto';
+  $('#dep-consent-linha').hidden = true;
+}
+
+function atualizarContadorDep() {
+  const n = $('#dep-texto').value.length;
+  const c = $('#cont-dep-texto');
+  c.textContent = `${n} de ${LIMITE_DEPOIMENTO} letras`;
+  c.classList.toggle('passou', n > LIMITE_DEPOIMENTO);
+}
+$('#dep-texto').addEventListener('input', atualizarContadorDep);
+
+function abrirDepoimento(d = null) {
+  depEditando = d;
+  preencherServicos();
+  $('#dep-dlg-titulo').textContent = d ? 'Editar depoimento' : 'Novo depoimento';
+  $('#dep-nome').value = d?.nome || '';
+  $('#dep-de-onde').value = d?.de_onde || '';
+  $('#dep-texto').value = d?.texto || '';
+  $('#dep-servico').value = d?.servico || '';
+  $('#dep-salvar').textContent = d ? 'Salvar alterações' : 'Colocar no site';
+  $('#dep-foto-area').hidden = Boolean(d); // a foto não muda na edição
+  $('#dep-consent').checked = false;
+  limparFotoDep();
+  $('#dep-consent-linha').hidden = true;
+  esconder('#dep-erro');
+  atualizarContadorDep();
+  abrirDialogo('#dlg-depoimento', { voltarFoco: d ? $('#dep-titulo') : $('#dep-novo') });
+  $('#dep-nome').focus();
+}
+$('#dep-novo').addEventListener('click', () => abrirDepoimento(null));
+$('#dep-escolher').addEventListener('click', () => { $('#dep-arquivo').value = ''; $('#dep-arquivo').click(); });
+$('#dep-sem-foto').addEventListener('click', () => { limparFotoDep(); $('#dep-consent-linha').hidden = true; });
+
+$('#dep-arquivo').addEventListener('change', () => {
+  const arquivo = $('#dep-arquivo').files?.[0];
+  if (!arquivo) return;
+  const pareceFoto = (arquivo.type || '').startsWith('image/') || /\.(jpe?g|png|webp|heic|heif)$/i.test(arquivo.name || '');
+  if (!pareceFoto) { mostrar('#dep-erro', 'Esse arquivo não é uma foto. Escolha uma foto da galeria.'); return; }
+  if (arquivo.size > LIMITE_FOTO) { mostrar('#dep-erro', 'Essa foto é grande demais. Escolha outra ou tire um print dela.'); return; }
+  depArquivo = arquivo;
+  if (depUrl) URL.revokeObjectURL(depUrl);
+  depUrl = URL.createObjectURL(arquivo);
+  const previa = $('#dep-previa');
+  previa.onerror = () => { previa.hidden = true; };
+  previa.src = depUrl;
+  previa.hidden = false;
+  $('#dep-sem-foto').hidden = false;
+  $('#dep-escolher').textContent = 'Trocar foto';
+  // Com foto, a autorização da cliente é obrigatória (uc4a).
+  $('#dep-consent-linha').hidden = false;
+  esconder('#dep-erro');
+});
+
+$('#dlg-depoimento').addEventListener('close', () => { limparFotoDep(); depEditando = null; });
+
+$('#form-depoimento').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const nome = $('#dep-nome').value.trim();
+  const deOnde = $('#dep-de-onde').value.trim();
+  const texto = $('#dep-texto').value.trim();
+  const servico = $('#dep-servico').value;
+  if (!nome) { mostrar('#dep-erro', 'Escreva o nome da cliente.'); $('#dep-nome').focus(); return; }
+  if (!texto) { mostrar('#dep-erro', 'Escreva o que ela disse.'); $('#dep-texto').focus(); return; }
+  if (texto.length > LIMITE_DEPOIMENTO) { mostrar('#dep-erro', `O depoimento pode ter até ${LIMITE_DEPOIMENTO} letras; este tem ${texto.length}.`); return; }
+  const consentimento = $('#dep-consent').checked;
+  if (!depEditando && depArquivo && !consentimento) { mostrar('#dep-erro', 'Marque que a cliente autorizou antes de publicar a foto.'); $('#dep-consent').focus(); return; }
+  const botao = $('#dep-salvar');
+  ocupado(botao, 'Salvando...');
+  try {
+    if (depEditando) {
+      const id = depEditando.id;
+      await api(`/api/painel/depoimentos/${enc(id)}`, { metodo: 'PATCH', json: { nome, de_onde: deOnde, texto, servico } });
+      fecharDialogo('#dlg-depoimento');
+      await sincronizar();
+      mostrarToast('Depoimento salvo', { verSite: true });
+      return;
+    }
+    let r;
+    if (depArquivo) {
+      const { arquivo, largura, altura } = await reduzirFoto(depArquivo, LADO_AVATAR);
+      const form = new FormData();
+      form.append('nome', nome);
+      form.append('de_onde', deOnde);
+      form.append('texto', texto);
+      form.append('servico', servico);
+      form.append('consentimento', 'true');
+      if (largura && altura) { form.append('largura', String(largura)); form.append('altura', String(altura)); }
+      form.append('foto', arquivo, arquivo === depArquivo ? (depArquivo.name || 'foto.jpg') : 'foto.jpg');
+      r = await api('/api/painel/depoimentos', { metodo: 'POST', form });
+    } else {
+      r = await api('/api/painel/depoimentos', { metodo: 'POST', json: { nome, de_onde: deOnde, texto, servico, consentimento } });
+    }
+    const criado = r.depoimento;
+    fecharDialogo('#dlg-depoimento');
+    await sincronizar();
+    mostrarToast('Depoimento no site', {
+      verSite: true,
+      desfazer: async () => {
+        await api(`/api/painel/depoimentos/${enc(criado.id)}`, { metodo: 'DELETE', json: {} });
+        await sincronizar();
+        mostrarToast('Pronto, o depoimento saiu do site');
+      },
+    });
+  } catch (e) {
+    if (e.tipo !== 'sessao') mostrar('#dep-erro', mensagemDe(e));
+  } finally {
+    livre(botao);
   }
 });
 

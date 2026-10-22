@@ -84,6 +84,24 @@
     </main>
   </section>
 
+  <!-- Depoimentos -->
+  <section id="tela-depoimentos" hidden>
+    <header class="topo">
+      <button class="voltar" id="voltar-dep" type="button">← Voltar</button>
+      <h1 id="dep-titulo" tabindex="-1">Depoimentos</h1>
+    </header>
+    <main>
+      <div class="botoes-add">
+        <button class="btn" type="button" id="dep-novo">+ Novo depoimento</button>
+      </div>
+      <section aria-labelledby="titulo-dep-lista">
+        <h2 class="bloco-titulo" id="titulo-dep-lista">No site agora <small id="dep-qtd"></small></h2>
+        <p class="bloco-sub" id="dep-dica" hidden>O de cima aparece primeiro. Use as setas para mudar a ordem.</p>
+        <div id="dep-lista"></div>
+      </section>
+    </main>
+  </section>
+
   <!-- Uma parte do site -->
   <section id="tela-secao" hidden>
     <header class="topo">
@@ -237,10 +255,48 @@
   </div>
 </dialog>
 
+<!-- Cadastrar ou editar um depoimento -->
+<dialog class="cheia" id="dlg-depoimento" aria-labelledby="dep-dlg-titulo">
+  <div class="rolagem">
+    <header class="topo">
+      <button class="voltar" type="button" data-fechar>← Voltar</button>
+      <h1 id="dep-dlg-titulo">Novo depoimento</h1>
+    </header>
+    <form class="celular-corpo" id="form-depoimento" novalidate>
+      <label class="campo"><span>Nome da cliente</span>
+        <input id="dep-nome" maxlength="80" autocomplete="off" placeholder="Ex.: Mariana">
+      </label>
+      <label class="campo"><span>De onde ou o que faz (opcional)</span>
+        <input id="dep-de-onde" maxlength="80" autocomplete="off" placeholder="Ex.: Florianópolis · arquiteta">
+      </label>
+      <label class="campo"><span>O que ela disse</span>
+        <textarea id="dep-texto" maxlength="400" aria-describedby="cont-dep-texto"></textarea>
+        <span class="ajuda" id="cont-dep-texto"></span>
+      </label>
+      <label class="campo"><span>Serviço (opcional)</span>
+        <select id="dep-servico"></select>
+      </label>
+      <div class="campo" id="dep-foto-area">
+        <span>Foto da cliente (opcional)</span>
+        <input type="file" id="dep-arquivo" accept="image/*" class="sr" tabindex="-1" aria-hidden="true">
+        <div class="dep-foto-linha">
+          <img class="dep-foto-previa" id="dep-previa" alt="" hidden>
+          <button class="btn btn-claro" type="button" id="dep-escolher">Escolher foto</button>
+          <button class="btn btn-claro" type="button" id="dep-sem-foto" hidden>Tirar a foto</button>
+        </div>
+        <span class="ajuda">Aparece redondinha ao lado do depoimento. Para trocar a foto de um depoimento já salvo, tire-o do site e cadastre de novo.</span>
+      </div>
+      <label class="marcar" id="dep-consent-linha" hidden><input type="checkbox" id="dep-consent"><span>A cliente autorizou usar a foto e o depoimento no site</span></label>
+      <div class="erro" id="dep-erro" role="alert" hidden></div>
+      <button class="btn btn-verde" type="submit" id="dep-salvar">Colocar no site</button>
+    </form>
+  </div>
+</dialog>
+
 <!-- Tirar do site -->
 <dialog id="dlg-tirar" aria-labelledby="tirar-titulo">
   <h2 id="tirar-titulo">Tirar essa foto do site?</h2>
-  <p>Ela some do site, mas continua no seu Instagram e no seu celular.</p>
+  <p id="tirar-texto">Ela some do site, mas continua no seu Instagram e no seu celular.</p>
   <div class="erro" id="tirar-erro" role="alert" hidden></div>
   <button class="btn btn-perigo" type="button" id="tirar-sim">Sim, tirar do site</button>
   <button class="btn btn-claro" type="button" data-fechar autofocus>Não, deixar como está</button>

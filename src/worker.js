@@ -1,6 +1,7 @@
 import { ErroApi, json, respostaDeErro, lerJson } from './util.js';
 import { pedirCodigo, entrar, cookieSair, exigirSessao } from './auth.js';
-import { SECOES, listarItens, lerTextos, salvarTextos, adicionarDoInstagram, adicionarDoCelular, renomear, remover, restaurar, mover, secoesPorPost } from './itens.js';
+import { SECOES, listarItens, lerTextos, salvarTextos, adicionarDoInstagram, adicionarDoCelular, renomear, remover, restaurar, mover, secoesPorPost, lerFotoDoForm } from './itens.js';
+import { listarDepoimentos, criarDepoimento, editarDepoimento, removerDepoimento, restaurarDepoimento, moverDepoimento } from './depoimentos.js';
 import { contasLigadas, listarPosts, urlLigar, concluirLigacao, renovarTokens, CONTAS } from './instagram.js';
 import { renderizarSite } from './site.js';
 import { comCabecalhos } from './seguranca.js';
@@ -18,6 +19,16 @@ function exigirOrigem(request) {
 function exigirJson(request) {
   if (!(request.headers.get('content-type') || '').includes('application/json')) throw new ErroApi(415, 'precisa_json');
 }
+
+// Multipart com foto(s): recusa antes de ler o corpo quando passa do teto (ENG-03).
+const MAX_CORPO_MULTIPART = 24 * 1024 * 1024;
+async function lerMultipart(request) {
+  if (Number(request.headers.get('content-length') || 0) > MAX_CORPO_MULTIPART) {
+    throw new ErroApi(413, 'foto_grande', 'As fotos são grandes demais. Escolha outras ou tire um print delas.');
+  }
+  try { return await request.formData(); } catch { throw new ErroApi(400, 'foto_invalida', 'Esse arquivo não é uma foto. Escolha uma foto da galeria.'); }
+}
+const ehMultipart = request => (request.headers.get('content-type') || '').includes('multipart/form-data');
 
 async function marcarNoSite(env, posts) {
   const mapa = await secoesPorPost(env);
@@ -64,9 +75,31 @@ async function api(request, env, url) {
   const rota = pathname.slice('/api/painel'.length);
 
   if (rota === '/estado' && metodo === 'GET') {
-    const [itens, textos, contas, produtos, condicoes, cupom] = await Promise.all([listarItens(env), lerTextos(env), contasLigadas(env), listarProdutos(env), lerCondicoes(env), lerCupom(env)]);
+    const [itens, textos, contas, produtos, condicoes, cupom, depoimentos] = await Promise.all([
+      listarItens(env), lerTextos(env), contasLigadas(env), listarProdutos(env), lerCondicoes(env), lerCupom(env), listarDepoimentos(env),
+    ]);
     const lalaia = { produtos: agruparProdutos(itens.filter(i => i.secao === 'lalaia'), produtos), condicoes, cupom };
-    return json({ usuario: { email }, secoes: SECOES, itens, textos, lalaia, instagram: { contas }, site_url: '/' });
+    return json({ usuario: { email }, secoes: SECOES, itens, textos, lalaia, depoimentos, instagram: { contas }, site_url: '/' });
+  }
+
+  // ---------- Depoimentos ----------
+  if (rota === '/depoimentos' && metodo === 'POST') {
+    if (ehMultipart(request)) {
+      const form = await lerMultipart(request);
+      const foto = await lerFotoDoForm(form, 'foto', { obrigatoria: false });
+      const campos = Object.fromEntries(['nome', 'de_onde', 'texto', 'servico', 'consentimento'].map(c => [c, form.get(c)]));
+      return json({ depoimento: await criarDepoimento(env, { ...campos, foto: foto && { ...foto, largura: form.get('largura'), altura: form.get('altura') } }) }, 201);
+    }
+    exigirJson(request);
+    return json({ depoimento: await criarDepoimento(env, await lerJson(request)) }, 201);
+  }
+  const dp = rota.match(/^\/depoimentos\/(dep_[\w-]+)(\/restaurar|\/mover)?$/);
+  if (dp) {
+    const [, id, acao] = dp;
+    if (!acao && metodo === 'PATCH') { exigirJson(request); return json({ depoimento: await editarDepoimento(env, id, await lerJson(request)) }); }
+    if (!acao && metodo === 'DELETE') return json({ depoimento: await removerDepoimento(env, id) });
+    if (acao === '/restaurar' && metodo === 'POST') return json({ depoimento: await restaurarDepoimento(env, id) });
+    if (acao === '/mover' && metodo === 'POST') { exigirJson(request); return json({ depoimentos: await moverDepoimento(env, id, (await lerJson(request)).direcao) }); }
   }
 
   // ---------- Como encomendar: condições da LALAIÁ ----------
@@ -147,10 +180,11 @@ async function tratar(request, env, url) {
   if (url.pathname.startsWith('/api/')) return api(request, env, url);
   if (url.pathname.startsWith('/fotos/') && request.method === 'GET') return foto(env, decodeURIComponent(url.pathname.slice('/fotos/'.length)));
   if (url.pathname === '/' && (request.method === 'GET' || request.method === 'HEAD')) {
-    const [itens, textos, produtos, condicoes, cupom] = await Promise.all([
+    const [itens, textos, produtos, condicoes, cupom, depoimentos] = await Promise.all([
       listarItens(env), lerTextos(env), tolerante(listarProdutos(env), []), tolerante(lerCondicoes(env), null), tolerante(lerCupom(env), null),
+      tolerante(listarDepoimentos(env), []),
     ]);
-    return new Response(renderizarSite({ itens, textos, produtos, condicoes, cupom, whatsappNumero: env.WHATSAPP_NUMERO }), {
+    return new Response(renderizarSite({ itens, textos, produtos, condicoes, cupom, depoimentos, whatsappNumero: env.WHATSAPP_NUMERO }), {
       headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
     });
   }

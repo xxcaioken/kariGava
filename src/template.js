@@ -81,6 +81,26 @@ export function template(d, esc) {
 
   const fotoSobre = d.sobre.fotos[0];
 
+  // O que dizem (R-04): só existe no HTML quando há depoimento. Lista vertical, foto redonda ou inicial na cor da cartela.
+  const depoimentos = d.depoimentos.length ? `
+  <section class="secao depoimentos-secao" id="depoimentos" aria-labelledby="titulo-depoimentos">
+    <div class="wrap">
+      <div class="secao-cab">
+        <h2 id="titulo-depoimentos">O que dizem</h2>
+        <p>Quem já passou por aqui.</p>
+      </div>
+      <ul class="depoimentos">${d.depoimentos.map(p => `
+        <li class="depoimento" style="--cor:var(--${p.cor})">
+          ${p.foto_url
+            ? `<img class="depoimento-foto" src="${esc(p.foto_url)}" alt="" width="${esc(p.largura)}" height="${esc(p.altura)}" loading="lazy" decoding="async">`
+            : `<span class="depoimento-inicial" aria-hidden="true">${esc(p.inicial)}</span>`}
+          <blockquote class="citacao">${esc(p.texto)}</blockquote>
+          <p class="depoimento-autor"><strong>${esc(p.nome)}</strong>${p.de_onde ? `, ${esc(p.de_onde)}` : ''}${p.servico_nome ? `<span class="rotulo">${esc(p.servico_nome)}</span>` : ''}</p>
+        </li>`).join('')}
+      </ul>
+    </div>
+  </section>` : '';
+
   return `<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -173,7 +193,7 @@ export function template(d, esc) {
       </ol>
     </div>
   </section>
-
+${depoimentos}
   <section class="secao secao-cinza" id="sobre" aria-labelledby="titulo-sobre">
     <div class="wrap sobre-grade">
       <figure class="sobre-foto" style="margin:0">${img(fotoSobre, 'Kari')}</figure>
