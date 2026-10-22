@@ -12,8 +12,7 @@
     {
       "binding": "DB",
       "database_name": "site-kari",
-      // Preencher com o id de `wrangler d1 create site-kari` antes do primeiro deploy.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "da3b4b64-0da2-431a-be4d-6221bf9c450d",
       "migrations_dir": "migrations"
     }
   ],
