@@ -206,7 +206,15 @@ export async function adicionarDoCelular(env, form) {
   const id = novoId('it');
   const chave = `celular/${id}.${tipo.split('/')[1].replace('jpeg', 'jpg')}`;
   await env.FOTOS.put(chave, bytes, { httpMetadata: { contentType: tipo } });
-  const item = await inserir(env, { id, secao, ordem: await proximaOrdem(env, secao), titulo, foto_chave: chave, origem: 'celular' });
+  // Se gravar no banco falhar, a foto não fica órfã (e pública) no R2: mesma compensação de depoimentos e pares (review-r1 S-22).
+  let item;
+  try {
+    item = await inserir(env, { id, secao, ordem: await proximaOrdem(env, secao), titulo, foto_chave: chave, origem: 'celular' });
+  } catch (e) {
+    console.error('INSERT da foto do celular falhou; apagando do R2', chave, e?.stack || e);
+    await env.FOTOS.delete(chave).catch(err => console.error('não deu para apagar a foto órfã', chave, err));
+    throw new ErroApi(500, 'erro_interno', 'Não deu para colocar a foto no site. Tente de novo.');
+  }
   if (!lista.length && lados.largura === null) return item;
   return aplicarVariantes(env, { ...item, foto_chave: chave, variantes: null }, lista, lados);
 }

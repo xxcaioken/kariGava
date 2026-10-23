@@ -1163,3 +1163,59 @@ test('R-10/R-05 pre-qa: toda <img> com width/height tem height:auto no CSS, para
     assert.ok(new RegExp(seletor.replace(/[.]/g, '\\.') + '\\s*\\{[^}]*aspect-ratio').test(css), `${seletor} com aspect-ratio`);
   }
 });
+
+// ---------- Review r1 ----------
+// S-19: foto de cliente tirada do site deixa de ser servida na hora (privacidade promete retirada imediata).
+test('review-r1 S-19: foto de depoimento ou par tirado do site some de /fotos e nunca tem cache imutável', async () => {
+  const jpg = fixture('retrato-1200.jpg', 'image/jpeg');
+  const d = (await chamar('/api/painel/depoimentos', { metodo: 'POST', form: formDepoimento({ nome: 'QA - teste retirada', texto: 'Some quando sair.', consentimento: 'true', largura: 1200, altura: 1600 }, jpg) })).dados.depoimento;
+  let r = await fetch(BASE + d.foto_url);
+  assert.equal(r.status, 200);
+  assert.ok(!/immutable/.test(r.headers.get('cache-control')), `foto de cliente sem cache imutável: ${r.headers.get('cache-control')}`);
+  assert.equal((await chamar(`/api/painel/depoimentos/${d.id}`, { metodo: 'DELETE' })).status, 200);
+  assert.equal((await fetch(BASE + d.foto_url)).status, 404, 'depoimento tirado: foto some na hora');
+  assert.equal((await chamar(`/api/painel/depoimentos/${d.id}/restaurar`, { metodo: 'POST' })).status, 200);
+  assert.equal((await fetch(BASE + d.foto_url)).status, 200, 'desfazer devolve a foto');
+  await chamar(`/api/painel/depoimentos/${d.id}`, { metodo: 'DELETE' });
+
+  const par = (await chamar('/api/painel/antes-depois', { metodo: 'POST', form: formPar({ legenda: 'QA - teste retirada', servico: 'vm', consentimento: 'true', largura_antes: 1600, altura_antes: 1200, largura_depois: 1200, altura_depois: 1600, antes: fixture('paisagem-1600.jpg', 'image/jpeg'), depois: jpg }) })).dados.par;
+  assert.equal((await fetch(BASE + par.antes_url)).status, 200);
+  assert.equal((await chamar(`/api/painel/antes-depois/${par.id}`, { metodo: 'DELETE' })).status, 200);
+  assert.equal((await fetch(BASE + par.antes_url)).status, 404, 'par tirado: foto de antes some');
+  assert.equal((await fetch(BASE + par.depois_url)).status, 404, 'par tirado: foto de depois some');
+  // Fotos de produtos e serviços (itens) seguem com cache longo.
+  const item = (await chamar('/api/painel/estado')).dados.itens.find(i => i.foto_url.startsWith('/fotos/'));
+  if (item) assert.match((await fetch(BASE + item.foto_url)).headers.get('cache-control'), /immutable/);
+});
+
+// S-21: entrada malformada responde 4xx com mensagem, nunca 500.
+test('review-r1 S-21: corpo JSON que não é objeto e caminho de foto mal codificado não viram 500', async () => {
+  const estado = (await chamar('/api/painel/estado')).dados;
+  const faq = estado.faq[0];
+  const casos = [
+    ['/api/painel/lalaia/condicoes', 'PUT', 'null'],
+    ['/api/painel/lalaia/condicoes', 'PUT', '"texto"'],
+    [`/api/painel/faq/${faq.id}`, 'PUT', 'null'],
+    ['/api/painel/faq', 'POST', '"texto"'],
+    ['/api/painel/textos/consultoria', 'PUT', '[1,2]'],
+    ['/api/login/codigo', 'POST', 'null'],
+  ];
+  for (const [rota, metodo, corpo] of casos) {
+    const r = await fetch(BASE + rota, { method: metodo, headers: { 'content-type': 'application/json', origin: BASE, cookie }, body: corpo });
+    assert.equal(r.status, 400, `${metodo} ${rota} ${corpo}`);
+    const j = await r.json();
+    assert.equal(j.erro, 'json_invalido');
+    assert.ok(j.mensagem?.length > 10, 'mensagem para a Kari');
+  }
+  const f = await fetch(BASE + '/fotos/%E0%A4%A');
+  assert.equal(f.status, 404, '/fotos com % quebrado → 404');
+});
+
+// S-23: o espaço da barra fixa vem de uma classe no <body> da home, sem depender de :has().
+test('review-r1 S-23: a home marca o body com a classe da barra fixa; as outras páginas não', async () => {
+  const css = (await chamar('/site.css')).dados;
+  assert.match(css, /body\.com-barra\s*\{[^}]*padding-bottom/, 'regra body.com-barra');
+  assert.ok(!/body:has\(/.test(css), 'sem :has() para o espaço da barra');
+  assert.match((await chamar('/')).dados, /<body class="com-barra">/);
+  for (const caminho of ['/quiz', '/privacidade']) assert.ok(!(await chamar(caminho)).dados.includes('com-barra'), caminho);
+});

@@ -198,22 +198,43 @@ async function api(request, env, url) {
   throw new ErroApi(404, 'nao_encontrado');
 }
 
+const naoEncontrada404 = () => new Response('Foto não encontrada', { status: 404 });
+
+// Fotos de clientes (depoimentos `dep/` e antes e depois `ad/`) só saem enquanto o registro está no site:
+// tirar do site tira a foto na hora, como /privacidade promete (review-r1 S-19). Por isso não têm cache imutável.
+async function fotoDeClienteNoSite(env, chave) {
+  if (chave.startsWith('dep/')) {
+    return Boolean(await env.DB.prepare('SELECT 1 FROM depoimentos WHERE foto_chave = ? AND removido_em IS NULL').bind(chave).first());
+  }
+  const base = chave.replace(/-\d+\.(jpg|webp)$/, '.$1');
+  return Boolean(await env.DB.prepare('SELECT 1 FROM antes_depois WHERE (antes_chave IN (?1, ?2) OR depois_chave IN (?1, ?2)) AND removido_em IS NULL').bind(chave, base).first());
+}
+
 async function foto(env, chave) {
+  const deCliente = chave.startsWith('dep/') || chave.startsWith('ad/');
+  if (deCliente && !(await fotoDeClienteNoSite(env, chave))) return naoEncontrada404();
   const obj = await env.FOTOS.get(chave);
-  if (!obj) return new Response('Foto não encontrada', { status: 404 });
+  if (!obj) return naoEncontrada404();
   return new Response(obj.body, {
     headers: {
       'content-type': obj.httpMetadata?.contentType || 'image/jpeg',
-      'cache-control': 'public, max-age=31536000, immutable',
+      'cache-control': deCliente ? 'public, no-cache' : 'public, max-age=31536000, immutable',
       etag: obj.httpEtag,
     },
   });
 }
 
+function chaveDaFoto(caminho) {
+  try { return decodeURIComponent(caminho); } catch { return null; } // %E0%A4%A e afins: 404, não 500 (S-21)
+}
+
 // Toda rota passa por aqui; os assets estáticos (run_worker_first) caem no ASSETS.
 async function tratar(request, env, url) {
   if (url.pathname.startsWith('/api/')) return api(request, env, url);
-  if (url.pathname.startsWith('/fotos/') && request.method === 'GET') return foto(env, decodeURIComponent(url.pathname.slice('/fotos/'.length)));
+  if (url.pathname.startsWith('/fotos/') && request.method === 'GET') {
+    const chave = chaveDaFoto(url.pathname.slice('/fotos/'.length));
+    return chave ? foto(env, chave) : naoEncontrada404();
+  }
   if (url.pathname === '/' && (request.method === 'GET' || request.method === 'HEAD')) {
     const [itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois, faq] = await Promise.all([
       listarItens(env), lerTextos(env), tolerante(listarProdutos(env), []), tolerante(lerCondicoes(env), null), tolerante(lerCupom(env), null),

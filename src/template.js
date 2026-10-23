@@ -172,7 +172,7 @@ ${metaBase({ base: d.base, caminho: '/', titulo: `${d.marca.assinatura} · ${d.m
 <link rel="stylesheet" href="/site.css">
 ${jsonLd(d, { base: d.base, whatsappNumero: d.whatsapp.numero })}
 </head>
-<body>
+<body class="com-barra">
 
 <header class="topo">
   <div class="wrap">

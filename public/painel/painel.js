@@ -510,6 +510,9 @@ function abrirSecao(id) {
   renderSecao();
   window.scrollTo(0, 0);
   mostrarTela('tela-secao');
+  // Fotos do Instagram ainda sem versão leve (importação interrompida, ou anterior às versões) são otimizadas
+  // em segundo plano ao abrir a parte; é o que zera o "N fotos sem versão leve" do cartão (review-r1 S-20).
+  otimizarFotos(itensDa(id).filter((i) => i.origem === 'instagram'));
   // O "voltar" do celular volta para o início em vez de sair do painel.
   history.pushState({ secao: id }, '');
 }
@@ -1310,9 +1313,15 @@ function avisarVariantesFaltando(item, v) {
 
 // Fotos vindas do Instagram chegam só no tamanho original: o painel baixa cada uma (mesma origem), gera as versões
 // e manda em segundo plano, uma por vez, com progresso. Falha numa foto não para as outras nem vira erro.
+let otimizando = false; // uma rodada por vez: abrir e fechar partes rápido não dispara envios duplicados
 async function otimizarFotos(itens) {
   const lista = itens.filter((i) => !i.variantes);
-  if (!lista.length) return;
+  if (!lista.length || otimizando) return;
+  otimizando = true;
+  try { await otimizarLista(lista); } finally { otimizando = false; }
+}
+
+async function otimizarLista(lista) {
   const status = $('#otimizando');
   let n = 0;
   for (const item of lista) {

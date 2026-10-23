@@ -159,7 +159,8 @@ Seção "Perguntas frequentes" do site, depois dos cursos e antes do rodapé; mo
 ## Site público
 
 - `GET /` → página gerada com o conteúdo atual (cache curto, limpo a cada mudança no painel).
-- `GET /fotos/:chave` → imagem guardada (cache longo, imutável).
+- `GET /fotos/:chave` → imagem guardada. Fotos do site e da LALAIÁ: cache longo, imutável. Fotos de clientes (`dep/…` de depoimentos e `ad/…` de antes e depois): só enquanto o registro está no site, com `cache-control: public, no-cache`; tirado do site, a foto responde 404 na hora (e volta com o desfazer). Caminho com `%` mal codificado → 404.
+- Toda rota que recebe JSON exige um objeto: `null`, texto, número ou lista → `400 { erro: "json_invalido", mensagem }`.
 - `GET /painel/` → painel (HTML estático; ele mesmo decide se mostra o login ou o conteúdo chamando `/api/painel/estado`).
 
 ## Rotina agendada (cron, 1x por semana)

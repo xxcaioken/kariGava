@@ -65,6 +65,7 @@ Atualizado em 23/10/2026.
 
 ## Segurança (auditoria estática de 23/10/2026, decisão do Caio)
 
+- [ ] **Limite de 5 tentativas do código de login não é atômico** (médio; achado do code review de 23/10, em `src/auth.js`, que esta entrega não alterou). O servidor lê `tentativas`, confere o código e só depois soma 1; muitas tentativas disparadas ao mesmo tempo passam todas pela leitura antes de qualquer soma, e o limite deixa de valer. Correção sugerida: somar e conferir no mesmo comando (`UPDATE codigos_login SET tentativas = tentativas + 1 WHERE email = ? AND tentativas < 5 RETURNING codigo_hash, expira_em`) e só então comparar o código.
 - [ ] **"Sair" do painel não invalida a sessão no servidor** (médio). O cookie `kari_sessao` é assinado e vale 60 dias; "Sair" só o apaga no navegador, então um cookie copiado antes (celular perdido, computador de terceiros) continua valendo até o segredo ser trocado (`docs/OPERACAO.md`, procedimento 6). Correção sugerida: guardar por e-mail um carimbo "sessões válidas a partir de" que o "Sair" atualiza e a checagem de sessão respeita; ou reduzir a sessão para 7 dias. É mudança de comportamento (hoje a API promete 60 dias): entra numa próxima rodada com spec.
 - Sem outros achados sustentados no escopo lido (login, sessão, OAuth do Instagram, upload de fotos, escape de HTML/JSON-LD, cabeçalhos). Não rodados por falta de orçamento/perfis: varredura do histórico git, lockfile e scanners (Gitleaks, OSV, Semgrep, Trivy).
 
