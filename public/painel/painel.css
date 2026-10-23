@@ -79,7 +79,7 @@ h1:focus, h2:focus { outline: none; }
 .topo .acoes-topo a { color: var(--roxo-forte); }
 .voltar { min-height: 48px; min-width: 48px; padding: 0 12px 0 8px; border: 0; border-radius: 12px; background: var(--fundo); font-weight: 700; }
 
-main { padding: 20px 16px 120px; }
+.conteudo { padding: 20px 16px 120px; }
 .rodape-painel { margin: 8px 0 0; text-align: center; font-size: 14px; }
 .rodape-painel a { display: inline-flex; align-items: center; min-height: 44px; color: var(--tinta-suave); }
 .ola { font-size: 28px; line-height: 1.15; margin: 4px 0 6px; letter-spacing: -.01em; }

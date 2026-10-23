@@ -1125,3 +1125,26 @@ test('R-14 manifest: JSON válido com standalone, escopo /painel/, cores e ícon
   assert.equal((await fetch(BASE + '/painel/icone-180.png')).status, 200);
   assert.ok(!painel.includes('serviceWorker'), 'sem service worker');
 });
+
+// ---------- S-17 · Portão de qualidade (R-15): checagens estáticas ----------
+// Ordem fixa da home (DES-01); seção sem conteúdo não existe, então só os ids presentes são comparados.
+const ORDEM_HOME = ['class="hero"', 'id="servicos"', 'id="antes-depois"', 'id="depoimentos"', 'id="como-trabalhar"', 'id="sobre"', 'id="lalaia"', 'id="cupom"', 'id="como-encomendar"', 'id="cursos"', 'id="faq"', '<footer'];
+
+test('R-15 estático: lang, descrição, alt em toda imagem, ordem da home e "Dúvidas" na navegação', async () => {
+  for (const caminho of ['/', '/quiz', '/privacidade']) {
+    const html = (await chamar(caminho)).dados;
+    assert.ok(html.startsWith('<!doctype html>\n<html lang="pt-BR">'), `${caminho} lang`);
+    assert.match(html, /<meta name="description" content="[^"]{20,}">/, `${caminho} description`);
+    assert.match(html, /<title>[^<]{5,}<\/title>/, `${caminho} title`);
+    for (const img of html.match(/<img [^>]*>/g) || []) assert.ok(/ alt="[^"]*"/.test(img), `${caminho} alt em: ${img.slice(0, 80)}`);
+    assert.ok(!/<h[1-6][^>]*>\s*<\/h[1-6]>/.test(html), `${caminho} sem título vazio`);
+    assert.equal((html.match(/<h1[ >]/g) || []).length, 1, `${caminho} um h1`);
+  }
+  const home = (await chamar('/')).dados;
+  const posicoes = ORDEM_HOME.map(id => home.indexOf(id)).filter(p => p >= 0);
+  assert.ok(posicoes.length >= 9, `ids presentes: ${posicoes.length}`);
+  assert.deepEqual(posicoes, [...posicoes].sort((a, b) => a - b), 'ordem da home conforme DES-01');
+  const nav = home.slice(home.indexOf('<nav class="nav"'), home.indexOf('</nav>'));
+  assert.ok(nav.includes('href="#faq">Dúvidas</a>'), 'navegação com "Dúvidas" → #faq');
+  assert.ok(home.includes('href="/quiz"') && home.includes('href="/privacidade"'), 'rodapé com quiz e privacidade');
+});

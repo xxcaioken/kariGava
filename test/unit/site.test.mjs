@@ -5,6 +5,15 @@ import conteudo from '../../conteudo.json' with { type: 'json' };
 
 const NUMERO = '5548998459412';
 
+test('ENG-07 home resiliente: sem os blocos novos, a home rende sem essas seções e sem quebrar', () => {
+  const html = renderizarSite({ itens: [], textos: {}, whatsappNumero: NUMERO });
+  assert.ok(html.trimEnd().endsWith('</html>'));
+  for (const id of ['id="depoimentos"', 'id="antes-depois"', 'id="faq"', 'id="cupom"', 'class="condicoes"']) assert.ok(!html.includes(id), `sem ${id}`);
+  assert.ok(html.includes('id="como-encomendar"') && html.includes('id="lalaia"') && html.includes('id="servicos"'), 'o resto da home está lá');
+  const comNulos = renderizarSite({ itens: [], textos: {}, produtos: [], condicoes: null, cupom: null, depoimentos: [], antesDepois: [], faq: [], whatsappNumero: NUMERO });
+  assert.ok(comNulos.includes('id="cursos"'), 'valores nulos/vazios (o que o try/catch da home devolve) também rendem');
+});
+
 test('R-11 sem token: o site não inclui o beacon do Cloudflare Web Analytics; com token, inclui antes de </body>', () => {
   const sem = renderizarSite({ itens: [], textos: {}, whatsappNumero: NUMERO });
   assert.ok(!sem.includes('cloudflareinsights'), 'sem ANALYTICS_TOKEN nada entra');

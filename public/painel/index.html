@@ -18,7 +18,7 @@
 <script type="module" src="painel.js"></script>
 </head>
 <body>
-<div class="app">
+<main class="app">
 
   <!-- Abrindo -->
   <section id="tela-carregando" class="carregando" aria-live="polite">
@@ -72,7 +72,7 @@
         <button type="button" class="btn-sair">Sair</button>
       </div>
     </header>
-    <main>
+    <div class="conteudo">
       <h2 class="ola" id="ola" tabindex="-1">Oi!</h2>
       <p class="dica">Toque numa foto do Instagram para colocar no site, ou escolha uma parte do site para arrumar.</p>
 
@@ -88,7 +88,7 @@
         <div id="cartoes"></div>
       </section>
       <p class="rodape-painel"><a href="/privacidade" target="_blank" rel="noopener">Privacidade</a></p>
-    </main>
+    </div>
   </section>
 
   <!-- Depoimentos -->
@@ -97,7 +97,7 @@
       <button class="voltar" id="voltar-dep" type="button">← Voltar</button>
       <h1 id="dep-titulo" tabindex="-1">Depoimentos</h1>
     </header>
-    <main>
+    <div class="conteudo">
       <div class="botoes-add">
         <button class="btn" type="button" id="dep-novo">+ Novo depoimento</button>
       </div>
@@ -106,7 +106,7 @@
         <p class="bloco-sub" id="dep-dica" hidden>O de cima aparece primeiro. Use as setas para mudar a ordem.</p>
         <div id="dep-lista"></div>
       </section>
-    </main>
+    </div>
   </section>
 
   <!-- Antes e depois -->
@@ -115,7 +115,7 @@
       <button class="voltar" id="voltar-par" type="button">← Voltar</button>
       <h1 id="par-titulo" tabindex="-1">Antes e depois</h1>
     </header>
-    <main>
+    <div class="conteudo">
       <div class="botoes-add">
         <button class="btn" type="button" id="par-novo">+ Novo par de fotos</button>
       </div>
@@ -124,7 +124,7 @@
         <p class="bloco-sub" id="par-dica" hidden>O de cima aparece primeiro. Use as setas para mudar a ordem.</p>
         <div id="par-lista"></div>
       </section>
-    </main>
+    </div>
   </section>
 
   <!-- Perguntas frequentes -->
@@ -133,7 +133,7 @@
       <button class="voltar" id="voltar-faq" type="button">← Voltar</button>
       <h1 id="faq-titulo" tabindex="-1">Perguntas frequentes</h1>
     </header>
-    <main>
+    <div class="conteudo">
       <div class="botoes-add">
         <button class="btn" type="button" id="faq-nova">+ Nova pergunta</button>
       </div>
@@ -142,7 +142,7 @@
         <p class="bloco-sub">Só as publicadas aparecem no site. As marcadas "Rascunho: revisar" foram escritas por nós: leia, ajuste e publique.</p>
         <div id="faq-lista"></div>
       </section>
-    </main>
+    </div>
   </section>
 
   <!-- Uma parte do site -->
@@ -151,7 +151,7 @@
       <button class="voltar" id="voltar" type="button">← Voltar</button>
       <h1 id="secao-titulo" tabindex="-1"></h1>
     </header>
-    <main>
+    <div class="conteudo">
       <div class="botoes-add">
         <button class="btn" type="button" id="abrir-instagram">+ Trazer do Instagram</button>
         <button class="btn btn-claro" type="button" id="abrir-celular">+ Foto do celular</button>
@@ -235,10 +235,10 @@
           <button class="btn btn-verde" type="submit" id="salvar-condicoes">Salvar condições</button>
         </form>
       </section>
-    </main>
+    </div>
   </section>
 
-</div>
+</main>
 
 <!-- Publicar um post do Instagram (3 toques) -->
 <dialog class="folha" id="dlg-publicar" aria-labelledby="pub-titulo">

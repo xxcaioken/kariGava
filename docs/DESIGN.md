@@ -27,7 +27,7 @@ Fonte da verdade é `public/site.css` (site) e `public/painel/painel.css` (paine
 | Vitrines e VM | `--verde` `#017F38` | `--verde-forte` `#017F38` | KG 05 |
 | Cursos e palestras | `--grafite` `#2A2730` | `--grafite-forte` `#2A2730` | KG 06 |
 
-**Pares texto/fundo permitidos.** Texto branco só sobre `--roxo-forte`, `--vermelho`, `--pink-forte`, `--verde`, `--grafite` e `--tinta` (contraste ≥ 4,5:1). Sobre `--mostarda` o texto é `--tinta` (classe `escuro` nos cartões e amostras). `--tinta-suave` sobre `--papel`/`--cinza` para texto secundário de 15 px ou mais. Nunca texto cinza sobre fundo colorido.
+**Pares texto/fundo permitidos.** Texto branco só sobre `--roxo-forte`, `--vermelho`, `--pink-forte`, `--verde`, `--grafite` e `--tinta` (contraste ≥ 4,5:1). Por isso a faixa do cartão de serviço (`.servico-faixa`) e as amostras do leque (`.amostra`) usam `--cor-forte` como fundo; `--cor` pura fica para superfícies sem texto (listras, bolinhas, `.legenda i`). Sobre `--mostarda` o texto é `--tinta` (classe `escuro` nos cartões e amostras). `--tinta-suave` sobre `--papel`/`--cinza` para texto secundário de 15 px ou mais. Nunca texto cinza sobre fundo colorido.
 
 ### Tipografia
 

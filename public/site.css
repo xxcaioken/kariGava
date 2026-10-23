@@ -63,7 +63,7 @@ p { margin: 0; }
 
 /* ---------- /quiz (R-07) ---------- */
 .pagina-quiz { background: var(--cinza); }
-.pagina-quiz .topo-cta { display: inline-flex; min-height: 42px; padding: 0 16px; font-size: 15px; }
+.pagina-quiz .topo-cta { display: inline-flex; min-height: 44px; padding: 0 16px; font-size: 15px; }
 .quiz-wrap { max-width: 640px; padding: 40px 0 72px; }
 .quiz h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1; letter-spacing: -.04em; margin: 8px 0 12px; }
 .quiz-intro { color: var(--tinta-suave); font-size: 17px; }
@@ -85,7 +85,7 @@ p { margin: 0; }
 .quiz-lista { margin: 20px 0 24px; padding-left: 0; list-style: none; display: grid; gap: 18px; }
 .quiz-lista-pergunta ul { margin: 6px 0 0; padding-left: 20px; color: var(--tinta-suave); }
 /* ---------- Páginas de leitura: /privacidade e 404 ---------- */
-.pagina-leitura .topo-cta { display: inline-flex; min-height: 42px; padding: 0 16px; font-size: 15px; }
+.pagina-leitura .topo-cta { display: inline-flex; min-height: 44px; padding: 0 16px; font-size: 15px; }
 .leitura-wrap { max-width: 70ch; padding: 40px 0 72px; }
 .leitura h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1; letter-spacing: -.04em; margin: 8px 0 16px; }
 .leitura h2 { font-size: 24px; margin: 36px 0 10px; }
@@ -98,6 +98,7 @@ p { margin: 0; }
 .rodape-curto { padding-bottom: 32px; }
 .rodape-curto .wrap { padding-top: 24px; }
 .rodape-curto .rodape-fim { margin-top: 0; padding-top: 0; border-top: 0; }
+.rodape-fim a { display: inline-flex; align-items: center; min-height: 44px; text-underline-offset: 4px; } /* alvo de toque ≥ 44 px (R-15) */
 
 .leque-area { position: relative; }
 .leque {
@@ -117,14 +118,14 @@ p { margin: 0; }
 }
 .amostra {
   width: var(--w); height: var(--h); margin-left: calc(var(--w) / -2);
-  background: var(--cor); color: #fff; text-decoration: none;
+  background: var(--cor-forte, var(--cor)); color: #fff; text-decoration: none; /* -forte: contraste ≥ 4,5:1 com o código em branco (R-15) */
   display: flex; flex-direction: column; padding: 8px;
   transition: transform .3s cubic-bezier(.3,1.4,.5,1);
 }
 .amostra.esq { align-items: flex-start; text-align: left; }
 .amostra.dir { align-items: flex-end; text-align: right; }
 .amostra.escuro { color: var(--tinta); }
-.amostra-cod { font: 10px/1 var(--mono); letter-spacing: .04em; opacity: .9; }
+.amostra-cod { font: 10px/1 var(--mono); letter-spacing: .04em; } /* sem opacidade: branco a 90% sobre o verde dava 4,46:1 (R-15) */
 .amostra-cor, .amostra-servico { display: none; }
 .amostra::after { /* furo do pino */
   content: ""; position: absolute; left: 50%; bottom: calc(var(--giro) - 5px); width: 10px; height: 10px; margin-left: -5px; border-radius: 50%;
@@ -187,7 +188,7 @@ p { margin: 0; }
 .servico { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--linha); border-radius: var(--raio); overflow: hidden; scroll-margin-top: 84px; }
 .servico-foto { position: relative; margin: 0; }
 .servico-foto img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
-.servico-faixa { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; background: var(--cor); color: #fff; font: 13px/1.2 var(--mono); letter-spacing: .03em; }
+.servico-faixa { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; background: var(--cor-forte, var(--cor)); color: #fff; font: 13px/1.2 var(--mono); letter-spacing: .03em; } /* -forte: texto branco pequeno precisa de 4,5:1 (R-15) */
 .servico.escuro .servico-faixa { color: var(--tinta); }
 .servico-corpo { display: flex; flex-direction: column; gap: 14px; padding: 20px 18px 22px; flex: 1; }
 .grupo-tag { align-self: flex-start; font: 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 6px 8px; border-radius: 3px; background: var(--cinza); color: var(--tinta-suave); }
@@ -339,7 +340,7 @@ p { margin: 0; }
   .amostra { padding: 12px 12px; }
   .amostra-cod { font-size: 11px; }
   .amostra-cor { display: block; font: 600 14px/1.15 var(--sans); margin-top: 6px; max-width: 92px; }
-  .amostra-servico { display: block; font: 12px/1.2 var(--mono); margin-top: 6px; opacity: .9; max-width: 92px; }
+  .amostra-servico { display: block; font: 12px/1.2 var(--mono); margin-top: 6px; max-width: 92px; }
   .leque-foto { padding: 7px 7px 0; }
   .leque-foto figcaption { font-size: 10px; line-height: 24px; }
   .leque-foto img { height: calc(100% - 24px); }

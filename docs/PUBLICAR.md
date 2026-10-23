@@ -40,9 +40,10 @@ No `wrangler.jsonc`, preencha:
 Depois:
 
 ```bash
-npm run banco:remoto    # cria as tabelas e as fotos iniciais
-npx wrangler deploy
+npm run deploy    # aplica as migrations no banco remoto (tabelas e fotos iniciais) e publica o Worker
 ```
+
+Daqui em diante, toda publicação é `npm run deploy`: ele sempre migra antes de publicar, então uma versão nova nunca sobe antes da tabela que ela precisa.
 
 O site já abre em `https://karigava.com.br` e o painel em `https://karigava.com.br/painel/`.
 

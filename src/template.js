@@ -30,7 +30,7 @@ export function template(d, esc) {
   };
 
   const leque = d.servicos.map((s, i) => `
-          <a class="amostra ${i < 3 ? 'esq' : 'dir'} a${i + 1}${s.escuro ? ' escuro' : ''}" href="#${esc(s.id)}" style="--cor:var(--${s.var})"><span class="amostra-cod">${esc(s.kg)}</span><span class="amostra-cor">${esc(s.nome)}</span><span class="amostra-servico">${esc(s.curto)}</span><span class="visualmente-oculto">${esc(s.titulo)}</span></a>`).join('');
+          <a class="amostra ${i < 3 ? 'esq' : 'dir'} a${i + 1}${s.escuro ? ' escuro' : ''}" href="#${esc(s.id)}" style="--cor:var(--${s.var});--cor-forte:var(--${s.var}-forte)"><span class="amostra-cod">${esc(s.kg)}</span><span class="amostra-cor">${esc(s.nome)}</span><span class="amostra-servico">${esc(s.curto)}</span><span class="visualmente-oculto">${esc(s.titulo)}</span></a>`).join('');
 
   const legenda = d.servicos.map(s => `
         <li><a href="#${esc(s.id)}" style="--cor:var(--${s.var})"><i></i>${esc(s.legenda)}</a></li>`).join('');
@@ -183,7 +183,8 @@ ${jsonLd(d, { base: d.base, whatsappNumero: d.whatsapp.numero })}
         <li><a href="#como-trabalhar">Como funciona</a></li>
         <li><a href="#sobre">Sobre</a></li>
         <li><a href="#lalaia">LALAIÁ</a></li>
-        <li><a href="#cursos">Cursos</a></li>
+        <li><a href="#cursos">Cursos</a></li>${d.faq.length ? `
+        <li><a href="#faq">Dúvidas</a></li>` : ''}
       </ul>
     </nav>
     <a class="btn topo-cta" href="${wa}">Chamar no WhatsApp</a>
