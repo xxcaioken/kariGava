@@ -170,3 +170,14 @@ Renova os tokens do Instagram (válidos 60 dias; renováveis após 24 h).
 ## Desenvolvimento local
 
 `npm run dev` sobe tudo com D1/R2 locais. Com `DEV_LOGIN=1` em `.dev.vars`, o código de login aparece no terminal em vez de ir por e-mail. Sem `IG_APP_ID`, o Instagram usa posts falsos (`MODO_INSTAGRAM=falso`) feitos com as fotos de `public/img/`.
+
+## Páginas públicas
+
+| Caminho | O que é | Cache |
+|---|---|---|
+| `/` | site da Kari (serviços, sobre, um bloco curto da LALAIÁ que leva à `/lalaia`) | `no-cache` (dados do banco) |
+| `/lalaia` | loja da LALAIÁ: produtos na primeira tela, cupom, como encomendar, quem faz; prévia própria (`/og-lalaia.jpg`); é o link da bio do @lalaia.acessorios | `no-cache` (dados do banco) |
+| `/quiz`, `/privacidade` | páginas fixas | `max-age=300` |
+| `/favicon.svg` | leque de três lâminas na cor de destaque de `conteudo.json` | `max-age=300` |
+| `/sitemap.xml`, `/robots.txt` | SEO | `max-age=300` |
+

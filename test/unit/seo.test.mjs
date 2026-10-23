@@ -56,7 +56,7 @@ test('R-09 jsonLd: ProfessionalService + Person + Product com offers quando há 
 
 test('R-09 sitemap e robots', () => {
   const xml = sitemap(BASE);
-  assert.deepEqual([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]), [`${BASE}/`, `${BASE}/quiz`, `${BASE}/privacidade`]);
+  assert.deepEqual([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]), [`${BASE}/`, `${BASE}/lalaia`, `${BASE}/quiz`, `${BASE}/privacidade`]);
   const txt = robots(BASE);
   assert.ok(txt.includes(`Sitemap: ${BASE}/sitemap.xml`) && txt.includes('Disallow: /painel/') && txt.includes('Disallow: /api/'));
 });

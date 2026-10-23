@@ -240,16 +240,28 @@ p { margin: 0; }
 /* Cupom de primeira encomenda (R-08): uma linha da LALAIÁ, nunca faixa do site todo */
 .cupom { margin-top: 28px; padding: 16px 18px; border: 2px dashed var(--destaque); border-radius: var(--raio); font-size: 17px; line-height: 1.5; }
 .cupom code { font: 15px/1 var(--mono); letter-spacing: .08em; padding: 4px 8px; border-radius: 4px; background: var(--destaque); color: #fff; }
-/* Como encomendar (R-03): fecha o bloco LALAIÁ com os 3 passos e as condições preenchidas */
-.como-encomendar { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--linha); }
-.como-encomendar > h3 { font-size: 26px; margin-bottom: 4px; }
-.como-encomendar .passos { gap: 0; }
+/* Como encomendar (R-03), na /lalaia: os 3 passos e as condições preenchidas */
 .condicoes { display: grid; gap: 16px 32px; margin: 8px 0 0; padding: 22px 0 0; border-top: 1px solid var(--linha); }
 .condicoes > div { display: grid; gap: 4px; align-content: start; }
 .condicoes dt { font: 12px/1.3 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-suave); }
 .condicoes dd { margin: 0; font-size: 16px; line-height: 1.5; }
 .lalaia-cta { margin-top: 28px; }
 .lalaia-cta .btn { background: var(--tinta); }
+
+/* LALAIÁ na home: vitrine curta (até 3 fotos) que leva à /lalaia */
+.lalaia-vitrine { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-width: 720px; list-style: none; margin: 0; padding: 0; } /* curta: um gostinho, a loja inteira está na /lalaia */
+.lalaia-vitrine a { display: block; }
+.lalaia-vitrine img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--raio); }
+
+/* ---------- /lalaia: a loja numa página própria (link da bio do @lalaia.acessorios) ---------- */
+.topo-link { display: inline-flex; align-items: center; min-height: 44px; font-size: 15px; color: var(--tinta-suave); text-underline-offset: 4px; }
+.lalaia-abre { padding: 24px 0 56px; }
+.lalaia-abre h1 { font-size: clamp(34px, 8vw, 64px); line-height: 1; letter-spacing: -.04em; margin: 8px 0 8px; }
+.lalaia-tagline { font-size: 17px; color: var(--tinta-suave); max-width: 44ch; margin-bottom: 20px; }
+.pagina-lalaia .lalaia-cta .btn { background: var(--destaque); }
+.lalaia-kari .wrap { display: grid; gap: 14px; justify-items: start; max-width: 70ch; margin-inline: auto; }
+.lalaia-kari h2 { font-size: clamp(30px, 5vw, 44px); line-height: 1; letter-spacing: -.04em; }
+.lalaia-kari p:not(.rotulo) { color: var(--tinta-suave); font-size: 18px; }
 
 /* Cursos já feitos */
 /* Perguntas frequentes (R-06): grupos com <details> reaproveitando .como */

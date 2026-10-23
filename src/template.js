@@ -10,24 +10,28 @@ const SIZES_CARTAO = '(max-width: 640px) 100vw, 480px';
 const SIZES_GRANDE = '(max-width: 640px) 100vw, 640px';
 const SIZES_MINIATURA = '(max-width: 640px) 40vw, 160px';
 const SIZES_LAMINA = '(max-width: 959px) 118px, 158px';
+const SIZES_VITRINE = '(max-width: 640px) 33vw, 320px';
 
-const ICONE_WA = '<svg class="icone-wa" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.2-.1-1-.4-2-1.2-.7-.6-1.2-1.4-1.3-1.7-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.2-.9.9-.9 2.2s.9 2.5 1 2.7c.1.2 1.8 2.8 4.4 3.9 2.2.9 2.6.7 3.1.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>';
+export const ICONE_WA = '<svg class="icone-wa" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.2-.1-1-.4-2-1.2-.7-.6-1.2-1.4-1.3-1.7-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.2-.9.9-.9 2.2s.9 2.5 1 2.7c.1.2 1.8 2.8 4.4 3.9 2.2.9 2.6.7 3.1.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>';
+
+// Foto com versões leves (R-10): <picture> com WebP e srcset nas larguras que existem; sem elas, <img> simples.
+// Toda foto fora do hero é lazy e, quando o tamanho é conhecido, leva width/height (sem pulo de layout).
+// Exportada para a página da LALAIÁ (src/lalaia.js) usar a mesma regra.
+export const criarImg = esc => (f, alt, { sizes = SIZES_CARTAO, hero = false } = {}) => {
+  if (!f) return '';
+  const texto = esc(alt ?? f.titulo);
+  const dims = Number.isInteger(f.largura) && Number.isInteger(f.altura) ? ` width="${f.largura}" height="${f.altura}"` : '';
+  const carga = hero ? ' fetchpriority="high" decoding="async"' : ' loading="lazy" decoding="async"';
+  const larguras = f.variantes?.larguras || [];
+  if (!larguras.length) return `<img src="${esc(f.foto_url)}" alt="${texto}"${dims}${carga}>`;
+  const lista = ext => larguras.map(w => `${esc(chaveDaVariante(f.foto_url, w, ext))} ${w}w`).join(', ');
+  const webp = f.variantes.webp ? `<source type="image/webp" srcset="${lista('webp')}" sizes="${sizes}">` : '';
+  return `<picture>${webp}<img src="${esc(f.foto_url)}" srcset="${lista('jpg')}" sizes="${sizes}" alt="${texto}"${dims}${carga}></picture>`;
+};
 
 export function template(d, esc) {
-  const wa = esc(d.whatsapp.geral); // botões gerais (topo, hero, rodapé, barra fixa); serviço e produto têm o próprio link
-  // Foto com versões leves (R-10): <picture> com WebP e srcset nas larguras que existem; sem elas, <img> simples.
-  // Toda foto fora do hero é lazy e, quando o tamanho é conhecido, leva width/height (sem pulo de layout).
-  const img = (f, alt, { sizes = SIZES_CARTAO, hero = false } = {}) => {
-    if (!f) return '';
-    const texto = esc(alt ?? f.titulo);
-    const dims = Number.isInteger(f.largura) && Number.isInteger(f.altura) ? ` width="${f.largura}" height="${f.altura}"` : '';
-    const carga = hero ? ' fetchpriority="high" decoding="async"' : ' loading="lazy" decoding="async"';
-    const larguras = f.variantes?.larguras || [];
-    if (!larguras.length) return `<img src="${esc(f.foto_url)}" alt="${texto}"${dims}${carga}>`;
-    const lista = ext => larguras.map(w => `${esc(chaveDaVariante(f.foto_url, w, ext))} ${w}w`).join(', ');
-    const webp = f.variantes.webp ? `<source type="image/webp" srcset="${lista('webp')}" sizes="${sizes}">` : '';
-    return `<picture>${webp}<img src="${esc(f.foto_url)}" srcset="${lista('jpg')}" sizes="${sizes}" alt="${texto}"${dims}${carga}></picture>`;
-  };
+  const wa = esc(d.whatsapp.geral); // botões gerais (topo, hero, rodapé, barra fixa); serviço tem o próprio link
+  const img = criarImg(esc);
 
   // Leque da abertura (ajustes da Kari): uma lâmina por serviço com foto, aberta em volta da foto dela. Metade à
   // esquerda e metade à direita, de 20 em 20 graus; as de dentro ficam na frente e abrem primeiro.
@@ -70,31 +74,10 @@ export function template(d, esc) {
   const passos = d.como_trabalhar.map(p => `
         <li class="passo"><div><h3>${esc(p.titulo)}</h3><p>${esc(p.texto)}</p></div></li>`).join('');
 
-  const produtos = d.lalaia.produtos.map(p => {
-    const fotos = p.fotos.slice(0, 4);
-    return `
-        <li class="produto">
-          <div class="produto-fotos${fotos.length === 1 ? ' uma' : ''}">
-            ${fotos.map(f => img(f, p.titulo)).join('\n            ')}
-          </div>
-          <div class="produto-corpo">
-            <p class="rotulo">${esc(p.rotulo)}</p>
-            <h3>${esc(p.titulo)}</h3>
-            ${p.descricao ? `<p>${esc(p.descricao)}</p>` : ''}
-            ${p.preco_texto ? `<p class="preco"><strong>${esc(p.preco_texto)}</strong></p>` : ''}
-            ${p.disponibilidade_texto ? `<p class="disponibilidade">${esc(p.disponibilidade_texto)}</p>` : ''}
-            <a href="${esc(p.wa)}">${esc(p.cta)} →</a>
-          </div>
-        </li>`;
-  }).join('');
-
-  // Como encomendar (R-03): 3 passos fixos; as condições que a Kari preencheu entram abaixo, as vazias somem.
-  const passosLalaia = d.lalaia.como_encomendar.map(p => `
-          <li class="passo"><div><h4>${esc(p.titulo)}</h4><p>${esc(p.texto)}</p></div></li>`).join('');
-  const condicoes = d.lalaia.condicoes.length ? `
-        <dl class="condicoes">${d.lalaia.condicoes.map(c => `
-          <div><dt>${esc(c.rotulo)}</dt><dd>${esc(c.texto)}</dd></div>`).join('')}
-        </dl>` : '';
+  // LALAIÁ na home (ajustes da Kari): bloco curto que leva à /lalaia; a loja inteira (produtos, cupom, como
+  // encomendar) mora lá, para o link da bio do @lalaia.acessorios cair direto nas peças.
+  const vitrine = d.lalaia.produtos.slice(0, 3).map(p => `
+        <li><a href="/lalaia">${img(p.fotos[0], p.titulo, { sizes: SIZES_VITRINE })}</a></li>`).join('');
 
   const agenda = d.ensino_realizado.map(e => `
         <li><p class="rotulo">${esc(e.tipo)}<br>${esc(e.quando)}</p><h3>${esc(e.titulo)}</h3><p>${esc(e.onde)}</p></li>`).join('');
@@ -184,7 +167,7 @@ ${jsonLd(d, { base: d.base, whatsappNumero: d.whatsapp.numero })}
         <li><a href="#servicos">Serviços</a></li>
         <li><a href="#como-trabalhar">Como funciona</a></li>
         <li><a href="#sobre">Sobre</a></li>
-        <li><a href="#lalaia">LALAIÁ</a></li>
+        <li><a href="/lalaia">LALAIÁ</a></li>
         <li><a href="#cursos">Cursos</a></li>${d.faq.length ? `
         <li><a href="#faq">Dúvidas</a></li>` : ''}
       </ul>
@@ -266,17 +249,10 @@ ${depoimentos}
           <h2 id="titulo-lalaia">${esc(d.lalaia.nome)}</h2>
         </div>
         <p>${esc(d.lalaia.tagline)}</p>
-      </div>
-      <ul class="detalhes">${d.lalaia.detalhes.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
-      <ul class="produtos">${produtos}
-      </ul>${d.lalaia.cupom ? `
-      <p class="cupom" id="cupom"><strong>Primeira encomenda?</strong> Diga o código <code>${esc(d.lalaia.cupom.codigo)}</code> no WhatsApp e ganhe ${esc(d.lalaia.cupom.desconto)}%.</p>` : ''}
-      <div class="como-encomendar" id="como-encomendar">
-        <h3>Como encomendar</h3>
-        <ol class="passos">${passosLalaia}
-        </ol>${condicoes}
-      </div>
-      <div class="lalaia-cta"><a class="btn" href="${esc(d.lalaia.wa)}">${esc(d.lalaia.cta)}</a></div>
+      </div>${vitrine ? `
+      <ul class="lalaia-vitrine">${vitrine}
+      </ul>` : ''}
+      <div class="lalaia-cta"><a class="btn" href="/lalaia">Ver as peças da LALAIÁ</a></div>
     </div>
   </section>
 

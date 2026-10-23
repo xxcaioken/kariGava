@@ -44,6 +44,7 @@ Atualizado em 23/10/2026.
 - [ ] **Serviços unidos a pedido dela (23/10/2026):** a Edição de guarda-roupa virou parte da Consultoria de estilo e a Oficina de Look entrou em Cursos, oficinas e palestras. O resumo, o "para quem" e os passos desses dois serviços foram reescritos por nós juntando os textos antigos; o resultado "Armário cheio" do quiz agora leva à Consultoria. Ela confere se é assim que descreve o trabalho.
 - [ ] Os 3 passos de "Como encomendar" da LALAIÁ (`lalaia.como_encomendar`, escritos por nós): confirmar que o pagamento é por Pix e o envio pelos Correios. As condições (pagamento, frete, prazo, trocas) a Kari preenche no painel, em LALAIÁ → Como encomendar.
 - [ ] Nomes dos produtos da LALAIÁ: "BigScrunchie (a Xuxona)", "Acessórios de cabeça sob medida", "Vai de presente".
+- [ ] **Textos da página `/lalaia` escritos por nós:** "Tudo pelo WhatsApp, peça por peça." (abaixo de "Como encomendar") e "A LALAIÁ é a marca de acessórios da Kari, stylist e visual merchandiser em Florianópolis, SC." (bloco "Quem faz"); a prévia do link (`og-lalaia.jpg`) usa o scrunchie e as pérolas. Ela confere.
 - [ ] **Cor da estação** (dona: Kari): o site usa uma cor só, hoje o vermelho `#C52118` (provisório, escolhido pelo Caio em 23/10/2026). Quando ela escolher a cor, o Caio troca em `conteudo.json` (`docs/OPERACAO.md`, procedimento 16). Os nomes de cor por serviço ("Vermelho Armário" etc.) saíram do site a pedido dela.
 - [ ] Mais fotos de produto da LALAIÁ. Hoje são só as 5 que estavam públicas no Instagram; com o painel ligado, ela mesma traz.
 - [ ] Depoimentos de clientes, se ela quiser. Não inventamos nenhum.
@@ -58,6 +59,8 @@ Atualizado em 23/10/2026.
 - [ ] **Condições da LALAIÁ** (dona: Kari): pagamento, frete, prazo e trocas em LALAIÁ → Como encomendar; e o cupom de primeira encomenda, se quiser.
 
 ## Fora do código (ações da Kari e do Caio)
+
+- [ ] **Link da bio do @lalaia.acessorios** (dona: Kari; depois do domínio): trocar pelo endereço `https://<domínio>/lalaia`, a página que abre direto nas peças (pedido dela em 23/10/2026). Enquanto não há domínio, serve `https://site-kari.karigava.workers.dev/lalaia`.
 
 - [ ] **Google Business Profile** (dona: Kari; até 15/12/2026): criar o perfil "Kari Gava · Stylist e Visual Merchandiser" em Florianópolis com o WhatsApp e o Instagram, pedir as primeiras avaliações e colar o link "Peça avaliações" no painel (LALAIÁ → Como encomendar → link do Google). É o que mais pesa para aparecer em "stylist Florianópolis".
 - [ ] **Google Search Console** (dono: Caio; depois do domínio): verificar o domínio pelo DNS da Cloudflare, enviar `https://<domínio>/sitemap.xml` e definir `vars.SITE_URL` no `wrangler.jsonc` antes de enviar.

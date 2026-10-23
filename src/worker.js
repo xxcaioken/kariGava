@@ -6,6 +6,7 @@ import { listarPares, criarPar, editarPar, removerPar, restaurarPar, moverPar } 
 import { listarFaq, criarFaq, salvarFaq, removerFaq, restaurarFaq, moverFaq } from './faq.js';
 import { contasLigadas, listarPosts, urlLigar, concluirLigacao, renovarTokens, CONTAS } from './instagram.js';
 import { renderizarSite } from './site.js';
+import { renderizarLalaia } from './lalaia.js';
 import { corDestaque, favicon } from './marca.js';
 import { renderizarQuiz } from './quiz.js';
 import { renderizarPrivacidade } from './privacidade.js';
@@ -238,12 +239,15 @@ async function tratar(request, env, url) {
     const chave = chaveDaFoto(url.pathname.slice('/fotos/'.length));
     return chave ? foto(env, chave, request) : naoEncontrada404();
   }
-  if (url.pathname === '/' && (request.method === 'GET' || request.method === 'HEAD')) {
+  // Home e /lalaia: mesmos dados do banco, sem cache (o que a Kari muda no painel aparece na hora).
+  const PAGINAS_DO_BANCO = { '/': renderizarSite, '/lalaia': renderizarLalaia };
+  if (PAGINAS_DO_BANCO[url.pathname] && (request.method === 'GET' || request.method === 'HEAD')) {
     const [itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois, faq] = await Promise.all([
       listarItens(env), lerTextos(env), tolerante(listarProdutos(env), []), tolerante(lerCondicoes(env), null), tolerante(lerCupom(env), null),
       tolerante(listarDepoimentos(env), []), tolerante(listarPares(env), []), tolerante(listarFaq(env), []),
     ]);
-    return new Response(renderizarSite({ itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois, faq, whatsappNumero: env.WHATSAPP_NUMERO, base: baseDoSite(env, request), analyticsToken: env.ANALYTICS_TOKEN }), {
+    const renderizar = PAGINAS_DO_BANCO[url.pathname];
+    return new Response(renderizar({ itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois, faq, whatsappNumero: env.WHATSAPP_NUMERO, base: baseDoSite(env, request), analyticsToken: env.ANALYTICS_TOKEN }), {
       headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
     });
   }
