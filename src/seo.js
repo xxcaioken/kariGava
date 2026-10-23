@@ -12,7 +12,7 @@ export function baseDoSite(env = {}, request) {
 export const telefoneE164 = numero => `+${String(numero ?? '').replace(/\D/g, '')}`;
 
 // <head> comum: canonical e og:url absolutos, og.jpg 1200×630, Twitter card. Cada página passa o próprio título/descrição.
-export function metaBase({ base, caminho, titulo, descricao, imagem = '/og.jpg', tipo = 'website' }) {
+export function metaBase({ base, caminho, titulo, descricao, imagem = '/og.jpg', imagemAlt = `${conteudo.marca.nome}, ${conteudo.marca.profissao}`, tipo = 'website' }) {
   const url = `${base}${caminho}`;
   const img = `${base}${imagem}`;
   return [
@@ -26,7 +26,7 @@ export function metaBase({ base, caminho, titulo, descricao, imagem = '/og.jpg',
     `<meta property="og:image" content="${esc(img)}">`,
     `<meta property="og:image:width" content="1200">`,
     `<meta property="og:image:height" content="630">`,
-    `<meta property="og:image:alt" content="${esc(conteudo.marca.nome)}, ${esc(conteudo.marca.profissao)}">`,
+    `<meta property="og:image:alt" content="${esc(imagemAlt)}">`,
     `<meta name="twitter:card" content="summary_large_image">`,
     `<meta name="twitter:title" content="${esc(titulo)}">`,
     `<meta name="twitter:description" content="${esc(descricao)}">`,
@@ -41,7 +41,8 @@ function jsonSeguro(valor) {
 
 const absoluta = (base, caminho) => (/^https?:\/\//.test(caminho) ? caminho : `${base}${caminho.startsWith('/') ? '' : '/'}${caminho}`);
 
-// ProfessionalService + Person + um Product por produto da LALAIÁ (offers quando há preço). `d` é o de montarDados.
+// Home: ProfessionalService + Person. Os produtos (com preço) ficam só no JSON-LD da /lalaia, onde aparecem na página.
+// `d` é o de montarDados.
 export function jsonLd(d, { base, whatsappNumero }) {
   const redes = Object.values(conteudo.marca.instagram);
   const precos = d.servicos.map(s => s.preco?.valor).filter(Boolean).map(v => Number(v.replace(/\D/g, ''))).filter(n => n > 0);
@@ -69,29 +70,39 @@ export function jsonLd(d, { base, whatsappNumero }) {
     sameAs: redes,
     worksFor: { '@id': `${base}/#negocio` },
   };
-  const produtos = d.lalaia.produtos.map(p => ({
+  return `<script type="application/ld+json">${jsonSeguro({ '@context': 'https://schema.org', '@graph': [negocio, pessoa] })}</script>`;
+}
+
+// Um Product por produto da LALAIÁ (offers quando há preço); a página de cada um é a /lalaia.
+function produtosLd(d, base) {
+  return d.lalaia.produtos.map(p => ({
     '@type': 'Product',
     name: p.titulo,
     ...(p.descricao ? { description: p.descricao } : {}),
     image: p.fotos.map(f => absoluta(base, f.foto_url)),
     brand: { '@type': 'Brand', name: conteudo.lalaia.nome },
-    url: `${base}/#lalaia`,
+    url: `${base}/lalaia`,
     ...(Number.isInteger(p.preco) && p.preco > 0 ? {
       offers: {
         '@type': 'Offer',
         price: p.preco,
         priceCurrency: 'BRL',
         availability: p.disponibilidade === 'pronta' ? 'https://schema.org/InStock' : 'https://schema.org/PreOrder',
-        url: `${base}/#lalaia`,
+        url: `${base}/lalaia`,
         seller: { '@id': `${base}/#negocio` },
       },
     } : {}),
   }));
-  return `<script type="application/ld+json">${jsonSeguro({ '@context': 'https://schema.org', '@graph': [negocio, pessoa, ...produtos] })}</script>`;
+}
+
+// /lalaia: os produtos e o nó do vendedor (o mesmo negócio da home, pelo @id), para o `seller` das ofertas existir na página.
+export function jsonLdLalaia(d, { base }) {
+  const vendedor = { '@type': 'ProfessionalService', '@id': `${base}/#negocio`, name: conteudo.marca.assinatura, url: `${base}/` };
+  return `<script type="application/ld+json">${jsonSeguro({ '@context': 'https://schema.org', '@graph': [vendedor, ...produtosLd(d, base)] })}</script>`;
 }
 
 export function sitemap(base) {
-  const paginas = ['/', '/quiz', '/privacidade'];
+  const paginas = ['/', '/lalaia', '/quiz', '/privacidade'];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${paginas.map(p => `  <url><loc>${esc(base)}${esc(p)}</loc></url>`).join('\n')}

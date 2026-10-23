@@ -10,14 +10,14 @@ O painel deve mostrar `mensagem` como está (já vem escrita para a Kari).
 |---|---|---|
 | `lalaia` | LALAIÁ (produtos) | lalaia |
 | `consultoria` | Consultoria de estilo | servico |
-| `edicao` | Edição de guarda-roupa | servico |
 | `styling` | Styling e produção de moda | servico |
 | `vm` | Vitrines e visual merchandising | servico |
-| `oficina-look` | Oficina de Look | servico |
 | `ensino` | Cursos, oficinas e palestras | servico |
 | `sobre` | Sobre mim | sobre |
 
 Só seções `tipo: servico` têm textos editáveis (`resumo`, `para_quem`).
+
+Desde a migration `0010_servicos_unidos.sql` (23/10/2026) não existem mais `edicao` (virou parte de `consultoria`) nem `oficina-look` (virou parte de `ensino`): fotos, depoimentos, pares e textos foram movidos, e `#edicao`/`#oficina-look` continuam como âncoras no cartão que os absorveu.
 A primeira foto (ordem 0) de cada serviço é a foto principal dele no site.
 
 ## Login (código por e-mail)
@@ -137,7 +137,7 @@ Seção "O que dizem" do site, entre "Como trabalhar comigo" e "Sobre"; só exis
 
 ## Antes e depois
 
-Bloco "Antes e depois" dentro da área de serviços do site, logo após a grade; só existe no HTML quando há par ativo. O estado traz `antes_depois`: `[ { "id": "ad_...", "ordem", "legenda", "servico": "vm" | "styling" | "edicao", "antes_url", "depois_url", "largura_antes", "altura_antes", "largura_depois", "altura_depois", "consentimento_em" } ]`.
+Bloco "Antes e depois" dentro da área de serviços do site, logo após a grade; só existe no HTML quando há par ativo. O estado traz `antes_depois`: `[ { "id": "ad_...", "ordem", "legenda", "servico": "vm" | "styling" | "consultoria", "antes_url", "depois_url", "largura_antes", "altura_antes", "largura_depois", "altura_depois", "consentimento_em" } ]`.
 
 - `POST /api/painel/antes-depois` (só multipart/form-data) campos `antes` e `depois` (as duas fotos, jpg/png/webp até 15 MB cada; corpo todo até 24 MB), `largura_antes`, `altura_antes`, `largura_depois`, `altura_depois` (inteiros de 1 a 10000; viram `width`/`height` no site), `legenda` (até 120 letras, opcional), `servico` (`vm`, `styling` ou `edicao`) e `consentimento` (`true`, obrigatório) → `201 { "par": {...} }`
   - Falta uma foto → `400 { erro: "foto_invalida", mensagem: "Falta a foto de Antes. O par precisa das duas fotos." }` (ou "de Depois"). Sem `consentimento` → `400 { erro: "foto_invalida", mensagem: "Marque que a cliente autorizou antes de publicar as fotos." }`. Legenda longa ou serviço fora dos três → `400 texto_invalido`. Tamanho inválido → `400 foto_invalida`; grande demais → `413 foto_grande`.
@@ -170,3 +170,14 @@ Renova os tokens do Instagram (válidos 60 dias; renováveis após 24 h).
 ## Desenvolvimento local
 
 `npm run dev` sobe tudo com D1/R2 locais. Com `DEV_LOGIN=1` em `.dev.vars`, o código de login aparece no terminal em vez de ir por e-mail. Sem `IG_APP_ID`, o Instagram usa posts falsos (`MODO_INSTAGRAM=falso`) feitos com as fotos de `public/img/`.
+
+## Páginas públicas
+
+| Caminho | O que é | Cache |
+|---|---|---|
+| `/` | site da Kari (serviços, sobre, um bloco curto da LALAIÁ que leva à `/lalaia`) | `no-cache` (dados do banco) |
+| `/lalaia` | loja da LALAIÁ: produtos na primeira tela, cupom, como encomendar, quem faz; prévia própria (`/og-lalaia.jpg`); é o link da bio do @lalaia.acessorios | `no-cache` (dados do banco) |
+| `/quiz`, `/privacidade` | páginas fixas | `max-age=300` |
+| `/favicon.svg` | leque de três lâminas na cor de destaque de `conteudo.json` | `max-age=300` |
+| `/sitemap.xml`, `/robots.txt` | SEO | `max-age=300` |
+

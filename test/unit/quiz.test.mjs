@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { renderizarQuiz, resultadoDoQuiz } from '../../src/quiz.js';
-import { ORDEM_SERVICOS } from '../../src/site.js';
+import { renderizarQuiz, resultadoDoQuiz, dadosDoQuiz } from '../../src/quiz.js';
+import { ORDEM_SERVICOS, renderizarSite } from '../../src/site.js';
 import conteudo from '../../conteudo.json' with { type: 'json' };
 
 const NUMERO = '5548998459412';
@@ -47,4 +47,13 @@ test('R-07 renderizarQuiz: 8 perguntas no <noscript>, dados em JSON com os links
   }
   assert.ok(!json.includes('</script'), 'JSON não fecha a tag script');
   assert.ok(html.includes('<script src="/quiz.js" defer></script>'), 'script externo (CSP self)');
+});
+
+test('R-05 todo resultado do quiz aponta para um serviço que existe na home', () => {
+  const home = renderizarSite({ itens: [], textos: {}, whatsappNumero: NUMERO });
+  for (const r of dadosDoQuiz(NUMERO).resultados) {
+    assert.ok(r.servico_nome, `resultado ${r.id} tem o nome do serviço`);
+    assert.equal(r.link, `/#${r.servico}`);
+    assert.ok(home.includes(`<li class="servico" id="${r.servico}"`), `resultado ${r.id} leva a um cartão da home (${r.servico})`);
+  }
 });

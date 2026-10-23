@@ -3,14 +3,12 @@ import conteudo from '../conteudo.json' with { type: 'json' };
 import { esc, linkWa, MENSAGENS_WA } from './site.js';
 import { metaBase } from './seo.js';
 import { beaconAnalytics } from './analytics.js';
-
-const CORES_MARCA = ['roxo', 'vermelho', 'mostarda', 'pink', 'verde', 'grafite'];
+import { abrirHtml, marcaLeque } from './marca.js';
 
 export function casca({ titulo, descricao, corpo, noindex = false, whatsappNumero, base = '', caminho = '/', analyticsToken = '' }) {
   const waGeral = esc(linkWa(whatsappNumero, MENSAGENS_WA.geral));
-  const listras = CORES_MARCA.map(c => `<i style="background:var(--${c})"></i>`).join('');
   return `<!doctype html>
-<html lang="pt-BR">
+${abrirHtml()}
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -25,7 +23,7 @@ export function casca({ titulo, descricao, corpo, noindex = false, whatsappNumer
 
 <header class="topo">
   <div class="wrap">
-    <a class="marca" href="/"><span class="marca-leque" aria-hidden="true">${listras}</span>${esc(conteudo.marca.assinatura)}</a>
+    <a class="marca" href="/">${marcaLeque()}${esc(conteudo.marca.assinatura)}</a>
     <a class="btn topo-cta" href="${waGeral}">Chamar no WhatsApp</a>
   </div>
 </header>
@@ -37,7 +35,7 @@ ${corpo}
 </main>
 
 <footer class="rodape rodape-curto">
-  <div class="faixa-cores" aria-hidden="true">${listras}</div>
+  <div class="faixa-destaque" aria-hidden="true"></div>
   <div class="wrap">
     <p class="rodape-fim">${esc(conteudo.marca.nome)} · ${esc(conteudo.marca.profissao)} · ${esc(conteudo.marca.cidade)} · <a href="/">Voltar ao site</a> · <a href="/privacidade">Privacidade</a></p>
   </div>
@@ -58,9 +56,10 @@ export function naoEncontrada({ whatsappNumero, base = '' } = {}) {
     base,
     corpo: `    <p class="rotulo">Erro 404</p>
     <h1>Essa página não existe</h1>
-    <p>O endereço pode ter mudado ou ter sido digitado errado. O site inteiro cabe numa página só: é mais fácil começar por ela.</p>
+    <p>O endereço pode ter mudado ou ter sido digitado errado. Comece pela página inicial ou pelas peças da LALAIÁ.</p>
     <div class="leitura-acoes">
       <a class="btn" href="/">Ir para o site</a>
+      <a class="btn btn-linha" href="/lalaia">Ver as peças da LALAIÁ</a>
       <a class="btn btn-linha" href="${wa}">Chamar no WhatsApp</a>
     </div>`,
   });

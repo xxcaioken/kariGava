@@ -76,7 +76,10 @@ test('estado traz seções, fotos iniciais e contas', async () => {
   const { status, dados } = await chamar('/api/painel/estado');
   assert.equal(status, 200);
   assert.equal(dados.usuario.email, EMAIL);
-  assert.equal(dados.secoes.length, 8);
+  assert.equal(dados.secoes.length, 6, 'LALAIÁ, 4 serviços e Sobre mim');
+  const extintos = dados.itens.filter(i => ['edicao', 'oficina-look'].includes(i.secao)).map(i => i.id);
+  assert.deepEqual(extintos, [], 'banco zerado sem foto em serviço extinto (a 0010 vale também depois do reset)');
+  assert.ok(dados.itens.some(i => i.id === 'ini_edicao_0' && i.secao === 'consultoria'), 'sapatos na consultoria');
   assert.equal(dados.itens.filter(i => i.secao === 'lalaia').length, 5);
   assert.ok(dados.instagram.contas.every(c => c.conectada));
   assert.equal(dados.textos.consultoria.titulo, 'Consultoria de estilo');
@@ -103,8 +106,7 @@ test('traz posts do Instagram para a LALAIÁ sem duplicar', async () => {
 test('fotos da LALAIÁ com o mesmo nome viram um produto só', async () => {
   const renomear = await chamar(`/api/painel/itens/${novos[1].id}`, { metodo: 'PATCH', corpo: { titulo: 'Vai de presente' } });
   assert.equal(renomear.status, 200);
-  const site = (await chamar('/')).dados;
-  const lalaia = site.slice(site.indexOf('id="lalaia"'), site.indexOf('id="cursos"'));
+  const lalaia = (await chamar('/lalaia')).dados;
   const produto = lalaia.slice(lalaia.lastIndexOf('<li class="produto">', lalaia.indexOf('<h3>Vai de presente</h3>')), lalaia.indexOf('<h3>Vai de presente</h3>'));
   assert.equal((produto.match(/<img /g) || []).length, 2);
   assert.equal((lalaia.match(/<h3>Vai de presente<\/h3>/g) || []).length, 1);
@@ -115,7 +117,7 @@ test('foto guardada abre e aparece no site', async () => {
   assert.equal(f.status, 200);
   assert.equal(f.headers.get('content-type'), 'image/jpeg');
   assert.match(f.headers.get('cache-control'), /immutable/);
-  const { dados } = await chamar('/');
+  const { dados } = await chamar('/lalaia'); // foto da LALAIÁ: a peça inteira aparece na /lalaia
   assert.ok(dados.includes(novos[0].foto_url));
 });
 
@@ -166,7 +168,7 @@ test('textos editados vão para o site e são escapados', async () => {
 test('foto do celular: aceita jpg e recusa o que não é foto', async () => {
   const jpg = readFileSync(new URL('../../public/img/lalaia-caixa.jpg', import.meta.url));
   const form = new FormData();
-  form.set('secao', 'edicao');
+  form.set('secao', 'styling');
   form.set('titulo', 'Armário da cliente');
   form.set('foto', new Blob([jpg], { type: 'image/jpeg' }), 'foto.jpg');
   const ok = await chamar('/api/painel/itens', { metodo: 'POST', form });
@@ -175,12 +177,12 @@ test('foto do celular: aceita jpg e recusa o que não é foto', async () => {
   assert.equal((await fetch(BASE + ok.dados.itens[0].foto_url)).status, 200);
   // 2ª foto do serviço aparece como miniatura no cartão dele.
   const site = (await chamar('/')).dados;
-  const cartao = site.slice(site.indexOf('id="edicao"'), site.indexOf('id="oficina-look"'));
+  const cartao = site.slice(site.indexOf('id="styling"'), site.indexOf('id="vm"'));
   assert.match(cartao, /class="servico-mais"/);
   assert.ok(cartao.includes(ok.dados.itens[0].foto_url));
 
   const ruim = new FormData();
-  ruim.set('secao', 'edicao');
+  ruim.set('secao', 'styling');
   ruim.set('foto', new Blob(['não sou foto'], { type: 'image/jpeg' }), 'falsa.jpg');
   const r = await chamar('/api/painel/itens', { metodo: 'POST', form: ruim });
   assert.equal(r.status, 400);
@@ -241,7 +243,7 @@ test('R-02 preço do serviço: PUT parcial, "A partir de", "Valor sob consulta" 
   assert.equal(r.dados.textos.resumo, antes.resumo, 'PUT parcial mantém o resumo');
 
   let html = (await chamar('/')).dados;
-  let cartao = cartaoDoServico(html, 'consultoria', 'edicao');
+  let cartao = cartaoDoServico(html, 'consultoria', 'styling');
   assert.ok(cartao.includes('A partir de'), 'rótulo');
   assert.ok(cartao.includes('R$ 380'), 'valor');
   const escapado = antes.resumo.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -249,7 +251,6 @@ test('R-02 preço do serviço: PUT parcial, "A partir de", "Valor sob consulta" 
   assert.ok(!cartaoDoServico(html, 'vm', 'ensino').includes('A partir de'));
   assert.ok(cartaoDoServico(html, 'vm', 'ensino').includes('Valor sob consulta'), 'grupo lojas sem preço');
   assert.ok(cartaoDoServico(html, 'ensino', 'como-trabalhar').includes('Valor sob consulta'), 'grupo ensino sem preço');
-  assert.ok(!cartaoDoServico(html, 'edicao', 'oficina-look').includes('sob consulta'), 'grupo "para você" sem preço não mostra nada');
 
   // Só o resumo muda; o preço fica.
   const soResumo = await chamar('/api/painel/textos/consultoria', { metodo: 'PUT', corpo: { resumo: 'Resumo novo da consultoria.' } });
@@ -268,9 +269,9 @@ test('R-02 preço do serviço: PUT parcial, "A partir de", "Valor sob consulta" 
   assert.equal(limpa.status, 200);
   assert.equal(limpa.dados.textos.preco, null);
   html = (await chamar('/')).dados;
-  cartao = cartaoDoServico(html, 'consultoria', 'edicao');
+  cartao = cartaoDoServico(html, 'consultoria', 'styling');
   assert.ok(!cartao.includes('A partir de'));
-  assert.ok(!cartao.includes('sob consulta'));
+  assert.ok(!cartao.includes('sob consulta'), 'grupo "para você" sem preço não mostra nada');
 
   const estado = (await chamar('/api/painel/estado')).dados;
   assert.equal(estado.textos.consultoria.preco, null);
@@ -278,9 +279,9 @@ test('R-02 preço do serviço: PUT parcial, "A partir de", "Valor sob consulta" 
 });
 
 // ---------- R-03 · Peça da LALAIÁ mostra preço, prazo e disponibilidade ----------
-// Recorta o <li class="produto"> cujo <h3> é o título dado (null se o produto não está na home).
+// Recorta o <li class="produto"> cujo <h3> é o título dado (null se o produto não está na /lalaia).
 function produtoNoHtml(html, titulo) {
-  const lalaia = html.slice(html.indexOf('id="lalaia"'), html.indexOf('id="cursos"'));
+  const lalaia = html.slice(html.indexOf('id="lalaia"'), html.indexOf('</main>'));
   const h3 = lalaia.indexOf(`<h3>${titulo}</h3>`);
   if (h3 < 0) return null;
   const ini = lalaia.lastIndexOf('<li class="produto">', h3);
@@ -300,25 +301,25 @@ test('R-03 produtos da LALAIÁ: preço, disponibilidade, prazo, descrição e re
   const r = await chamar(`/api/painel/lalaia/produtos/${slug}`, { metodo: 'PUT', corpo: { preco: 65, disponibilidade: 'encomenda', prazo_dias: 7, descricao: 'Scrunchie gigante de organza, com a etiquetinha.' } });
   assert.equal(r.status, 200, JSON.stringify(r.dados));
   assert.equal(r.dados.produto.preco, 65);
-  let card = produtoNoHtml((await chamar('/')).dados, 'BigScrunchie (a Xuxona)');
-  assert.ok(card, 'produto na home');
+  let card = produtoNoHtml((await chamar('/lalaia')).dados, 'BigScrunchie (a Xuxona)');
+  assert.ok(card, 'produto na /lalaia');
   assert.ok(card.includes('R$ 65'), 'preço');
   assert.ok(card.includes('Sob encomenda · até 7 dias úteis'), 'disponibilidade com prazo');
   assert.ok(card.includes('Scrunchie gigante de organza, com a etiquetinha.'), 'descrição editada');
 
   // PUT parcial: só a disponibilidade muda, o preço fica.
   assert.equal((await chamar(`/api/painel/lalaia/produtos/${slug}`, { metodo: 'PUT', corpo: { disponibilidade: 'pronta' } })).status, 200);
-  card = produtoNoHtml((await chamar('/')).dados, 'BigScrunchie (a Xuxona)');
+  card = produtoNoHtml((await chamar('/lalaia')).dados, 'BigScrunchie (a Xuxona)');
   assert.ok(card.includes('Pronta entrega') && card.includes('R$ 65') && !card.includes('Sob encomenda'));
 
   // Sob encomenda sem prazo: só "Sob encomenda", sem " · ".
   assert.equal((await chamar(`/api/painel/lalaia/produtos/${slug}`, { metodo: 'PUT', corpo: { disponibilidade: 'encomenda', prazo_dias: null } })).status, 200);
-  card = produtoNoHtml((await chamar('/')).dados, 'BigScrunchie (a Xuxona)');
+  card = produtoNoHtml((await chamar('/lalaia')).dados, 'BigScrunchie (a Xuxona)');
   assert.ok(card.includes('Sob encomenda') && !card.includes('Sob encomenda ·'), 'sem prazo não tem " · "');
 
   // Preço vazio → produto sem preço e sem "sob consulta" (spec R-03).
   assert.equal((await chamar(`/api/painel/lalaia/produtos/${slug}`, { metodo: 'PUT', corpo: { preco: null } })).status, 200);
-  card = produtoNoHtml((await chamar('/')).dados, 'BigScrunchie (a Xuxona)');
+  card = produtoNoHtml((await chamar('/lalaia')).dados, 'BigScrunchie (a Xuxona)');
   assert.ok(!card.includes('R$') && !/sob consulta/i.test(card), 'sem preço: nada');
   assert.equal((await chamar(`/api/painel/lalaia/produtos/${slug}`, { metodo: 'PUT', corpo: { preco: 65 } })).status, 200);
 
@@ -352,7 +353,7 @@ test('R-03 produtos da LALAIÁ: preço, disponibilidade, prazo, descrição e re
   const xuxona = estado.lalaia.produtos.find(p => p.slug === 'xuxona');
   assert.equal(xuxona.preco, 65, 'dados vieram junto');
   assert.ok(estado.itens.filter(i => i.secao === 'lalaia' && i.titulo === 'Xuxona').length === 2, 'as 2 fotos renomeadas');
-  card = produtoNoHtml((await chamar('/')).dados, 'Xuxona');
+  card = produtoNoHtml((await chamar('/lalaia')).dados, 'Xuxona');
   assert.ok(card && card.includes('R$ 65'));
 
   // "Laço" e "Laco" têm o mesmo slug: um cartão só; e a linha de produto sobrevive sem fotos.
@@ -360,7 +361,7 @@ test('R-03 produtos da LALAIÁ: preço, disponibilidade, prazo, descrição e re
   assert.equal(cabeca.fotos.length, 2);
   assert.equal((await chamar(`/api/painel/itens/${cabeca.fotos[0].id}`, { metodo: 'PATCH', corpo: { titulo: 'Laço' } })).status, 200);
   assert.equal((await chamar(`/api/painel/itens/${cabeca.fotos[1].id}`, { metodo: 'PATCH', corpo: { titulo: 'Laco' } })).status, 200);
-  let html = (await chamar('/')).dados;
+  let html = (await chamar('/lalaia')).dados;
   assert.equal((html.match(/<h3>La[çc]o<\/h3>/g) || []).length, 1, 'um cartão só para Laço/Laco');
   assert.equal(produtoNoHtml(html, 'Laço').match(/<img /g).length, 2);
   assert.equal((await chamar('/api/painel/lalaia/produtos/laco', { metodo: 'PUT', corpo: { preco: 10 } })).status, 200);
@@ -368,7 +369,8 @@ test('R-03 produtos da LALAIÁ: preço, disponibilidade, prazo, descrição e re
   estado = (await chamar('/api/painel/estado')).dados;
   const laco = estado.lalaia.produtos.find(p => p.slug === 'laco');
   assert.ok(laco && laco.preco === 10 && laco.fotos.length === 0, 'produto sem fotos continua no estado com o preço');
-  assert.equal(produtoNoHtml((await chamar('/')).dados, 'Laço'), null, 'mas não aparece no site');
+  assert.equal(produtoNoHtml((await chamar('/lalaia')).dados, 'Laço'), null, 'mas não aparece na /lalaia');
+  assert.ok(!(await chamar('/')).dados.includes('alt="Laço"'), 'nem na vitrine da home');
   for (const f of cabeca.fotos) assert.equal((await chamar(`/api/painel/itens/${f.id}/restaurar`, { metodo: 'POST' })).status, 200);
 });
 
@@ -392,11 +394,11 @@ test('R-01 botões de WhatsApp: número da config e mensagem por contexto', asyn
   assert.ok(links.length >= 8, `há ${links.length} links de WhatsApp`);
   for (const l of links) assert.ok(l.startsWith(`https://wa.me/${numero}?text=`), l);
 
-  const cartao = html.slice(html.indexOf('id="edicao"'), html.indexOf('id="oficina-look"'));
+  const cartao = html.slice(html.indexOf('id="vm"'), html.indexOf('id="ensino"'));
   const botao = cartao.match(/<a class="btn" href="([^"]+)"/)[1];
-  assert.equal(decodificarTexto(botao), 'Oi Kari, vi o site e quero saber sobre Edição de guarda-roupa');
+  assert.equal(decodificarTexto(botao), 'Oi Kari, vi o site e quero saber sobre Vitrines e visual merchandising');
 
-  const lalaia = html.slice(html.indexOf('id="lalaia"'), html.indexOf('id="cursos"'));
+  const lalaia = (await chamar('/lalaia')).dados;
   const produto = lalaia.slice(lalaia.indexOf('<li class="produto">'));
   const titulo = produto.match(/<h3>([^<]+)<\/h3>/)[1];
   const linkProduto = produto.match(/href="(https:\/\/wa\.me\/[^"]+)"/)[1];
@@ -461,15 +463,15 @@ test('R-10 fontes locais: site e painel sem Google Fonts, WOFF2 servidas pelo si
 // ---------- S-05 · Como encomendar e condições da LALAIÁ (R-03) ----------
 const blocoComoEncomendar = html => {
   const ini = html.indexOf('id="como-encomendar"');
-  return ini < 0 ? null : html.slice(ini, html.indexOf('id="cursos"'));
+  return ini < 0 ? null : html.slice(ini, html.indexOf('</main>'));
 };
 const rodape = html => html.slice(html.indexOf('<footer'), html.indexOf('</footer>'));
 
 test('R-03 condições e como encomendar', async () => {
-  let html = (await chamar('/')).dados;
-  const posLalaia = html.indexOf('id="lalaia"'), posBloco = html.indexOf('id="como-encomendar"'), posCursos = html.indexOf('id="cursos"');
-  assert.ok(posBloco > 0, 'home tem id="como-encomendar"');
-  assert.ok(posLalaia < posBloco && posBloco < posCursos, 'bloco fica depois da LALAIÁ e antes dos cursos');
+  let html = (await chamar('/lalaia')).dados;
+  const posLalaia = html.indexOf('id="lalaia"'), posBloco = html.indexOf('id="como-encomendar"'), posFim = html.indexOf('</main>');
+  assert.ok(posBloco > 0, '/lalaia tem id="como-encomendar"');
+  assert.ok(posLalaia < posBloco && posBloco < posFim, 'bloco fica depois dos produtos');
   let bloco = blocoComoEncomendar(html);
   for (const passo of ['WhatsApp', 'prazo e valor', 'Pix', 'Correios']) assert.ok(bloco.includes(passo), `passo fixo: ${passo}`);
   assert.ok(!bloco.includes('class="condicoes'), 'sem condições, só os 3 passos');
@@ -482,7 +484,7 @@ test('R-03 condições e como encomendar', async () => {
   const r = await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: condicoes });
   assert.equal(r.status, 200, JSON.stringify(r.dados));
   assert.equal(r.dados.condicoes.frete, condicoes.frete);
-  bloco = blocoComoEncomendar((await chamar('/')).dados);
+  bloco = blocoComoEncomendar((await chamar('/lalaia')).dados);
   assert.ok(bloco.includes('class="condicoes'), 'condições aparecem');
   assert.ok(bloco.includes('Pix à vista ou cartão em até 3x') && bloco.includes('Até 10 dias úteis depois do pagamento') && bloco.includes('encomenda não tem troca, só ajuste'));
   assert.ok(bloco.includes('&lt;b&gt;retirada&lt;/b&gt;') && !bloco.includes('<b>retirada</b>'), 'texto escapado');
@@ -492,7 +494,7 @@ test('R-03 condições e como encomendar', async () => {
   assert.equal(parcial.status, 200);
   assert.equal(parcial.dados.condicoes.frete, '');
   assert.equal(parcial.dados.condicoes.pagamento, condicoes.pagamento);
-  bloco = blocoComoEncomendar((await chamar('/')).dados);
+  bloco = blocoComoEncomendar((await chamar('/lalaia')).dados);
   assert.ok(!bloco.includes('retirada') && bloco.includes('Pix à vista'));
 
   // 221 letras → 400 com a mensagem dizendo o campo e o tamanho.
@@ -511,16 +513,16 @@ test('R-03 condições e como encomendar', async () => {
   }
   const url = 'https://g.page/r/AbC123/review?x=1&y=2';
   assert.equal((await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { gbp_url: url } })).status, 200);
-  let pe = rodape((await chamar('/')).dados);
+  let pe = rodape((await chamar('/lalaia')).dados);
   assert.ok(pe.includes('Avaliações no Google'), 'link no rodapé');
   assert.ok(pe.includes('href="https://g.page/r/AbC123/review?x=1&amp;y=2"'), 'href escapado');
   assert.equal((await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { gbp_url: '' } })).status, 200);
-  pe = rodape((await chamar('/')).dados);
+  pe = rodape((await chamar('/lalaia')).dados);
   assert.ok(!pe.includes('Avaliações no Google'), 'vazio tira o link');
 
   // Tudo vazio → bloco volta a mostrar só os passos.
   assert.equal((await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { pagamento: null, prazo_padrao: null, troca: null } })).status, 200);
-  html = (await chamar('/')).dados;
+  html = (await chamar('/lalaia')).dados;
   bloco = blocoComoEncomendar(html);
   assert.ok(!bloco.includes('class="condicoes') && bloco.includes('Correios'));
   assert.deepEqual((await chamar('/api/painel/estado')).dados.lalaia.condicoes, { pagamento: '', frete: '', prazo_padrao: '', troca: '', gbp_url: '' });
@@ -529,14 +531,14 @@ test('R-03 condições e como encomendar', async () => {
 // ---------- S-06 · Cupom de primeira encomenda (R-08) ----------
 const blocoLalaia = html => html.slice(html.indexOf('id="lalaia"'), html.indexOf('id="como-encomendar"'));
 const textosWaDaLalaia = html => {
-  const secao = html.slice(html.indexOf('id="lalaia"'), html.indexOf('id="cursos"'));
+  const secao = html.slice(html.indexOf('id="lalaia"'), html.indexOf('</main>'));
   return [...secao.matchAll(/href="(https:\/\/wa\.me\/[^"]+)"/g)].map(m => decodificarTexto(m[1]));
 };
 const diaRelativo = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
 const CUPOM_PADRAO = { ativo: false, codigo: '', desconto: null, valido_ate: '' };
 
 test('R-08 cupom de primeira encomenda: linha na LALAIÁ, sufixo no WhatsApp, validade e validações', async () => {
-  let html = (await chamar('/')).dados;
+  let html = (await chamar('/lalaia')).dados;
   assert.ok(!blocoLalaia(html).includes('código') && !blocoLalaia(html).includes('id="cupom"'), 'padrão: sem cupom');
   assert.deepEqual((await chamar('/api/painel/estado')).dados.lalaia.cupom, CUPOM_PADRAO, 'estado devolve lalaia.cupom desligado');
   const textosAntes = textosWaDaLalaia(html);
@@ -546,7 +548,7 @@ test('R-08 cupom de primeira encomenda: linha na LALAIÁ, sufixo no WhatsApp, va
   const liga = await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { cupom: { ativo: true, codigo: 'bemvinda', desconto: 10 } } });
   assert.equal(liga.status, 200, JSON.stringify(liga.dados));
   assert.deepEqual(liga.dados.cupom, { ativo: true, codigo: 'BEMVINDA', desconto: 10, valido_ate: '' });
-  html = (await chamar('/')).dados;
+  html = (await chamar('/lalaia')).dados;
   let lalaia = blocoLalaia(html);
   assert.ok(lalaia.includes('id="cupom"') && lalaia.includes('BEMVINDA') && lalaia.includes('10%'), 'linha do cupom');
   assert.ok(lalaia.indexOf('class="produtos"') < lalaia.indexOf('id="cupom"'), 'cupom fica depois dos produtos, logo acima de como encomendar');
@@ -554,21 +556,22 @@ test('R-08 cupom de primeira encomenda: linha na LALAIÁ, sufixo no WhatsApp, va
   assert.ok(textosLigado.every(t => t.endsWith(' · cupom BEMVINDA')), `todos os botões da LALAIÁ com sufixo: ${JSON.stringify(textosLigado)}`);
   // (o teste de R-03 já renomeou "BigScrunchie (a Xuxona)" para "Xuxona")
   assert.ok(textosLigado.some(t => /^Oi Kari, quero encomendar Xuxona · cupom BEMVINDA$/.test(t)), `mensagem do produto preservada: ${JSON.stringify(textosLigado)}`);
-  const servicos = html.slice(html.indexOf('id="servicos"'), html.indexOf('id="como-trabalhar"'));
+  const home = (await chamar('/')).dados;
+  const servicos = home.slice(home.indexOf('id="servicos"'), home.indexOf('id="como-trabalhar"'));
   assert.ok([...servicos.matchAll(/href="(https:\/\/wa\.me\/[^"]+)"/g)].every(m => !decodificarTexto(m[1]).includes('cupom')), 'serviços sem sufixo');
 
   // Desliga (parcial): some do site e do sufixo, mas o código fica guardado.
   assert.equal((await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { cupom: { ativo: false } } })).status, 200);
-  html = (await chamar('/')).dados;
+  html = (await chamar('/lalaia')).dados;
   assert.ok(!blocoLalaia(html).includes('BEMVINDA') && textosWaDaLalaia(html).every(t => !t.includes('cupom')), 'desligado');
   assert.equal((await chamar('/api/painel/estado')).dados.lalaia.cupom.codigo, 'BEMVINDA');
 
   // Validade (uc5a): vencido some; futuro mostra.
   assert.equal((await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { cupom: { ativo: true, valido_ate: diaRelativo(-2) } } })).status, 200);
-  html = (await chamar('/')).dados;
+  html = (await chamar('/lalaia')).dados;
   assert.ok(!blocoLalaia(html).includes('BEMVINDA') && textosWaDaLalaia(html).every(t => !t.includes('cupom')), 'vencido não aparece nem no sufixo');
   assert.equal((await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { cupom: { valido_ate: diaRelativo(2) } } })).status, 200);
-  html = (await chamar('/')).dados;
+  html = (await chamar('/lalaia')).dados;
   assert.ok(blocoLalaia(html).includes('BEMVINDA') && textosWaDaLalaia(html).every(t => t.endsWith(' · cupom BEMVINDA')), 'dentro da validade');
 
   // Validações com mensagem para a Kari.
@@ -599,7 +602,7 @@ test('R-08 cupom de primeira encomenda: linha na LALAIÁ, sufixo no WhatsApp, va
   assert.equal(junto.dados.cupom.desconto, 15);
   assert.equal((await chamar('/api/painel/lalaia/condicoes', { metodo: 'PUT', corpo: { frete: null, cupom: null } })).status, 200);
   assert.deepEqual((await chamar('/api/painel/estado')).dados.lalaia.cupom, CUPOM_PADRAO);
-  html = (await chamar('/')).dados;
+  html = (await chamar('/lalaia')).dados;
   assert.ok(!blocoLalaia(html).includes('id="cupom"') && textosWaDaLalaia(html).every(t => !t.includes('cupom')));
 });
 
@@ -646,7 +649,7 @@ test('R-04 depoimentos: seção só quando existe, foto com consentimento, valid
   const naoFoto = await chamar('/api/painel/depoimentos', { metodo: 'POST', form: formDepoimento({ nome: 'Paula', texto: 'Amei a edição.', consentimento: 'true', largura: 480, altura: 360 }, new Blob(['não sou foto'], { type: 'image/jpeg' })) });
   assert.equal(naoFoto.status, 400);
   assert.equal(naoFoto.dados.erro, 'foto_invalida');
-  const r2 = await chamar('/api/painel/depoimentos', { metodo: 'POST', form: formDepoimento({ nome: 'Paula', de_onde: 'Palhoça', texto: 'Amei a edição.', servico: 'edicao', consentimento: 'true', largura: 480, altura: 360 }, jpg) });
+  const r2 = await chamar('/api/painel/depoimentos', { metodo: 'POST', form: formDepoimento({ nome: 'Paula', de_onde: 'Palhoça', texto: 'Amei a edição.', servico: 'styling', consentimento: 'true', largura: 480, altura: 360 }, jpg) });
   assert.equal(r2.status, 201, JSON.stringify(r2.dados));
   const d2 = r2.dados.depoimento;
   assert.match(d2.foto_url, /^\/fotos\/dep\//);
@@ -743,7 +746,7 @@ test('R-05 antes e depois: par só com as duas fotos e consentimento, seção na
   assert.equal(semConsent.dados.erro, 'foto_invalida');
   assert.match(semConsent.dados.mensagem, /autorizou/);
   // Serviço fora dos 3 permitidos, legenda longa, tamanho inválido.
-  assert.equal((await chamar('/api/painel/antes-depois', { metodo: 'POST', form: formPar({ ...base, servico: 'consultoria', antes: jpgA, depois: jpgD }) })).status, 400);
+  assert.equal((await chamar('/api/painel/antes-depois', { metodo: 'POST', form: formPar({ ...base, servico: 'ensino', antes: jpgA, depois: jpgD }) })).status, 400);
   const legendaLonga = await chamar('/api/painel/antes-depois', { metodo: 'POST', form: formPar({ ...base, legenda: 'a'.repeat(121), antes: jpgA, depois: jpgD }) });
   assert.equal(legendaLonga.status, 400);
   assert.match(legendaLonga.dados.mensagem, /120 letras.*121/);
@@ -775,12 +778,12 @@ test('R-05 antes e depois: par só com as duas fotos e consentimento, seção na
   const r2 = await chamar('/api/painel/antes-depois', { metodo: 'POST', form: formPar({ ...base, legenda: 'Look de festa', servico: 'styling', antes: jpgA, depois: jpgD }) });
   assert.equal(r2.status, 201);
   const p2 = r2.dados.par;
-  const ed = await chamar(`/api/painel/antes-depois/${p1.id}`, { metodo: 'PATCH', corpo: { legenda: 'Vitrine de inverno', servico: 'edicao' } });
+  const ed = await chamar(`/api/painel/antes-depois/${p1.id}`, { metodo: 'PATCH', corpo: { legenda: 'Vitrine de inverno', servico: 'consultoria' } });
   assert.equal(ed.status, 200, JSON.stringify(ed.dados));
   assert.equal(ed.dados.par.legenda, 'Vitrine de inverno');
   assert.equal((await chamar(`/api/painel/antes-depois/${p1.id}`, { metodo: 'PATCH', corpo: { legenda: 'a'.repeat(121) } })).status, 400);
   secao = secaoAntesDepois((await chamar('/')).dados);
-  assert.ok(secao.includes('alt="Antes: Vitrine de inverno"') && secao.includes('Edição de guarda-roupa'));
+  assert.ok(secao.includes('alt="Antes: Vitrine de inverno"') && secao.includes('Consultoria de estilo'));
   const mv = await chamar(`/api/painel/antes-depois/${p2.id}/mover`, { metodo: 'POST', corpo: { direcao: 'cima' } });
   assert.equal(mv.status, 200);
   assert.deepEqual(mv.dados.antes_depois.map(p => p.id), [p2.id, p1.id]);
@@ -973,17 +976,19 @@ test('R-09 prévia do link e SEO: og absoluto, og.jpg 1200×630, canonical por p
   const sm = await chamar('/sitemap.xml');
   assert.equal(sm.status, 200);
   assert.match(sm.r.headers.get('content-type'), /xml/);
-  assert.deepEqual([...sm.dados.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]), [`${BASE}/`, `${BASE}/quiz`, `${BASE}/privacidade`]);
+  assert.deepEqual([...sm.dados.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]), [`${BASE}/`, `${BASE}/lalaia`, `${BASE}/quiz`, `${BASE}/privacidade`]);
   const rb = await chamar('/robots.txt');
   assert.equal(rb.status, 200);
   assert.ok(rb.dados.includes(`Sitemap: ${BASE}/sitemap.xml`));
 
   let ld = jsonLdDe(home);
   const tipos = ld['@graph'].map(n => n['@type']);
-  assert.ok(tipos.includes('ProfessionalService') && tipos.includes('Person') && tipos.includes('Product'));
+  assert.ok(tipos.includes('ProfessionalService') && tipos.includes('Person') && !tipos.includes('Product'), 'home sem Product (review-r2 S-14)');
   const negocio = ld['@graph'].find(n => n['@type'] === 'ProfessionalService');
   assert.equal(negocio.telephone, `+${numeroWhatsAppDaConfig()}`);
   assert.equal(negocio.image, `${BASE}/og.jpg`);
+  let loja = (await chamar('/lalaia')).dados;
+  ld = jsonLdDe(loja);
   const comPreco = ld['@graph'].find(n => n['@type'] === 'Product' && n.offers);
   assert.ok(comPreco && comPreco.offers.priceCurrency === 'BRL' && comPreco.image[0].startsWith(BASE), 'produto com preço tem offers e imagem absoluta');
 
@@ -992,10 +997,12 @@ test('R-09 prévia do link e SEO: og absoluto, og.jpg 1200×630, canonical por p
   const nomeAntes = foto.titulo;
   assert.equal((await chamar(`/api/painel/itens/${foto.id}`, { metodo: 'PATCH', corpo: { titulo: '</script><b>oi</b>' } })).status, 200);
   home = (await chamar('/')).dados;
-  assert.ok(home.trimEnd().endsWith('</html>'), 'página inteira');
-  ld = jsonLdDe(home);
-  assert.ok(ld['@graph'].some(n => n['@type'] === 'Product' && n.name === '</script><b>oi</b>'), 'nome preservado no JSON-LD');
-  assert.ok(!home.includes('<b>oi</b>'), 'HTML escapado');
+  assert.ok(home.trimEnd().endsWith('</html>') && !home.includes('<b>oi</b>'), 'home inteira e escapada');
+  loja = (await chamar('/lalaia')).dados;
+  assert.ok(loja.trimEnd().endsWith('</html>'), '/lalaia inteira');
+  ld = jsonLdDe(loja);
+  assert.ok(ld['@graph'].some(n => n['@type'] === 'Product' && n.name === '</script><b>oi</b>'), 'nome preservado no JSON-LD da /lalaia');
+  assert.ok(!loja.includes('<b>oi</b>'), 'HTML escapado');
   assert.equal((await chamar(`/api/painel/itens/${foto.id}`, { metodo: 'PATCH', corpo: { titulo: nomeAntes } })).status, 200);
 });
 
@@ -1043,7 +1050,8 @@ test('R-10 variantes de imagem: celular num só multipart, POST /variantes, pict
   assert.ok(pic && pic.includes('/img/kari-look-blazer-360.webp 360w') && !pic.includes('480w'), 'nunca ampliar');
   // Item sem variantes (Instagram falso) continua com <img> simples; hero sem lazy e com fetchpriority.
   const semVariantes = (await chamar('/api/painel/estado')).dados.itens.find(i => i.origem === 'instagram' && !i.variantes);
-  assert.ok(semVariantes && html.includes(`<img src="${semVariantes.foto_url}"`) && !pictureDe(html, semVariantes.foto_url), '<img> simples');
+  const paginas = html + (await chamar('/lalaia')).dados; // fotos de produto da LALAIÁ só aparecem inteiras na /lalaia
+  assert.ok(semVariantes && paginas.includes(`<img src="${semVariantes.foto_url}"`) && !pictureDe(paginas, semVariantes.foto_url), '<img> simples');
   const hero = html.match(/<img [^>]*kari-stylist-toia[^>]*>/)[0];
   assert.ok(hero.includes('fetchpriority="high"') && !hero.includes('loading="lazy"'));
   for (const img of html.match(/<img [^>]*>/g)) assert.ok(img.includes('fetchpriority="high"') || img.includes('loading="lazy"'), img);
@@ -1054,7 +1062,7 @@ test('R-10 variantes de imagem: celular num só multipart, POST /variantes, pict
   const bf = await chamar(`/api/painel/itens/${ig.id}/variantes`, { metodo: 'POST', form: formVariantes({ largura: 1080, altura: 1350 }, { '480.jpg': variantes['480.jpg'], '960.jpg': variantes['960.jpg'], '1080.jpg': variantes['1600.jpg'] }) });
   assert.equal(bf.status, 200, JSON.stringify(bf.dados));
   assert.deepEqual(bf.dados.item.variantes, { larguras: [480, 960, 1080], webp: false });
-  html = (await chamar('/')).dados;
+  html = (await chamar('/')).dados + (await chamar('/lalaia')).dados;
   pic = pictureDe(html, `${ig.foto_url.replace(/\.jpg$/, '')}-480.jpg`);
   assert.ok(pic && !pic.includes('image/webp') && pic.includes('1080w') && pic.includes('width="1080"'), 'sem webp: só a source jpg; largura do original');
   // Repetir é idempotente (sobrescreve as mesmas chaves).
@@ -1081,7 +1089,7 @@ function tokenAnalyticsDoDevVars() {
 test('R-11 analytics: com ANALYTICS_TOKEN o site traz o beacon do Cloudflare; o painel nunca', async (t) => {
   const token = tokenAnalyticsDoDevVars();
   if (!token) { t.skip('defina ANALYTICS_TOKEN=abc em .dev.vars'); return; }
-  for (const caminho of ['/', '/quiz', '/privacidade']) {
+  for (const caminho of ['/', '/lalaia', '/quiz', '/privacidade']) {
     const html = (await chamar(caminho)).dados;
     assert.ok(html.includes('https://static.cloudflareinsights.com/beacon.min.js'), `${caminho} com beacon`);
     assert.ok(html.includes(`data-cf-beacon='{"token": "${token}"}'`), `${caminho} com o token`);
@@ -1128,12 +1136,12 @@ test('R-14 manifest: JSON válido com standalone, escopo /painel/, cores e ícon
 
 // ---------- S-17 · Portão de qualidade (R-15): checagens estáticas ----------
 // Ordem fixa da home (DES-01); seção sem conteúdo não existe, então só os ids presentes são comparados.
-const ORDEM_HOME = ['class="hero"', 'id="servicos"', 'id="antes-depois"', 'id="depoimentos"', 'id="como-trabalhar"', 'id="sobre"', 'id="lalaia"', 'id="cupom"', 'id="como-encomendar"', 'id="cursos"', 'id="faq"', '<footer'];
+const ORDEM_HOME = ['class="hero"', 'id="servicos"', 'id="antes-depois"', 'id="depoimentos"', 'id="como-trabalhar"', 'id="sobre"', 'id="lalaia"', 'id="cursos"', 'id="faq"', '<footer'];
 
 test('R-15 estático: lang, descrição, alt em toda imagem, ordem da home e "Dúvidas" na navegação', async () => {
-  for (const caminho of ['/', '/quiz', '/privacidade']) {
+  for (const caminho of ['/', '/lalaia', '/quiz', '/privacidade']) {
     const html = (await chamar(caminho)).dados;
-    assert.ok(html.startsWith('<!doctype html>\n<html lang="pt-BR">'), `${caminho} lang`);
+    assert.match(html, /^<!doctype html>\n<html lang="pt-BR"[ >]/, `${caminho} lang`);
     assert.match(html, /<meta name="description" content="[^"]{20,}">/, `${caminho} description`);
     assert.match(html, /<title>[^<]{5,}<\/title>/, `${caminho} title`);
     for (const img of html.match(/<img [^>]*>/g) || []) assert.ok(/ alt="[^"]*"/.test(img), `${caminho} alt em: ${img.slice(0, 80)}`);
@@ -1142,7 +1150,7 @@ test('R-15 estático: lang, descrição, alt em toda imagem, ordem da home e "D�
   }
   const home = (await chamar('/')).dados;
   const posicoes = ORDEM_HOME.map(id => home.indexOf(id)).filter(p => p >= 0);
-  assert.ok(posicoes.length >= 9, `ids presentes: ${posicoes.length}`);
+  assert.ok(posicoes.length >= 8, `ids presentes: ${posicoes.length}`);
   assert.deepEqual(posicoes, [...posicoes].sort((a, b) => a - b), 'ordem da home conforme DES-01');
   const nav = home.slice(home.indexOf('<nav class="nav"'), home.indexOf('</nav>'));
   assert.ok(nav.includes('href="#faq">Dúvidas</a>'), 'navegação com "Dúvidas" → #faq');
@@ -1244,4 +1252,27 @@ test('review-r1 S-23: a home marca o body com a classe da barra fixa; as outras 
   assert.ok(!/body:has\(/.test(css), 'sem :has() para o espaço da barra');
   assert.match((await chamar('/')).dados, /<body class="com-barra">/);
   for (const caminho of ['/quiz', '/privacidade']) assert.ok(!(await chamar(caminho)).dados.includes('com-barra'), caminho);
+});
+
+// ---------- Ajustes da Kari · R-04 · Página própria da LALAIÁ ----------
+test('R-04 /lalaia responde 200, está no sitemap e some produto despublicado', async () => {
+  const { status, r, dados: html } = await chamar('/lalaia');
+  assert.equal(status, 200);
+  assert.match(r.headers.get('content-type'), /text\/html/);
+  assert.match(html, /<title>[^<]*LALAIÁ[^<]*<\/title>/);
+  assert.match(html, /<meta property="og:image" content="[^"]*\/og-lalaia\.jpg">/);
+  assert.equal((await fetch(BASE + '/og-lalaia.jpg')).status, 200, 'a imagem da prévia existe');
+  const main = html.slice(html.indexOf('<main'), html.indexOf('</main>'));
+  assert.ok(main.indexOf('<li class="produto">') > 0 && main.indexOf('<li class="produto">') < main.indexOf('id="como-encomendar"'), 'produtos primeiro');
+  assert.ok((await chamar('/sitemap.xml')).dados.includes('/lalaia</loc>'), 'sitemap com /lalaia');
+
+  // Tirar as fotos de um produto do site: some da /lalaia e da vitrine da home; desfazer volta.
+  const estado = (await chamar('/api/painel/estado')).dados;
+  const produto = estado.lalaia.produtos.find(p => p.fotos.length);
+  for (const f of produto.fotos) assert.equal((await chamar(`/api/painel/itens/${f.id}`, { metodo: 'DELETE' })).status, 200);
+  assert.equal(produtoNoHtml((await chamar('/lalaia')).dados, produto.titulo), null, 'some da /lalaia');
+  const vitrine = h => h.slice(h.indexOf('class="lalaia-vitrine"'), h.indexOf('</ul>', h.indexOf('class="lalaia-vitrine"')));
+  for (const f of produto.fotos) assert.ok(!vitrine((await chamar('/')).dados).includes(f.foto_url), 'some da vitrine da home');
+  for (const f of produto.fotos) assert.equal((await chamar(`/api/painel/itens/${f.id}/restaurar`, { metodo: 'POST' })).status, 200);
+  assert.ok(produtoNoHtml((await chamar('/lalaia')).dados, produto.titulo), 'desfazer volta');
 });

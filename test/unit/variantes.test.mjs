@@ -51,7 +51,7 @@ test('R-10 renderizarSite: hero com fetchpriority e sem lazy; foto inicial em <p
   const html = renderizarSite({ itens, whatsappNumero: '5548998459412' });
   const hero = html.match(/<img [^>]*kari-stylist-toia[^>]*>/)[0];
   assert.ok(hero.includes('fetchpriority="high"') && !hero.includes('loading="lazy"'), hero);
-  const consultoria = html.slice(html.indexOf('id="consultoria"'), html.indexOf('id="edicao"'));
+  const consultoria = html.slice(html.indexOf('id="consultoria"'), html.indexOf('id="styling"'));
   assert.match(consultoria, /<picture>\s*<source type="image\/webp" srcset="\/img\/kari-look-blazer-360\.webp 360w" sizes="[^"]+">\s*<img [^>]*srcset="\/img\/kari-look-blazer-360\.jpg 360w"/);
   assert.ok(consultoria.includes('width="360"') && consultoria.includes('height="640"') && consultoria.includes('loading="lazy"'));
   const lalaia = html.slice(html.indexOf('id="lalaia"'), html.indexOf('id="cursos"'));

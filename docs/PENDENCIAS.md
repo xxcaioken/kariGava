@@ -41,9 +41,12 @@ Atualizado em 23/10/2026.
 
 - [ ] Textos marcados com `"rascunho": true` em `conteudo.json`: resumo, "para quem" e "como funciona" de cada serviço, e o 3º passo de "Como trabalhar comigo". Foram redigidos a partir do Instagram dela.
 - [ ] Os passos de "Como funciona" de Cursos, oficinas e palestras (escritos por nós).
+- [ ] **Serviços unidos a pedido dela (23/10/2026):** a Edição de guarda-roupa virou parte da Consultoria de estilo e a Oficina de Look entrou em Cursos, oficinas e palestras. O resumo, o "para quem" e os passos desses dois serviços foram reescritos por nós juntando os textos antigos; o resultado "Armário cheio" do quiz agora leva à Consultoria. Ela confere se é assim que descreve o trabalho.
 - [ ] Os 3 passos de "Como encomendar" da LALAIÁ (`lalaia.como_encomendar`, escritos por nós): confirmar que o pagamento é por Pix e o envio pelos Correios. As condições (pagamento, frete, prazo, trocas) a Kari preenche no painel, em LALAIÁ → Como encomendar.
 - [ ] Nomes dos produtos da LALAIÁ: "BigScrunchie (a Xuxona)", "Acessórios de cabeça sob medida", "Vai de presente".
-- [ ] Nomes das cores da cartela: Roxo Autêntico, Vermelho Armário, Mostarda Oficina, Pink Produção, Verde Vitrine, Grafite Aula.
+- [ ] **Textos da página `/lalaia` escritos por nós** (em `conteudo.json`, marcados como rascunho): `lalaia.como_encomendar_intro` ("Tudo pelo WhatsApp, peça por peça.") e `lalaia.quem_faz` ("A LALAIÁ é a marca de acessórios da Kari, stylist e visual merchandiser em Florianópolis, SC."); a prévia do link (`og-lalaia.jpg`) usa o scrunchie e as pérolas. Ela confere.
+- [ ] **Subtítulo do topo** (`hero.subtitulo`, rascunho): "Consultoria de estilo, styling, vitrines e cursos com Kariene Gava, em Florianópolis." Reescrito por nós quando a edição de guarda-roupa virou parte da consultoria (23/10/2026).
+- [ ] **Cor da estação** (dona: Kari): o site usa uma cor só, hoje o vermelho `#C52118` (provisório, escolhido pelo Caio em 23/10/2026). Quando ela escolher a cor, o Caio troca em `conteudo.json` (`docs/OPERACAO.md`, procedimento 16). Os nomes de cor por serviço ("Vermelho Armário" etc.) saíram do site a pedido dela.
 - [ ] Mais fotos de produto da LALAIÁ. Hoje são só as 5 que estavam públicas no Instagram; com o painel ligado, ela mesma traz.
 - [ ] Depoimentos de clientes, se ela quiser. Não inventamos nenhum.
 - [ ] **Quiz "Qual é o seu momento de estilo?"** (`/quiz`; dona: Kari; até 30/11/2026). As 8 perguntas, as opções e os 4 resultados estão em `conteudo.json` (`quiz`, marcado como rascunho) e foram escritos por nós. Ela revisa o tom e o Caio troca o texto no arquivo.
@@ -57,6 +60,8 @@ Atualizado em 23/10/2026.
 - [ ] **Condições da LALAIÁ** (dona: Kari): pagamento, frete, prazo e trocas em LALAIÁ → Como encomendar; e o cupom de primeira encomenda, se quiser.
 
 ## Fora do código (ações da Kari e do Caio)
+
+- [ ] **Link da bio do @lalaia.acessorios** (dona: Kari; depois do domínio): trocar pelo endereço `https://<domínio>/lalaia`, a página que abre direto nas peças (pedido dela em 23/10/2026). Enquanto não há domínio, serve `https://site-kari.karigava.workers.dev/lalaia`.
 
 - [ ] **Google Business Profile** (dona: Kari; até 15/12/2026): criar o perfil "Kari Gava · Stylist e Visual Merchandiser" em Florianópolis com o WhatsApp e o Instagram, pedir as primeiras avaliações e colar o link "Peça avaliações" no painel (LALAIÁ → Como encomendar → link do Google). É o que mais pesa para aparecer em "stylist Florianópolis".
 - [ ] **Google Search Console** (dono: Caio; depois do domínio): verificar o domínio pelo DNS da Cloudflare, enviar `https://<domínio>/sitemap.xml` e definir `vars.SITE_URL` no `wrangler.jsonc` antes de enviar.
@@ -80,7 +85,15 @@ Achados confirmados no código e deixados para uma próxima rodada (o processo e
 - [ ] **Memória no celular ao gerar versões leves** (`public/painel/painel.js`, `gerarVariantes`). Quando o tempo de 20 s estoura ou a conversão falha, a imagem decodificada não é liberada. Também: a foto é decodificada duas vezes e a versão de 1600 px é enviada duas vezes no envio pelo celular.
 - [ ] **Sessão expirada no meio da otimização** (`public/painel/painel.js`, `rodarFila`). Depois do primeiro "sessão expirada", a fila continua com as próximas fotos e volta à tela de e-mail a cada uma. Correção sugerida: parar a fila no primeiro 401.
 - [ ] **Número do WhatsApp no Google** (`src/seo.js`). Se `WHATSAPP_NUMERO` estiver configurado errado, os botões usam o número de `conteudo.json`, mas os dados para o Google publicam o valor errado. Só acontece com configuração inválida.
+- [ ] **Foto proibida só fica fora do leque** (review da PR #3, 23/10/2026): `kari-chapeu-anturio` e `kari-oculos` são filtradas na abertura, mas se alguém as puser num serviço ou em "Sobre" elas aparecem no cartão. Hoje nenhuma está no banco. Correção sugerida: recusar essas fotos ao adicionar (painel) em vez de filtrar na hora de mostrar.
 - [ ] **Foto órfã ao importar do Instagram** (`src/itens.js`, `adicionarDoInstagram`; já existia antes desta entrega). Se gravar no banco falhar, a foto fica no armazenamento sem uso. Mesma correção já feita no envio pelo celular.
+
+## Correções técnicas abertas da PR #3 (ajustes da Kari; 3ª rodada de code review, 23/10/2026)
+
+- [ ] **"Ver no site" das fotos da LALAIÁ abre a home** (`public/painel/painel.js`, toasts de adicionar foto do Instagram e do celular). Quando a foto vai para a parte LALAIÁ, o link deveria abrir a `/lalaia` (como já fazem "Produto salvo" e "Condições salvas").
+- [ ] **Peça com uma foto só fica borrada no celular** (`src/lalaia.js`, `SIZES_PRODUTO`). A foto ocupa o cartão inteiro, mas o navegador é avisado de meia largura e baixa a versão menor. Correção: `sizes` de largura cheia quando a peça tem uma foto.
+- [ ] **Leque com número ímpar de lâminas** (`src/template.js`): a lâmina do meio fica em pé atrás da foto da Kari, com só a pontinha à mostra. Só acontece quando um serviço fica sem foto.
+- [ ] Limpezas: `data-grupo` nos cartões e `grupos` em `montarDados` (o filtro saiu); `quiz.js` com cópia própria do ícone do WhatsApp; `/lalaia` monta os dados da home inteira; o link `/lalaia` dos toasts ignora `estado.site_url` (hoje sempre `/`).
 
 ## Ideias adiadas de propósito (não entram sem nova decisão)
 

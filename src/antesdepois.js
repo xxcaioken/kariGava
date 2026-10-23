@@ -8,7 +8,7 @@ import { consentimentoDado } from './depoimentos.js';
 
 const MAX_LEGENDA = 120;
 const MAX_LADO = 10000;
-export const SERVICOS_PAR = ['vm', 'styling', 'edicao'];
+export const SERVICOS_PAR = ['vm', 'styling', 'consultoria'];
 const NOMES_SERVICO = new Map(conteudo.servicos.map(s => [s.id, s.titulo]));
 
 export function paraPar(l) {

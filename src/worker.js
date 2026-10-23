@@ -6,6 +6,8 @@ import { listarPares, criarPar, editarPar, removerPar, restaurarPar, moverPar } 
 import { listarFaq, criarFaq, salvarFaq, removerFaq, restaurarFaq, moverFaq } from './faq.js';
 import { contasLigadas, listarPosts, urlLigar, concluirLigacao, renovarTokens, CONTAS } from './instagram.js';
 import { renderizarSite } from './site.js';
+import { renderizarLalaia } from './lalaia.js';
+import { corDestaque, favicon } from './marca.js';
 import { renderizarQuiz } from './quiz.js';
 import { renderizarPrivacidade } from './privacidade.js';
 import { naoEncontrada } from './paginas.js';
@@ -13,9 +15,7 @@ import { baseDoSite, sitemap, robots } from './seo.js';
 import { comCabecalhos } from './seguranca.js';
 import { listarProdutos, agruparProdutos, salvarProduto, renomearProduto } from './produtos.js';
 import { lerCondicoes, salvarCondicoes, lerCupom } from './config.js';
-
-// Blocos novos da home nunca derrubam a página inteira: erro vira log + valor padrão, e a seção some (ENG-07).
-const tolerante = (promessa, padrao) => promessa.catch(e => { console.error(e?.stack || e); return padrao; });
+import { dadosDaPagina } from './dados.js';
 
 function exigirOrigem(request) {
   const origem = request.headers.get('origin');
@@ -85,7 +85,7 @@ async function api(request, env, url) {
       listarItens(env), lerTextos(env), contasLigadas(env), listarProdutos(env), lerCondicoes(env), lerCupom(env), listarDepoimentos(env), listarPares(env), listarFaq(env),
     ]);
     const lalaia = { produtos: agruparProdutos(itens.filter(i => i.secao === 'lalaia'), produtos), condicoes, cupom };
-    return json({ usuario: { email }, secoes: SECOES, itens, textos, lalaia, depoimentos, antes_depois, faq, instagram: { contas }, site_url: '/' });
+    return json({ usuario: { email }, cor_destaque: corDestaque(), secoes: SECOES, itens, textos, lalaia, depoimentos, antes_depois, faq, instagram: { contas }, site_url: '/' });
   }
 
   // ---------- Perguntas frequentes ----------
@@ -237,12 +237,12 @@ async function tratar(request, env, url) {
     const chave = chaveDaFoto(url.pathname.slice('/fotos/'.length));
     return chave ? foto(env, chave, request) : naoEncontrada404();
   }
-  if (url.pathname === '/' && (request.method === 'GET' || request.method === 'HEAD')) {
-    const [itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois, faq] = await Promise.all([
-      listarItens(env), lerTextos(env), tolerante(listarProdutos(env), []), tolerante(lerCondicoes(env), null), tolerante(lerCupom(env), null),
-      tolerante(listarDepoimentos(env), []), tolerante(listarPares(env), []), tolerante(listarFaq(env), []),
-    ]);
-    return new Response(renderizarSite({ itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois, faq, whatsappNumero: env.WHATSAPP_NUMERO, base: baseDoSite(env, request), analyticsToken: env.ANALYTICS_TOKEN }), {
+  // Home e /lalaia: dados do banco (cada página lê só o que mostra, src/dados.js), sem cache: o que a Kari muda no painel aparece na hora.
+  const PAGINAS_DO_BANCO = { '/': renderizarSite, '/lalaia': renderizarLalaia };
+  if (PAGINAS_DO_BANCO[url.pathname] && (request.method === 'GET' || request.method === 'HEAD')) {
+    const dados = await dadosDaPagina(env, url.pathname);
+    const renderizar = PAGINAS_DO_BANCO[url.pathname];
+    return new Response(renderizar({ ...dados, whatsappNumero: env.WHATSAPP_NUMERO, base: baseDoSite(env, request), analyticsToken: env.ANALYTICS_TOKEN }), {
       headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
     });
   }
@@ -255,6 +255,7 @@ async function tratar(request, env, url) {
   if (url.pathname === '/privacidade' && leitura) return pagina(renderizarPrivacidade({ emailContato: env.EMAIL_CONTATO, whatsappNumero: env.WHATSAPP_NUMERO, base, analyticsToken }));
   if (url.pathname === '/sitemap.xml' && leitura) return texto(sitemap(base), 'application/xml; charset=utf-8');
   if (url.pathname === '/robots.txt' && leitura) return texto(robots(base), 'text/plain; charset=utf-8');
+  if (url.pathname === '/favicon.svg' && leitura) return texto(favicon(), 'image/svg+xml');
   const asset = await env.ASSETS.fetch(request);
   // Endereço que não existe: página 404 do site (noindex) em vez do 404 vazio dos assets.
   if (asset.status === 404 && leitura) {

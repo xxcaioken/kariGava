@@ -323,7 +323,7 @@ function renderCartoes() {
       el('span', { class: 'qtd', text: plural(deps.length, 'depoimento', 'depoimentos') })),
     el('span', { class: 'cartao-preco', text: deps.length ? resumir(deps.map((d) => d.nome).join(', '), 60) : 'O que as clientes dizem de você. Toque para cadastrar o primeiro.' }),
     el('span', { class: 'ir', 'aria-hidden': 'true', text: 'Atualizar →' }));
-  aplicarCor(cartaoDep, '#E5196E');
+  aplicarCor(cartaoDep, estado.cor_destaque);
   caixa.append(cartaoDep);
   // Antes e depois (R-05): pares de fotos, com a própria tela.
   const ps = pares();
@@ -340,7 +340,7 @@ function renderCartoes() {
       el('span', { class: 'qtd', text: plural(ps.length, 'par', 'pares') })),
     miniPares,
     el('span', { class: 'ir', 'aria-hidden': 'true', text: 'Atualizar →' }));
-  aplicarCor(cartaoPar, '#017F38');
+  aplicarCor(cartaoPar, estado.cor_destaque);
   caixa.append(cartaoPar);
   // Perguntas frequentes (R-06).
   const fs = faqs();
@@ -647,7 +647,7 @@ function cartaoProduto(p, aberto) {
       await api(`/api/painel/lalaia/produtos/${enc(p.slug)}`, { metodo: 'PUT', json: { preco, disponibilidade: dispCampo.value || null, prazo_dias: prazo, descricao: descCampo.value.trim() } });
       erro.hidden = true;
       await sincronizar();
-      mostrarToast('Produto salvo', { verSite: true });
+      mostrarToast('Produto salvo', { verSite: '/lalaia' });
     } catch (e) {
       if (e.tipo !== 'sessao') mostrarErro(erro, mensagemDe(e));
     } finally {
@@ -684,7 +684,7 @@ async function renomearProduto(p) {
   try {
     await api(`/api/painel/lalaia/produtos/${enc(p.slug)}/renomear`, { metodo: 'POST', json: { nome: limpo } });
     await sincronizar();
-    mostrarToast(`Produto renomeado para "${limpo}"`, { verSite: true });
+    mostrarToast(`Produto renomeado para "${limpo}"`, { verSite: '/lalaia' });
   } catch (e) {
     if (e.tipo !== 'sessao') mostrarToast(mensagemDe(e));
   }
@@ -955,7 +955,7 @@ $('#form-condicoes').addEventListener('submit', async (ev) => {
     renderCartoes();
     esconder('#erro-condicoes');
     if (secaoAtual === 'lalaia') preencherCondicoes();
-    mostrarToast('Condições salvas', { verSite: true });
+    mostrarToast('Condições salvas', { verSite: '/lalaia' });
   } catch (e) {
     if (e.tipo !== 'sessao') mostrar('#erro-condicoes', mensagemDe(e));
   } finally {
@@ -1428,7 +1428,7 @@ function renderDepoimentos({ foco } = {}) {
         el('button', { class: 'mini', type: 'button', 'data-id': d.id, 'data-dir': 'baixo', disabled: idx === lista.length - 1, 'aria-label': `Mostrar depois: ${d.nome}`, text: '↓', onclick: (ev) => moverDepoimento(d, 'baixo', ev.currentTarget) })),
       el('button', { class: 'editar', type: 'button', text: 'Editar', 'aria-label': `Editar: ${d.nome}`, onclick: () => abrirDepoimento(d) }),
       el('button', { class: 'tirar', type: 'button', text: 'Tirar do site', 'aria-label': `Tirar do site: ${d.nome}`, onclick: () => tirarDepoimento(d) }));
-    aplicarCor(cartao, secao(d.servico)?.cor || '#E5196E');
+    aplicarCor(cartao, estado.cor_destaque);
     caixa.append(cartao);
   });
   if (foco) {
@@ -1593,7 +1593,7 @@ $('#form-depoimento').addEventListener('submit', async (ev) => {
 
 const pares = () => estado?.antes_depois || [];
 const LIMITE_LEGENDA = 120;
-const SERVICOS_PAR = ['vm', 'styling', 'edicao'];
+const SERVICOS_PAR = ['vm', 'styling', 'consultoria'];
 let parEditando = null;
 const parArquivos = { antes: null, depois: null };
 const parUrls = { antes: null, depois: null };
@@ -1628,7 +1628,7 @@ function renderPares({ foco } = {}) {
         el('button', { class: 'mini', type: 'button', 'data-id': p.id, 'data-dir': 'baixo', disabled: idx === lista.length - 1, 'aria-label': `Mostrar depois: ${nome}`, text: '↓', onclick: (ev) => moverPar(p, 'baixo', ev.currentTarget) })),
       el('button', { class: 'editar', type: 'button', text: 'Editar legenda', 'aria-label': `Editar legenda: ${nome}`, onclick: () => abrirPar(p) }),
       el('button', { class: 'tirar', type: 'button', text: 'Tirar do site', 'aria-label': `Tirar do site: ${nome}`, onclick: () => tirarPar(p) }));
-    aplicarCor(cartao, secao(p.servico)?.cor || '#017F38');
+    aplicarCor(cartao, estado.cor_destaque);
     caixa.append(cartao);
   });
   if (foco) {
@@ -1986,7 +1986,8 @@ function mostrarToast(texto, { desfazer, verSite, erro, acao } = {}) {
       },
     }));
   }
-  if (verSite) acoes.append(el('a', { href: estado?.site_url || '/', target: '_blank', rel: 'noopener', text: 'Ver no site' }));
+  // verSite: true abre a home; um caminho ('/lalaia') abre a página onde aquilo aparece.
+  if (verSite) acoes.append(el('a', { href: typeof verSite === 'string' ? verSite : (estado?.site_url || '/'), target: '_blank', rel: 'noopener', text: 'Ver no site' }));
   const toast = el('div', { class: `toast${erro ? ' toast-erro' : ''}` },
     el('p', { text: texto }),
     acoes.childNodes.length ? acoes : null);

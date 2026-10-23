@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { jsonLd, sitemap, robots, metaBase, baseDoSite, telefoneE164 } from '../../src/seo.js';
+import { jsonLd, jsonLdLalaia, sitemap, robots, metaBase, baseDoSite, telefoneE164 } from '../../src/seo.js';
 import { montarDados } from '../../src/site.js';
 
 const BASE = 'https://karigava.com.br';
@@ -23,7 +23,7 @@ test('R-09 metaBase: canonical e og:url absolutos, og:image 1200×630 absoluta, 
   assert.ok(html.includes('content="Desc &quot;x&quot;"'), 'descrição escapada');
 });
 
-test('R-09 jsonLd: ProfessionalService + Person + Product com offers quando há preço; escapa </script> e U+2028', () => {
+test('R-09 jsonLd: ProfessionalService + Person na home; Product com offers (quando há preço) na /lalaia; escapa </script> e U+2028', () => {
   const itens = [
     { id: 'a', secao: 'lalaia', ordem: 0, titulo: '</script><b>Xuxona</b>\u2028', foto_url: '/fotos/a.jpg' },
     { id: 'b', secao: 'lalaia', ordem: 1, titulo: 'Laço', foto_url: '/img/laco.jpg' },
@@ -43,7 +43,11 @@ test('R-09 jsonLd: ProfessionalService + Person + Product com offers quando há 
   assert.ok(!negocio.address.streetAddress, 'endereço oculto');
   assert.equal(negocio.url, `${BASE}/`);
   assert.ok(negocio.sameAs.length === 2 && negocio.priceRange.includes('380'));
-  const prods = dados['@graph'].filter(n => n['@type'] === 'Product');
+  assert.ok(!tipos.includes('Product'), 'home sem Product: os preços só aparecem na /lalaia (review-r2 S-14)');
+  const tagLoja = jsonLdLalaia(d, { base: BASE });
+  const corpoLoja = tagLoja.slice('<script type="application/ld+json">'.length, -'</script>'.length);
+  assert.ok(!corpoLoja.includes('</script') && !corpoLoja.includes('<') && !corpoLoja.includes('\u2028'), '/lalaia: nada que feche a tag ou quebre o JSON');
+  const prods = JSON.parse(corpoLoja)['@graph'].filter(n => n['@type'] === 'Product');
   assert.equal(prods.length, 2);
   const xux = prods.find(p => p.name.includes('Xuxona'));
   assert.equal(xux.name, '</script><b>Xuxona</b> ', 'nome preservado (o U+2028 volta no parse)');
@@ -56,7 +60,7 @@ test('R-09 jsonLd: ProfessionalService + Person + Product com offers quando há 
 
 test('R-09 sitemap e robots', () => {
   const xml = sitemap(BASE);
-  assert.deepEqual([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]), [`${BASE}/`, `${BASE}/quiz`, `${BASE}/privacidade`]);
+  assert.deepEqual([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]), [`${BASE}/`, `${BASE}/lalaia`, `${BASE}/quiz`, `${BASE}/privacidade`]);
   const txt = robots(BASE);
   assert.ok(txt.includes(`Sitemap: ${BASE}/sitemap.xml`) && txt.includes('Disallow: /painel/') && txt.includes('Disallow: /api/'));
 });
