@@ -1,6 +1,8 @@
 // Site público: variante D1 "Leque" (design/variantes/d1-leque.html), gerada a partir do banco.
 // O CSS está em public/site.css. Todo texto dinâmico passa por esc().
 
+import { metaBase, jsonLd } from './seo.js';
+
 const ICONE_WA = '<svg class="icone-wa" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.2-.1-1-.4-2-1.2-.7-.6-1.2-1.4-1.3-1.7-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.2-.9.9-.9 2.2s.9 2.5 1 2.7c.1.2 1.8 2.8 4.4 3.9 2.2.9 2.6.7 3.1.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>';
 const CORES_MARCA = ['roxo', 'vermelho', 'mostarda', 'pink', 'verde', 'grafite'];
 
@@ -146,16 +148,13 @@ export function template(d, esc) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(d.marca.assinatura)} · Styling &amp; VM</title>
 <meta name="description" content="${esc(d.hero.subtitulo)} Acessórios LALAIÁ feitos à mão.">
-<meta property="og:title" content="${esc(d.marca.assinatura)} · ${esc(d.marca.profissao)}">
-<meta property="og:description" content="${esc(d.hero.titulo)} ${esc(d.hero.subtitulo)}">
-<meta property="og:image" content="/${esc(d.hero.foto)}">
-<meta property="og:type" content="website">
-<meta property="og:locale" content="pt_BR">
+${metaBase({ base: d.base, caminho: '/', titulo: `${d.marca.assinatura} · ${d.marca.profissao}`, descricao: `${d.hero.titulo} ${d.hero.subtitulo}` })}
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preload" as="font" type="font/woff2" href="/fontes/familjen-grotesk-latin.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="/fontes/fragment-mono-latin.woff2" crossorigin>
 <link rel="stylesheet" href="/fontes.css">
 <link rel="stylesheet" href="/site.css">
+${jsonLd(d, { base: d.base, whatsappNumero: d.whatsapp.numero })}
 </head>
 <body>
 

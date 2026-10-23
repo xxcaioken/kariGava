@@ -927,3 +927,74 @@ test('R-13 privacidade: página com os 4 títulos, canal pelo WhatsApp sem EMAIL
   assert.equal(api404.dados.erro, 'nao_encontrado', 'a API continua respondendo JSON');
   assert.equal((await fetch(BASE + '/fotos/nao-existe.jpg')).status, 404);
 });
+
+// ---------- S-12 · Prévia do link, sitemap, robots e dados estruturados (R-09) ----------
+// Largura e altura do JPEG pelo marcador SOF (sem biblioteca).
+function dimensoesJpeg(bytes) {
+  let i = 2;
+  while (i < bytes.length) {
+    if (bytes[i] !== 0xff) { i++; continue; }
+    const marcador = bytes[i + 1];
+    if (marcador >= 0xc0 && marcador <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marcador)) {
+      return { altura: (bytes[i + 5] << 8) | bytes[i + 6], largura: (bytes[i + 7] << 8) | bytes[i + 8] };
+    }
+    i += 2 + ((bytes[i + 2] << 8) | bytes[i + 3]);
+  }
+  return null;
+}
+const meta = (html, prop) => html.match(new RegExp(`<meta (?:property|name)="${prop}" content="([^"]*)"`))?.[1];
+const jsonLdDe = html => JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+
+test('R-09 prévia do link e SEO: og absoluto, og.jpg 1200×630, canonical por página, sitemap, robots e JSON-LD', async () => {
+  let home = (await chamar('/')).dados;
+  assert.equal(meta(home, 'og:image'), `${BASE}/og.jpg`);
+  assert.equal(meta(home, 'og:image:width'), '1200');
+  assert.equal(meta(home, 'og:image:height'), '630');
+  assert.equal(meta(home, 'og:url'), `${BASE}/`);
+  assert.equal(meta(home, 'twitter:card'), 'summary_large_image');
+  assert.ok(home.includes(`<link rel="canonical" href="${BASE}/">`), 'canonical absoluto');
+
+  for (const caminho of ['/quiz', '/privacidade']) {
+    const html = (await chamar(caminho)).dados;
+    assert.ok(html.includes(`<link rel="canonical" href="${BASE}${caminho}">`), `${caminho} canonical`);
+    assert.equal(meta(html, 'og:url'), `${BASE}${caminho}`);
+    assert.equal(meta(html, 'og:image'), `${BASE}/og.jpg`);
+    assert.ok(meta(html, 'og:title') && meta(html, 'og:title') !== meta(home, 'og:title'), `${caminho} og:title próprio`);
+    assert.ok(meta(html, 'og:description') && meta(html, 'og:description') !== meta(home, 'og:description'), `${caminho} og:description próprio`);
+  }
+
+  const og = await fetch(BASE + '/og.jpg');
+  assert.equal(og.status, 200);
+  assert.match(og.headers.get('content-type'), /image\/jpeg/);
+  const bytes = new Uint8Array(await og.arrayBuffer());
+  assert.ok(bytes.length < 600 * 1024, `og.jpg com ${bytes.length} bytes`);
+  assert.deepEqual(dimensoesJpeg(bytes), { largura: 1200, altura: 630 });
+
+  const sm = await chamar('/sitemap.xml');
+  assert.equal(sm.status, 200);
+  assert.match(sm.r.headers.get('content-type'), /xml/);
+  assert.deepEqual([...sm.dados.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]), [`${BASE}/`, `${BASE}/quiz`, `${BASE}/privacidade`]);
+  const rb = await chamar('/robots.txt');
+  assert.equal(rb.status, 200);
+  assert.ok(rb.dados.includes(`Sitemap: ${BASE}/sitemap.xml`));
+
+  let ld = jsonLdDe(home);
+  const tipos = ld['@graph'].map(n => n['@type']);
+  assert.ok(tipos.includes('ProfessionalService') && tipos.includes('Person') && tipos.includes('Product'));
+  const negocio = ld['@graph'].find(n => n['@type'] === 'ProfessionalService');
+  assert.equal(negocio.telephone, `+${numeroWhatsAppDaConfig()}`);
+  assert.equal(negocio.image, `${BASE}/og.jpg`);
+  const comPreco = ld['@graph'].find(n => n['@type'] === 'Product' && n.offers);
+  assert.ok(comPreco && comPreco.offers.priceCurrency === 'BRL' && comPreco.image[0].startsWith(BASE), 'produto com preço tem offers e imagem absoluta');
+
+  // Título hostil num produto: a página continua inteira e o JSON-LD parseável (ENG-08).
+  const foto = (await chamar('/api/painel/estado')).dados.itens.find(i => i.secao === 'lalaia');
+  const nomeAntes = foto.titulo;
+  assert.equal((await chamar(`/api/painel/itens/${foto.id}`, { metodo: 'PATCH', corpo: { titulo: '</script><b>oi</b>' } })).status, 200);
+  home = (await chamar('/')).dados;
+  assert.ok(home.trimEnd().endsWith('</html>'), 'página inteira');
+  ld = jsonLdDe(home);
+  assert.ok(ld['@graph'].some(n => n['@type'] === 'Product' && n.name === '</script><b>oi</b>'), 'nome preservado no JSON-LD');
+  assert.ok(!home.includes('<b>oi</b>'), 'HTML escapado');
+  assert.equal((await chamar(`/api/painel/itens/${foto.id}`, { metodo: 'PATCH', corpo: { titulo: nomeAntes } })).status, 200);
+});

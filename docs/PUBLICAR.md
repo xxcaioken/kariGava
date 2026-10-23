@@ -28,6 +28,8 @@ No `wrangler.jsonc`, preencha:
 - `vars.REMETENTE`: um endereço do domínio, ex.: `"painel@karigava.com.br"`;
 - `vars.WHATSAPP_NUMERO`: o número da Kari só com dígitos, com DDI e DDD (`"5548998459412"`); cada botão do site abre a conversa já com a mensagem do serviço ou produto;
 - `vars.EMAIL_CONTATO`: o e-mail que a página `/privacidade` indica para pedidos sobre dados (ex.: `"kari@karigava.com.br"`); enquanto vazio, a página aponta o WhatsApp;
+- `vars.SITE_URL`: o endereço final do site (`"https://karigava.com.br"`), usado em canonical, `og:url`, sitemap e dados estruturados, para o Google não ver o `workers.dev` e o domínio como dois sites; enquanto vazio, vale o endereço do próprio request;
+- a prévia do link (`public/og.jpg`) já está pronta; para regenerar depois de trocar a foto do hero: `bash scripts/gerar-og.sh` (precisa do ImageMagick: `sudo apt install imagemagick`);
 - a rota do domínio, adicionando no topo do arquivo:
 
 ```jsonc

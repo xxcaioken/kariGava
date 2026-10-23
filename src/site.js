@@ -49,7 +49,7 @@ export function textoDoPreco(preco, grupo) {
 }
 
 // Junta o conteúdo fixo (conteudo.json) com o que a Kari muda no painel (fotos e textos).
-export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos = [], condicoes, cupom, depoimentos = [], antesDepois = [], faq = [], whatsappNumero } = {}) {
+export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos = [], condicoes, cupom, depoimentos = [], antesDepois = [], faq = [], whatsappNumero, base = '' } = {}) {
   const porSecao = new Map();
   for (const it of itens) porSecao.set(it.secao, [...(porSecao.get(it.secao) || []), it]);
   const grupos = new Map(conteudo.grupos_servicos.map(g => [g.id, g.titulo]));
@@ -92,8 +92,9 @@ export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos 
   const listaCondicoes = Object.entries(ROTULOS_CONDICOES).filter(([campo]) => cond[campo]).map(([campo, rotulo]) => ({ rotulo, texto: cond[campo] }));
 
   return {
+    base: String(base || '').replace(/\/+$/, ''),
     marca: { ...conteudo.marca, gbp_url: cond.gbp_url },
-    whatsapp: { geral: wa(MENSAGENS_WA.geral) },
+    whatsapp: { geral: wa(MENSAGENS_WA.geral), numero: whatsappNumero },
     hero: conteudo.hero,
     servicos,
     grupos: conteudo.grupos_servicos,

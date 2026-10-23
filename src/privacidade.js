@@ -6,7 +6,7 @@ import { casca } from './paginas.js';
 
 export const VERSAO_PRIVACIDADE = '22/10/2026';
 
-export function renderizarPrivacidade({ emailContato = '', whatsappNumero } = {}) {
+export function renderizarPrivacidade({ emailContato = '', whatsappNumero, base = '' } = {}) {
   const email = String(emailContato || '').trim();
   const wa = esc(linkWa(whatsappNumero, 'Oi Kari, vi a página de privacidade do site e quero falar sobre os meus dados'));
   const canal = email
@@ -40,5 +40,5 @@ export function renderizarPrivacidade({ emailContato = '', whatsappNumero } = {}
     <p>A Lei Geral de Proteção de Dados (LGPD, art. 18) garante que você pode pedir para saber quais dados seus existem aqui, corrigi-los, apagá-los ou retirar uma autorização que deu. Se você aparece num depoimento ou numa foto e quer que ela saia do site, é só pedir ${canal}: a retirada é feita pelo painel, na hora.</p>
 
     <p class="leitura-versao">Versão desta página: ${VERSAO_PRIVACIDADE}.</p>`;
-  return casca({ titulo: 'Privacidade', descricao: 'O que este site coleta (quase nada), o que o painel guarda e os seus direitos pela LGPD.', corpo, whatsappNumero });
+  return casca({ titulo: 'Privacidade', descricao: 'O que este site coleta (quase nada), o que o painel guarda e os seus direitos pela LGPD.', corpo, whatsappNumero, base, caminho: '/privacidade' });
 }

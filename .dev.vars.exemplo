@@ -6,5 +6,7 @@ MODO_INSTAGRAM=falso
 # WHATSAPP_NUMERO=5548998459412
 # E-mail de contato da página /privacidade (vars.EMAIL_CONTATO no wrangler.jsonc); vazio, a página cita o WhatsApp.
 # EMAIL_CONTATO=kari@exemplo.com
+# Endereço final do site para canonical/og:url/sitemap (vars.SITE_URL); vazio, usa o endereço do request.
+# SITE_URL=https://karigava.com.br
 # Para depurar bloqueios da CSP, descomente: o navegador só avisa no console em vez de bloquear.
 # CSP_MODO=relatorio

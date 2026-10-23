@@ -1,10 +1,11 @@
 // Casca das páginas de leitura (privacidade, 404): mesma marca e rodapé do site, uma coluna de 65–75ch.
 import conteudo from '../conteudo.json' with { type: 'json' };
 import { esc, linkWa, MENSAGENS_WA } from './site.js';
+import { metaBase } from './seo.js';
 
 const CORES_MARCA = ['roxo', 'vermelho', 'mostarda', 'pink', 'verde', 'grafite'];
 
-export function casca({ titulo, descricao, corpo, noindex = false, whatsappNumero }) {
+export function casca({ titulo, descricao, corpo, noindex = false, whatsappNumero, base = '', caminho = '/' }) {
   const waGeral = esc(linkWa(whatsappNumero, MENSAGENS_WA.geral));
   const listras = CORES_MARCA.map(c => `<i style="background:var(--${c})"></i>`).join('');
   return `<!doctype html>
@@ -13,7 +14,7 @@ export function casca({ titulo, descricao, corpo, noindex = false, whatsappNumer
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(titulo)} · ${esc(conteudo.marca.assinatura)}</title>
-<meta name="description" content="${esc(descricao)}">${noindex ? '\n<meta name="robots" content="noindex">' : ''}
+<meta name="description" content="${esc(descricao)}">${noindex ? '\n<meta name="robots" content="noindex">' : `\n${metaBase({ base, caminho, titulo: `${titulo} · ${conteudo.marca.assinatura}`, descricao })}`}
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preload" as="font" type="font/woff2" href="/fontes/familjen-grotesk-latin.woff2" crossorigin>
 <link rel="stylesheet" href="/fontes.css">
@@ -45,13 +46,14 @@ ${corpo}
 }
 
 // Qualquer rota que não existe (fora da API e das fotos): status 404, mesma casca, sem indexar.
-export function naoEncontrada({ whatsappNumero } = {}) {
+export function naoEncontrada({ whatsappNumero, base = '' } = {}) {
   const wa = esc(linkWa(whatsappNumero, MENSAGENS_WA.geral));
   return casca({
     titulo: 'Essa página não existe',
     descricao: 'Endereço não encontrado no site da Kari Gava.',
     noindex: true,
     whatsappNumero,
+    base,
     corpo: `    <p class="rotulo">Erro 404</p>
     <h1>Essa página não existe</h1>
     <p>O endereço pode ter mudado ou ter sido digitado errado. O site inteiro cabe numa página só: é mais fácil começar por ela.</p>
