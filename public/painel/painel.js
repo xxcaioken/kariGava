@@ -1313,31 +1313,43 @@ function avisarVariantesFaltando(item, v) {
 
 // Fotos vindas do Instagram chegam só no tamanho original: o painel baixa cada uma (mesma origem), gera as versões
 // e manda em segundo plano, uma por vez, com progresso. Falha numa foto não para as outras nem vira erro.
-let otimizando = false; // uma rodada por vez: abrir e fechar partes rápido não dispara envios duplicados
-async function otimizarFotos(itens) {
-  const lista = itens.filter((i) => !i.variantes);
-  if (!lista.length || otimizando) return;
-  otimizando = true;
-  try { await otimizarLista(lista); } finally { otimizando = false; }
+// Fila única (review-r2 S-24): o que chega durante uma rodada entra na fila em vez de ser descartado, e cada foto
+// é tentada uma vez por sessão do painel, para uma foto que sempre falha não ser baixada de novo a cada abertura.
+const filaOtimizar = new Map(); // id → item, na ordem de chegada
+const jaTentadas = new Set();
+let otimizando = false;
+
+function otimizarFotos(itens) {
+  for (const i of itens) if (!i.variantes && !jaTentadas.has(i.id)) filaOtimizar.set(i.id, i);
+  if (otimizando || !filaOtimizar.size) return;
+  rodarFila().catch((e) => { if (e?.tipo !== 'sessao') console.warn('otimização das fotos parou', e); });
 }
 
-async function otimizarLista(lista) {
+async function rodarFila() {
+  otimizando = true;
   const status = $('#otimizando');
   let n = 0;
-  for (const item of lista) {
-    n += 1;
-    status.textContent = `Otimizando fotos… ${n} de ${lista.length}`;
-    status.hidden = false;
-    try {
-      const resposta = await fetch(item.foto_url, { credentials: 'same-origin' });
-      if (!resposta.ok) throw new Error(`foto ${resposta.status}`);
-      const v = await gerarVariantes(await resposta.blob());
-      await enviarVariantes(item, v);
-    } catch (e) {
-      console.warn('não deu para otimizar a foto', item.id, e);
+  try {
+    while (filaOtimizar.size) {
+      const [id, item] = filaOtimizar.entries().next().value;
+      filaOtimizar.delete(id);
+      jaTentadas.add(id);
+      n += 1;
+      status.textContent = `Otimizando fotos… ${n} de ${n + filaOtimizar.size}`;
+      status.hidden = false;
+      try {
+        const resposta = await fetch(item.foto_url, { credentials: 'same-origin' });
+        if (!resposta.ok) throw new Error(`foto ${resposta.status}`);
+        const v = await gerarVariantes(await resposta.blob());
+        await enviarVariantes(item, v);
+      } catch (e) {
+        console.warn('não deu para otimizar a foto', item.id, e);
+      }
     }
+  } finally {
+    otimizando = false;
+    status.hidden = true;
   }
-  status.hidden = true;
   await sincronizar();
 }
 

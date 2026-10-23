@@ -1183,9 +1183,35 @@ test('review-r1 S-19: foto de depoimento ou par tirado do site some de /fotos e 
   assert.equal((await chamar(`/api/painel/antes-depois/${par.id}`, { metodo: 'DELETE' })).status, 200);
   assert.equal((await fetch(BASE + par.antes_url)).status, 404, 'par tirado: foto de antes some');
   assert.equal((await fetch(BASE + par.depois_url)).status, 404, 'par tirado: foto de depois some');
-  // Fotos de produtos e serviços (itens) seguem com cache longo.
-  const item = (await chamar('/api/painel/estado')).dados.itens.find(i => i.foto_url.startsWith('/fotos/'));
-  if (item) assert.match((await fetch(BASE + item.foto_url)).headers.get('cache-control'), /immutable/);
+  // Fotos de produtos e serviços (itens) seguem com cache longo: o teste cria a própria foto (review-r2 #9).
+  const f = new FormData();
+  f.set('secao', 'styling');
+  f.set('titulo', 'QA - teste cache de item');
+  f.set('foto', fixture('paisagem-1600.jpg', 'image/jpeg'), 'foto.jpg');
+  const item = (await chamar('/api/painel/itens', { metodo: 'POST', form: f })).dados.itens[0];
+  assert.match((await fetch(BASE + item.foto_url)).headers.get('cache-control'), /immutable/);
+  await chamar(`/api/painel/itens/${item.id}`, { metodo: 'DELETE' });
+});
+
+// S-25 (review-r2): foto de cliente revalida com 304, e o 404 de foto tirada do site nunca fica em cache.
+test('review-r2 S-25: foto de cliente responde 304 ao If-None-Match e o 404 sai com no-store', async () => {
+  const jpg = fixture('retrato-1200.jpg', 'image/jpeg');
+  const d = (await chamar('/api/painel/depoimentos', { metodo: 'POST', form: formDepoimento({ nome: 'QA - teste etag', texto: 'Revalida.', consentimento: 'true', largura: 1200, altura: 1600 }, jpg) })).dados.depoimento;
+  const primeira = await fetch(BASE + d.foto_url);
+  assert.equal(primeira.status, 200);
+  const etag = primeira.headers.get('etag');
+  assert.ok(etag, 'etag presente');
+  const revalida = await fetch(BASE + d.foto_url, { headers: { 'if-none-match': etag } });
+  assert.equal(revalida.status, 304, 'mesma foto → 304 sem corpo');
+  assert.equal((await revalida.arrayBuffer()).byteLength, 0);
+  assert.equal((await chamar(`/api/painel/depoimentos/${d.id}`, { metodo: 'DELETE' })).status, 200);
+  const sumiu = await fetch(BASE + d.foto_url);
+  assert.equal(sumiu.status, 404);
+  assert.equal(sumiu.headers.get('cache-control'), 'no-store', '404 de foto tirada do site não pode ficar em cache');
+  assert.equal((await fetch(BASE + d.foto_url, { headers: { 'if-none-match': etag } })).status, 404, 'tirada do site: nem o 304 sai');
+  assert.equal((await chamar(`/api/painel/depoimentos/${d.id}/restaurar`, { metodo: 'POST' })).status, 200);
+  assert.equal((await fetch(BASE + d.foto_url)).status, 200, 'desfazer devolve');
+  await chamar(`/api/painel/depoimentos/${d.id}`, { metodo: 'DELETE' });
 });
 
 // S-21: entrada malformada responde 4xx com mensagem, nunca 500.

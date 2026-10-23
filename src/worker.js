@@ -198,30 +198,32 @@ async function api(request, env, url) {
   throw new ErroApi(404, 'nao_encontrado');
 }
 
-const naoEncontrada404 = () => new Response('Foto não encontrada', { status: 404 });
+// no-store: um 404 guardado em cache impediria o "desfazer" de trazer a foto de volta (review-r2 S-25).
+const naoEncontrada404 = () => new Response('Foto não encontrada', { status: 404, headers: { 'cache-control': 'no-store' } });
 
 // Fotos de clientes (depoimentos `dep/` e antes e depois `ad/`) só saem enquanto o registro está no site:
 // tirar do site tira a foto na hora, como /privacidade promete (review-r1 S-19). Por isso não têm cache imutável.
+// Pares e depoimentos não têm versões leves: a chave pedida é a própria chave gravada.
 async function fotoDeClienteNoSite(env, chave) {
-  if (chave.startsWith('dep/')) {
-    return Boolean(await env.DB.prepare('SELECT 1 FROM depoimentos WHERE foto_chave = ? AND removido_em IS NULL').bind(chave).first());
-  }
-  const base = chave.replace(/-\d+\.(jpg|webp)$/, '.$1');
-  return Boolean(await env.DB.prepare('SELECT 1 FROM antes_depois WHERE (antes_chave IN (?1, ?2) OR depois_chave IN (?1, ?2)) AND removido_em IS NULL').bind(chave, base).first());
+  const sql = chave.startsWith('dep/')
+    ? 'SELECT 1 FROM depoimentos WHERE foto_chave = ?1 AND removido_em IS NULL'
+    : 'SELECT 1 FROM antes_depois WHERE (antes_chave = ?1 OR depois_chave = ?1) AND removido_em IS NULL';
+  return Boolean(await env.DB.prepare(sql).bind(chave).first());
 }
 
-async function foto(env, chave) {
+async function foto(env, chave, request) {
   const deCliente = chave.startsWith('dep/') || chave.startsWith('ad/');
-  if (deCliente && !(await fotoDeClienteNoSite(env, chave))) return naoEncontrada404();
-  const obj = await env.FOTOS.get(chave);
-  if (!obj) return naoEncontrada404();
-  return new Response(obj.body, {
-    headers: {
-      'content-type': obj.httpMetadata?.contentType || 'image/jpeg',
-      'cache-control': deCliente ? 'public, no-cache' : 'public, max-age=31536000, immutable',
-      etag: obj.httpEtag,
-    },
-  });
+  // Banco e R2 em paralelo: a checagem não soma latência à foto (review-r2 S-25).
+  const [noSite, obj] = await Promise.all([deCliente ? fotoDeClienteNoSite(env, chave) : true, env.FOTOS.get(chave)]);
+  if (!noSite || !obj) return naoEncontrada404();
+  const cabecalhos = {
+    'content-type': obj.httpMetadata?.contentType || 'image/jpeg',
+    'cache-control': deCliente ? 'public, no-cache' : 'public, max-age=31536000, immutable',
+    etag: obj.httpEtag,
+  };
+  // Revalidação de foto de cliente (no-cache): mesma foto → 304 sem corpo, em vez de baixar tudo de novo.
+  if (request.headers.get('if-none-match') === obj.httpEtag) return new Response(null, { status: 304, headers: cabecalhos });
+  return new Response(obj.body, { headers: cabecalhos });
 }
 
 function chaveDaFoto(caminho) {
@@ -233,7 +235,7 @@ async function tratar(request, env, url) {
   if (url.pathname.startsWith('/api/')) return api(request, env, url);
   if (url.pathname.startsWith('/fotos/') && request.method === 'GET') {
     const chave = chaveDaFoto(url.pathname.slice('/fotos/'.length));
-    return chave ? foto(env, chave) : naoEncontrada404();
+    return chave ? foto(env, chave, request) : naoEncontrada404();
   }
   if (url.pathname === '/' && (request.method === 'GET' || request.method === 'HEAD')) {
     const [itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois, faq] = await Promise.all([
