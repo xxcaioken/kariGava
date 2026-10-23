@@ -1148,3 +1148,18 @@ test('R-15 estático: lang, descrição, alt em toda imagem, ordem da home e "D�
   assert.ok(nav.includes('href="#faq">Dúvidas</a>'), 'navegação com "Dúvidas" → #faq');
   assert.ok(home.includes('href="/quiz"') && home.includes('href="/privacidade"'), 'rodapé com quiz e privacidade');
 });
+
+// ---------- S-18 (origem: pre-qa, BUG 1 do C16) · width/height no HTML não podem vencer o aspect-ratio do CSS ----------
+test('R-10/R-05 pre-qa: toda <img> com width/height tem height:auto no CSS, para o aspect-ratio valer', async () => {
+  const css = (await chamar('/site.css')).dados;
+  const regraImg = css.match(/(^|\n)img\s*\{([^}]*)\}/);
+  assert.ok(regraImg, 'regra global img {}');
+  assert.match(regraImg[2], /height:\s*auto/, 'img { height: auto } (senão o atributo height vira altura fixa e o aspect-ratio é ignorado)');
+  // Toda foto com atributos de tamanho fica numa caixa com aspect-ratio no CSS: a altura tem de vir da proporção, não do atributo.
+  const home = (await chamar('/')).dados;
+  const comAtributos = (home.match(/<img [^>]*width="\d+" height="\d+"[^>]*>/g) || []).length;
+  assert.ok(comAtributos >= 5, `há fotos com width/height na home (${comAtributos})`);
+  for (const seletor of ['.par-foto img', '.servico-foto img', '.produto-fotos img', '.sobre-foto img']) {
+    assert.ok(new RegExp(seletor.replace(/[.]/g, '\\.') + '\\s*\\{[^}]*aspect-ratio').test(css), `${seletor} com aspect-ratio`);
+  }
+});

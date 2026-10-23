@@ -21,7 +21,7 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--papel); color: var(--tinta); font: 17px/1.55 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-img { display: block; max-width: 100%; }
+img { display: block; max-width: 100%; height: auto; } /* height:auto: os atributos width/height só reservam espaço; a altura vem do aspect-ratio (pré-QA C16) */
 a { color: inherit; }
 h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -.025em; }
 p { margin: 0; }
