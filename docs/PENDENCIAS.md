@@ -69,6 +69,19 @@ Atualizado em 23/10/2026.
 - [ ] **"Sair" do painel não invalida a sessão no servidor** (médio). O cookie `kari_sessao` é assinado e vale 60 dias; "Sair" só o apaga no navegador, então um cookie copiado antes (celular perdido, computador de terceiros) continua valendo até o segredo ser trocado (`docs/OPERACAO.md`, procedimento 6). Correção sugerida: guardar por e-mail um carimbo "sessões válidas a partir de" que o "Sair" atualiza e a checagem de sessão respeita; ou reduzir a sessão para 7 dias. É mudança de comportamento (hoje a API promete 60 dias): entra numa próxima rodada com spec.
 - Sem outros achados sustentados no escopo lido (login, sessão, OAuth do Instagram, upload de fotos, escape de HTML/JSON-LD, cabeçalhos). Não rodados por falta de orçamento/perfis: varredura do histórico git, lockfile e scanners (Gitleaks, OSV, Semgrep, Trivy).
 
+## Correções técnicas abertas (3ª rodada de code review, 23/10/2026, decisão do Caio)
+
+Achados confirmados no código e deixados para uma próxima rodada (o processo encerra a revisão na 3ª rodada):
+
+- [ ] **Produto da LALAIÁ sem nome fica preso** (`src/produtos.js`). Uma foto que vira produto sem nome ganha o endereço interno `sem-nome-<id>`, que a rota do painel não aceita: salvar ou renomear esse produto dá "não encontrado". No site, o cartão sai sem título e o WhatsApp vai com "quero encomendar " em branco. Correção sugerida: gerar o endereço só com letras minúsculas, números e hífen e esconder do site produto sem nome.
+- [ ] **A página de privacidade promete apagar o que sai do site** (`src/privacidade.js`), mas nada apaga: foto, depoimento ou produto tirado do site fica guardado. Ajustar o texto ("fica guardado e pode ser restaurado; para apagar de vez, peça à Kari") ou criar a limpeza automática.
+- [ ] **Toque duplo no quiz pode pular uma pergunta** (`public/quiz.js`, `trocar`). A troca de tela roda duas vezes (fim da transição e o tempo de segurança). Correção sugerida: uma trava que deixa só a primeira chamada passar.
+- [ ] **Foto do celular pode duplicar** (`src/itens.js`, `adicionarDoCelular`). Se gravar as versões leves falhar depois da foto já estar no site, o painel recebe erro e, ao repetir, a foto entra de novo. Correção sugerida: tratar a falha das versões como aviso, sem erro, já que a foto original está salva.
+- [ ] **Memória no celular ao gerar versões leves** (`public/painel/painel.js`, `gerarVariantes`). Quando o tempo de 20 s estoura ou a conversão falha, a imagem decodificada não é liberada. Também: a foto é decodificada duas vezes e a versão de 1600 px é enviada duas vezes no envio pelo celular.
+- [ ] **Sessão expirada no meio da otimização** (`public/painel/painel.js`, `rodarFila`). Depois do primeiro "sessão expirada", a fila continua com as próximas fotos e volta à tela de e-mail a cada uma. Correção sugerida: parar a fila no primeiro 401.
+- [ ] **Número do WhatsApp no Google** (`src/seo.js`). Se `WHATSAPP_NUMERO` estiver configurado errado, os botões usam o número de `conteudo.json`, mas os dados para o Google publicam o valor errado. Só acontece com configuração inválida.
+- [ ] **Foto órfã ao importar do Instagram** (`src/itens.js`, `adicionarDoInstagram`; já existia antes desta entrega). Se gravar no banco falhar, a foto fica no armazenamento sem uso. Mesma correção já feita no envio pelo celular.
+
 ## Ideias adiadas de propósito (não entram sem nova decisão)
 
 Levantadas na revisão de produto e design e deixadas de fora desta entrega, cada uma com o motivo:
