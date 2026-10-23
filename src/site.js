@@ -3,6 +3,13 @@ import { template } from './template.js';
 import { agruparProdutos, textoPreco, textoDisponibilidade } from './produtos.js';
 import { CONDICOES_VAZIAS, ROTULOS_CONDICOES, cupomVigente } from './config.js';
 import { agruparFaq } from './faq.js';
+import { variantesDaFotoInicial } from './variantes.js';
+
+// Fotos iniciais (public/img) ganham as variantes de variantes.json; as do R2 já trazem as suas do banco.
+function comVariantes(foto) {
+  const v = variantesDaFotoInicial(foto.foto_url);
+  return v ? { ...foto, variantes: { larguras: v.larguras, webp: v.webp }, largura: v.largura, altura: v.altura } : foto;
+}
 
 // Nome de cor estilo cartela Pantone para cada serviço.
 // `var` é o nome da cor em public/site.css; `curto` vai no leque, `legenda` nos botões do celular.
@@ -51,7 +58,7 @@ export function textoDoPreco(preco, grupo) {
 // Junta o conteúdo fixo (conteudo.json) com o que a Kari muda no painel (fotos e textos).
 export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos = [], condicoes, cupom, depoimentos = [], antesDepois = [], faq = [], whatsappNumero, base = '' } = {}) {
   const porSecao = new Map();
-  for (const it of itens) porSecao.set(it.secao, [...(porSecao.get(it.secao) || []), it]);
+  for (const it of itens.map(comVariantes)) porSecao.set(it.secao, [...(porSecao.get(it.secao) || []), it]);
   const grupos = new Map(conteudo.grupos_servicos.map(g => [g.id, g.titulo]));
   const wa = mensagem => linkWa(whatsappNumero, mensagem);
   // Cupom (R-08): só vigente vai para o site; ligado, os botões da LALAIÁ já chegam com o código na mensagem.
@@ -95,7 +102,7 @@ export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos 
     base: String(base || '').replace(/\/+$/, ''),
     marca: { ...conteudo.marca, gbp_url: cond.gbp_url },
     whatsapp: { geral: wa(MENSAGENS_WA.geral), numero: whatsappNumero },
-    hero: conteudo.hero,
+    hero: { ...conteudo.hero, foto_item: comVariantes({ foto_url: `/${conteudo.hero.foto}`, titulo: conteudo.marca.nome }) },
     servicos,
     grupos: conteudo.grupos_servicos,
     como_trabalhar: conteudo.como_trabalhar,

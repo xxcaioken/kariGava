@@ -1,6 +1,7 @@
 import conteudo from '../conteudo.json' with { type: 'json' };
 import { ErroApi, agora, novoId } from './util.js';
 import { buscarPost, baixarImagem } from './instagram.js';
+import { nomeDaVariante, chaveDaVariante } from './variantes.js';
 
 const CORES = { lalaia: '#FEBC5C', sobre: '#141218' };
 const COR_SERVICO = { consultoria: '#8D51FF', edicao: '#C52118', 'oficina-look': '#FEBC5C', styling: '#E5196E', vm: '#017F38', ensino: '#2A2730' };
@@ -25,10 +26,20 @@ export function urlFoto(chave) {
   return chave.startsWith('img/') ? `/${chave}` : `/fotos/${chave}`;
 }
 
+function lerVariantes(texto) {
+  if (!texto) return null;
+  try {
+    const v = typeof texto === 'string' ? JSON.parse(texto) : texto;
+    const larguras = Array.isArray(v?.larguras) ? v.larguras.filter(Number.isInteger) : [];
+    return larguras.length ? { larguras, webp: v.webp === true } : null;
+  } catch { return null; }
+}
+
 export function paraItem(l) {
   return {
     id: l.id, secao: l.secao, ordem: l.ordem, titulo: l.titulo,
     foto_url: urlFoto(l.foto_chave), origem: l.origem, ig_conta: l.ig_conta, ig_id: l.ig_id,
+    variantes: lerVariantes(l.variantes), largura: l.largura ?? null, altura: l.altura ?? null,
   };
 }
 
@@ -118,15 +129,86 @@ export async function lerFotoDoForm(form, campo = 'foto', { obrigatoria = true }
   return { bytes, tipo };
 }
 
+// ---------- Versões leves (R-10) ----------
+const TIPO_DA_EXT = { jpg: 'image/jpeg', webp: 'image/webp' };
+const MAX_LADO = 10000;
+
+// Campos "<largura>.<jpg|webp>" do multipart, já conferidos pelos bytes (um PNG chamado 480.webp é recusado).
+export async function lerVariantesDoForm(form) {
+  const lista = [];
+  for (const [nome, valor] of form.entries()) {
+    const v = nomeDaVariante(nome);
+    if (!v || typeof valor === 'string' || valor.size === 0) continue;
+    if (valor.size > MAX_FOTO) throw new ErroApi(413, 'foto_grande', `A versão ${nome} é grande demais.`);
+    const bytes = await valor.arrayBuffer();
+    if (tipoDaImagem(bytes) !== TIPO_DA_EXT[v.ext]) {
+      throw new ErroApi(400, 'foto_invalida', `A versão ${nome} não é um ${v.ext.toUpperCase()} de verdade. Escolha a foto de novo.`);
+    }
+    lista.push({ ...v, bytes, tipo: TIPO_DA_EXT[v.ext] });
+  }
+  return lista;
+}
+
+// largura/altura opcionais (tamanho da original, pós-orientação): inteiros de 1 a 10000.
+export function lerLados(form) {
+  const ler = nome => {
+    const texto = form.get(nome);
+    if (texto === null || texto === undefined || texto === '') return null;
+    const n = Number(texto);
+    if (!Number.isInteger(n) || n < 1 || n > MAX_LADO) throw new ErroApi(400, 'foto_invalida', `Não deu para ler o tamanho da foto (${nome}). Escolha a foto de novo.`);
+    return n;
+  };
+  const largura = ler('largura');
+  const altura = ler('altura');
+  if ((largura === null) !== (altura === null)) throw new ErroApi(400, 'foto_invalida', 'Mande largura e altura juntas.');
+  return { largura, altura };
+}
+
+// Sobe cada versão no R2 (chave determinística: repetir sobrescreve) e grava só as que subiram.
+async function aplicarVariantes(env, linha, lista, { largura, altura }) {
+  const subiu = { jpg: new Set(), webp: new Set() };
+  for (const v of lista) {
+    const chave = chaveDaVariante(linha.foto_chave, v.largura, v.ext);
+    try {
+      await env.FOTOS.put(chave, v.bytes, { httpMetadata: { contentType: v.tipo } });
+      subiu[v.ext].add(v.largura);
+    } catch (e) {
+      console.error('não deu para subir a versão', chave, e?.stack || e);
+    }
+  }
+  const atual = lerVariantes(linha.variantes) || { larguras: [], webp: false };
+  const larguras = [...new Set([...atual.larguras, ...subiu.jpg])].sort((a, b) => a - b);
+  const comWebp = new Set([...(atual.webp ? atual.larguras : []), ...subiu.webp]);
+  const variantes = larguras.length ? { larguras, webp: larguras.every(w => comWebp.has(w)) } : null;
+  await env.DB.prepare('UPDATE itens SET variantes = ?, largura = COALESCE(?, largura), altura = COALESCE(?, altura) WHERE id = ?')
+    .bind(variantes ? JSON.stringify(variantes) : null, largura, altura, linha.id).run();
+  return paraItem({ ...linha, variantes, largura: largura ?? linha.largura, altura: altura ?? linha.altura });
+}
+
+// POST /api/painel/itens/:id/variantes (backfill e pós-Instagram pelo painel).
+export async function salvarVariantes(env, id, form) {
+  const l = await buscarItem(env, id);
+  if (l.removido_em) throw new ErroApi(404, 'nao_encontrado');
+  const lista = await lerVariantesDoForm(form);
+  const lados = lerLados(form);
+  if (!lista.length) throw new ErroApi(400, 'foto_invalida', 'Mande pelo menos uma versão da foto (480.jpg, 960.jpg, 1600.jpg ou .webp).');
+  return aplicarVariantes(env, l, lista, lados);
+}
+
 export async function adicionarDoCelular(env, form) {
   const secao = String(form.get('secao') || '');
   validarSecao(secao);
   const titulo = limparTitulo(form.get('titulo'));
   const { bytes, tipo } = await lerFotoDoForm(form);
+  // Valida as versões leves antes de guardar qualquer coisa: ou entra tudo, ou nada.
+  const lista = await lerVariantesDoForm(form);
+  const lados = lerLados(form);
   const id = novoId('it');
   const chave = `celular/${id}.${tipo.split('/')[1].replace('jpeg', 'jpg')}`;
   await env.FOTOS.put(chave, bytes, { httpMetadata: { contentType: tipo } });
-  return inserir(env, { id, secao, ordem: await proximaOrdem(env, secao), titulo, foto_chave: chave, origem: 'celular' });
+  const item = await inserir(env, { id, secao, ordem: await proximaOrdem(env, secao), titulo, foto_chave: chave, origem: 'celular' });
+  if (!lista.length && lados.largura === null) return item;
+  return aplicarVariantes(env, { ...item, foto_chave: chave, variantes: null }, lista, lados);
 }
 
 export async function renomear(env, id, titulo) {

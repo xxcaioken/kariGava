@@ -2,6 +2,12 @@
 // O CSS está em public/site.css. Todo texto dinâmico passa por esc().
 
 import { metaBase, jsonLd } from './seo.js';
+import { chaveDaVariante } from './variantes.js';
+
+// `sizes` por posição (ENG-09): cartões ocupam a largura toda no celular e ~480 px no desktop; hero/sobre até 640 px.
+const SIZES_CARTAO = '(max-width: 640px) 100vw, 480px';
+const SIZES_GRANDE = '(max-width: 640px) 100vw, 640px';
+const SIZES_MINIATURA = '(max-width: 640px) 40vw, 160px';
 
 const ICONE_WA = '<svg class="icone-wa" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.2-.1-1-.4-2-1.2-.7-.6-1.2-1.4-1.3-1.7-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.2-.9.9-.9 2.2s.9 2.5 1 2.7c.1.2 1.8 2.8 4.4 3.9 2.2.9 2.6.7 3.1.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>';
 const CORES_MARCA = ['roxo', 'vermelho', 'mostarda', 'pink', 'verde', 'grafite'];
@@ -9,9 +15,19 @@ const CORES_MARCA = ['roxo', 'vermelho', 'mostarda', 'pink', 'verde', 'grafite']
 export function template(d, esc) {
   const wa = esc(d.whatsapp.geral); // botões gerais (topo, hero, rodapé, barra fixa); serviço e produto têm o próprio link
   const listras = CORES_MARCA.map(c => `<i style="background:var(--${c})"></i>`).join('');
-  const img = (f, alt, extra = '') => f
-    ? `<img src="${esc(f.foto_url)}" alt="${esc(alt ?? f.titulo)}" loading="lazy" decoding="async"${extra}>`
-    : '';
+  // Foto com versões leves (R-10): <picture> com WebP e srcset nas larguras que existem; sem elas, <img> simples.
+  // Toda foto fora do hero é lazy e, quando o tamanho é conhecido, leva width/height (sem pulo de layout).
+  const img = (f, alt, { sizes = SIZES_CARTAO, hero = false } = {}) => {
+    if (!f) return '';
+    const texto = esc(alt ?? f.titulo);
+    const dims = Number.isInteger(f.largura) && Number.isInteger(f.altura) ? ` width="${f.largura}" height="${f.altura}"` : '';
+    const carga = hero ? ' fetchpriority="high" decoding="async"' : ' loading="lazy" decoding="async"';
+    const larguras = f.variantes?.larguras || [];
+    if (!larguras.length) return `<img src="${esc(f.foto_url)}" alt="${texto}"${dims}${carga}>`;
+    const lista = ext => larguras.map(w => `${esc(chaveDaVariante(f.foto_url, w, ext))} ${w}w`).join(', ');
+    const webp = f.variantes.webp ? `<source type="image/webp" srcset="${lista('webp')}" sizes="${sizes}">` : '';
+    return `<picture>${webp}<img src="${esc(f.foto_url)}" srcset="${lista('jpg')}" sizes="${sizes}" alt="${texto}"${dims}${carga}></picture>`;
+  };
 
   const leque = d.servicos.map((s, i) => `
           <a class="amostra ${i < 3 ? 'esq' : 'dir'} a${i + 1}${s.escuro ? ' escuro' : ''}" href="#${esc(s.id)}" style="--cor:var(--${s.var})"><span class="amostra-cod">${esc(s.kg)}</span><span class="amostra-cor">${esc(s.nome)}</span><span class="amostra-servico">${esc(s.curto)}</span><span class="visualmente-oculto">${esc(s.titulo)}</span></a>`).join('');
@@ -38,7 +54,7 @@ export function template(d, esc) {
             <h3>${esc(s.titulo)}</h3>
             <p class="servico-resumo">${esc(s.resumo)}</p>
             ${s.para_quem ? `<p class="para-quem"><strong>Para quem</strong>${esc(s.para_quem)}</p>` : ''}
-            ${outras.length ? `<ul class="servico-mais" aria-label="Mais fotos">${outras.map(f => `<li>${img(f)}</li>`).join('')}</ul>` : ''}
+            ${outras.length ? `<ul class="servico-mais" aria-label="Mais fotos">${outras.map(f => `<li>${img(f, undefined, { sizes: SIZES_MINIATURA })}</li>`).join('')}</ul>` : ''}
             ${s.como_funciona?.length ? `<details class="como"><summary>Como funciona</summary>
               <ol>${s.como_funciona.map(p => `<li>${esc(p)}</li>`).join('')}</ol>
             </details>` : ''}
@@ -191,7 +207,7 @@ ${jsonLd(d, { base: d.base, whatsappNumero: d.whatsapp.numero })}
       <div class="leque-area">
         <div class="leque" aria-label="Cartela de serviços da Kari">${leque}
           <figure class="leque-foto">
-            <img src="/${esc(d.hero.foto)}" alt="Kari sorrindo, segurando um cabide com uma peça de babados vermelhos, num fundo pink" width="640" height="640" fetchpriority="high">
+            ${img(d.hero.foto_item, 'Kari sorrindo, segurando um cabide com uma peça de babados vermelhos, num fundo pink', { sizes: SIZES_GRANDE, hero: true })}
             <figcaption>${esc(d.hero.credito_foto)}</figcaption>
           </figure>
           <span class="pino" aria-hidden="true"></span>
@@ -234,7 +250,7 @@ ${jsonLd(d, { base: d.base, whatsappNumero: d.whatsapp.numero })}
 ${depoimentos}
   <section class="secao secao-cinza" id="sobre" aria-labelledby="titulo-sobre">
     <div class="wrap sobre-grade">
-      <figure class="sobre-foto" style="margin:0">${img(fotoSobre, 'Kari')}</figure>
+      <figure class="sobre-foto" style="margin:0">${img(fotoSobre, 'Kari', { sizes: SIZES_GRANDE })}</figure>
       <div class="sobre-texto">
         <p class="rotulo">Sobre</p>
         <h2 id="titulo-sobre">Oi, eu sou a ${esc(d.marca.apelido)}!</h2>

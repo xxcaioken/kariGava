@@ -998,3 +998,74 @@ test('R-09 prévia do link e SEO: og absoluto, og.jpg 1200×630, canonical por p
   assert.ok(!home.includes('<b>oi</b>'), 'HTML escapado');
   assert.equal((await chamar(`/api/painel/itens/${foto.id}`, { metodo: 'PATCH', corpo: { titulo: nomeAntes } })).status, 200);
 });
+
+// ---------- S-14 · Variantes de imagem (R-10) ----------
+const fixture = (nome, tipo) => new Blob([readFileSync(new URL(`../fixtures/${nome}`, import.meta.url))], { type: tipo });
+function formVariantes(campos, variantes) {
+  const form = new FormData();
+  for (const [k, v] of Object.entries(campos)) { if (v instanceof Blob) form.set(k, v, 'foto.jpg'); else form.set(k, String(v)); }
+  for (const [nome, blob] of Object.entries(variantes)) form.set(nome, blob, nome);
+  return form;
+}
+const pictureDe = (html, url) => {
+  const i = html.indexOf(url);
+  if (i < 0) return null;
+  const ini = html.lastIndexOf('<picture>', i);
+  const fim = html.indexOf('</picture>', i);
+  return ini >= 0 && fim >= 0 && html.indexOf('</picture>', ini) === fim ? html.slice(ini, fim) : null;
+};
+
+test('R-10 variantes de imagem: celular num só multipart, POST /variantes, picture/srcset no site, nunca ampliar, validações', async () => {
+  // Foto do celular ≥ 1600 px com as 6 variantes num só multipart.
+  const jpg = fixture('paisagem-1600.jpg', 'image/jpeg');
+  const variantes = Object.fromEntries(['480', '960', '1600'].flatMap(w => [[`${w}.jpg`, fixture(`variante-${w}.jpg`, 'image/jpeg')], [`${w}.webp`, fixture(`variante-${w}.webp`, 'image/webp')]]));
+  const r = await chamar('/api/painel/itens', { metodo: 'POST', form: formVariantes({ secao: 'styling', titulo: 'Produção na praia', foto: jpg, largura: 1600, altura: 1200 }, variantes) });
+  assert.equal(r.status, 201, JSON.stringify(r.dados));
+  const item = r.dados.itens[0];
+  assert.deepEqual(item.variantes, { larguras: [480, 960, 1600], webp: true });
+  assert.equal(item.largura, 1600);
+  assert.equal(item.altura, 1200);
+  const chave = item.foto_url.replace(/\.jpg$/, '');
+  for (const w of [480, 960, 1600]) {
+    assert.equal((await fetch(`${BASE}${chave}-${w}.jpg`)).status, 200, `${chave}-${w}.jpg`);
+    const webp = await fetch(`${BASE}${chave}-${w}.webp`);
+    assert.equal(webp.status, 200);
+    assert.match(webp.headers.get('content-type'), /image\/webp/);
+  }
+  let html = (await chamar('/')).dados;
+  let pic = pictureDe(html, `${chave}-480.jpg`);
+  assert.ok(pic, 'item com variantes vira <picture>');
+  assert.ok(pic.includes('<source type="image/webp"') && pic.includes(`${chave}-480.webp 480w, ${chave}-960.webp 960w, ${chave}-1600.webp 1600w`), pic);
+  assert.ok(pic.includes(`${chave}-480.jpg 480w, ${chave}-960.jpg 960w, ${chave}-1600.jpg 1600w`) && pic.includes('sizes="') && pic.includes('width="1600"') && pic.includes('height="1200"') && pic.includes('loading="lazy"'), pic);
+
+  // Foto inicial de consultoria (360 px): <picture> com webp e só 360w.
+  pic = pictureDe(html, '/img/kari-look-blazer-360.jpg');
+  assert.ok(pic && pic.includes('/img/kari-look-blazer-360.webp 360w') && !pic.includes('480w'), 'nunca ampliar');
+  // Item sem variantes (Instagram falso) continua com <img> simples; hero sem lazy e com fetchpriority.
+  const semVariantes = (await chamar('/api/painel/estado')).dados.itens.find(i => i.origem === 'instagram' && !i.variantes);
+  assert.ok(semVariantes && html.includes(`<img src="${semVariantes.foto_url}"`) && !pictureDe(html, semVariantes.foto_url), '<img> simples');
+  const hero = html.match(/<img [^>]*kari-stylist-toia[^>]*>/)[0];
+  assert.ok(hero.includes('fetchpriority="high"') && !hero.includes('loading="lazy"'));
+  for (const img of html.match(/<img [^>]*>/g)) assert.ok(img.includes('fetchpriority="high"') || img.includes('loading="lazy"'), img);
+  for (const p of html.match(/<picture>[\s\S]*?<\/picture>/g)) assert.ok(p.includes('sizes="'), 'sizes em todo picture');
+
+  // Backfill: POST /itens/:id/variantes num item do Instagram (sem variantes) → passa a ter picture.
+  const ig = semVariantes;
+  const bf = await chamar(`/api/painel/itens/${ig.id}/variantes`, { metodo: 'POST', form: formVariantes({ largura: 1080, altura: 1350 }, { '480.jpg': variantes['480.jpg'], '960.jpg': variantes['960.jpg'], '1080.jpg': variantes['1600.jpg'] }) });
+  assert.equal(bf.status, 200, JSON.stringify(bf.dados));
+  assert.deepEqual(bf.dados.item.variantes, { larguras: [480, 960, 1080], webp: false });
+  html = (await chamar('/')).dados;
+  pic = pictureDe(html, `${ig.foto_url.replace(/\.jpg$/, '')}-480.jpg`);
+  assert.ok(pic && !pic.includes('image/webp') && pic.includes('1080w') && pic.includes('width="1080"'), 'sem webp: só a source jpg; largura do original');
+  // Repetir é idempotente (sobrescreve as mesmas chaves).
+  assert.equal((await chamar(`/api/painel/itens/${ig.id}/variantes`, { metodo: 'POST', form: formVariantes({}, { '480.jpg': variantes['480.jpg'] }) })).status, 200);
+
+  // Validações: PNG com nome de WebP → 400; campo desconhecido ignorado; item inexistente → 404; tamanho inválido → 400.
+  const png = await chamar(`/api/painel/itens/${ig.id}/variantes`, { metodo: 'POST', form: formVariantes({}, { '480.webp': fixture('nao-e-webp.png', 'image/webp') }) });
+  assert.equal(png.status, 400);
+  assert.equal(png.dados.erro, 'foto_invalida');
+  assert.equal((await chamar('/api/painel/itens/it_naoexiste/variantes', { metodo: 'POST', form: formVariantes({}, { '480.jpg': variantes['480.jpg'] }) })).status, 404);
+  assert.equal((await chamar(`/api/painel/itens/${ig.id}/variantes`, { metodo: 'POST', form: formVariantes({ largura: 0, altura: 10 }, { '480.jpg': variantes['480.jpg'] }) })).status, 400);
+  assert.equal((await chamar(`/api/painel/itens/${ig.id}/variantes`, { metodo: 'POST', form: formVariantes({}, {}) })).status, 400, 'sem nenhuma variante');
+  await chamar(`/api/painel/itens/${item.id}`, { metodo: 'DELETE' });
+});

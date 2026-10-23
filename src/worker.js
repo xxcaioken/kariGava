@@ -1,6 +1,6 @@
 import { ErroApi, json, respostaDeErro, lerJson } from './util.js';
 import { pedirCodigo, entrar, cookieSair, exigirSessao } from './auth.js';
-import { SECOES, listarItens, lerTextos, salvarTextos, adicionarDoInstagram, adicionarDoCelular, renomear, remover, restaurar, mover, secoesPorPost, lerFotoDoForm } from './itens.js';
+import { SECOES, listarItens, lerTextos, salvarTextos, adicionarDoInstagram, adicionarDoCelular, renomear, remover, restaurar, mover, secoesPorPost, lerFotoDoForm, salvarVariantes } from './itens.js';
 import { listarDepoimentos, criarDepoimento, editarDepoimento, removerDepoimento, restaurarDepoimento, moverDepoimento } from './depoimentos.js';
 import { listarPares, criarPar, editarPar, removerPar, restaurarPar, moverPar } from './antesdepois.js';
 import { listarFaq, criarFaq, salvarFaq, removerFaq, restaurarFaq, moverFaq } from './faq.js';
@@ -173,17 +173,16 @@ async function api(request, env, url) {
   if (rota === '/itens' && metodo === 'POST') {
     const tipo = request.headers.get('content-type') || '';
     if (tipo.includes('multipart/form-data')) {
-      let form;
-      try { form = await request.formData(); } catch { throw new ErroApi(400, 'foto_invalida', 'Esse arquivo não é uma foto. Escolha uma foto da galeria.'); }
-      return json({ itens: [await adicionarDoCelular(env, form)] }, 201);
+      return json({ itens: [await adicionarDoCelular(env, await lerMultipart(request))] }, 201);
     }
     exigirJson(request);
     return json({ itens: await adicionarDoInstagram(env, request, await lerJson(request)) }, 201);
   }
 
-  const m = rota.match(/^\/itens\/(it_[\w-]+|ini_[\w-]+)(\/restaurar|\/mover)?$/);
+  const m = rota.match(/^\/itens\/(it_[\w-]+|ini_[\w-]+)(\/restaurar|\/mover|\/variantes)?$/);
   if (m) {
     const [, id, acao] = m;
+    if (acao === '/variantes' && metodo === 'POST') return json({ item: await salvarVariantes(env, id, await lerMultipart(request)) });
     if (!acao && metodo === 'PATCH') { exigirJson(request); return json({ item: await renomear(env, id, (await lerJson(request)).titulo) }); }
     if (!acao && metodo === 'DELETE') return json({ item: await remover(env, id) });
     if (acao === '/restaurar' && metodo === 'POST') return json({ item: await restaurar(env, id) });

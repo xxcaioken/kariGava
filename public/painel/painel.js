@@ -302,12 +302,15 @@ function renderCartoes() {
       const produtosTexto = lista.length ? `${plural(lista.length, 'produto', 'produtos')} · ${semPreco ? `${semPreco} sem preço` : 'todos com preço'}` : 'Nenhum produto ainda';
       linhaPreco = el('span', { class: 'cartao-preco', text: `${produtosTexto} · Cupom ${situacaoDoCupom(estado.lalaia?.cupom)}` });
     }
+    // Fotos do Instagram que ainda não têm as versões leves (R-10): dá para gerar abrindo a parte e esperando "Otimizando".
+    const semVersaoLeve = itens.filter((i) => i.origem === 'instagram' && !i.variantes).length;
     const cartao = el('button', { class: 'cartao', type: 'button', 'data-secao': s.id, onclick: () => abrirSecao(s.id) },
       el('span', { class: 'cartao-topo' },
         el('span', { class: 'cartao-nome', text: s.nome }),
         el('span', { class: 'qtd', text: plural(itens.length, 'foto', 'fotos') })),
       miniaturas,
       ...(linhaPreco ? [linhaPreco] : []),
+      semVersaoLeve ? el('span', { class: 'cartao-preco', text: `${plural(semVersaoLeve, 'foto', 'fotos')} sem versão leve` }) : null,
       el('span', { class: 'ir', 'aria-hidden': 'true', text: 'Atualizar →' }));
     aplicarCor(cartao, s.cor);
     caixa.append(cartao);
@@ -1151,6 +1154,7 @@ $('#ig-adicionar').addEventListener('click', async () => {
         mostrarToast(qtd === 1 ? 'Pronto, a foto saiu do site' : 'Pronto, as fotos saíram do site');
       },
     });
+    otimizarFotos(criados); // em segundo plano; a foto já está no site
   } catch (e) {
     livre(botao);
     if (e.tipo !== 'sessao') mostrar('#ig-erro', mensagemDe(e));
@@ -1220,21 +1224,132 @@ async function reduzirFoto(arquivo, ladoMaximo = LADO_MAXIMO) {
   return { arquivo, ...original };
 }
 
+// ---------- Versões leves das fotos (R-10) ----------
+// O Worker não redimensiona (plano Free): o navegador gera 480/960/1600 px (só as menores que a original, mais a
+// original) em JPEG e, quando o navegador souber, WebP. Em falha, a foto publica do mesmo jeito, sem versões.
+const LARGURAS_VARIANTES = [480, 960, 1600];
+const TEMPO_MAXIMO_VARIANTES = 20000;
+let suporteWebp = null;
+
+async function navegadorGeraWebp() {
+  if (suporteWebp !== null) return suporteWebp;
+  const c = document.createElement('canvas');
+  c.width = 2; c.height = 2;
+  const b = await new Promise((ok) => c.toBlob(ok, 'image/webp', 0.8));
+  suporteWebp = Boolean(b && b.type === 'image/webp'); // Safari antigo devolve PNG, não null
+  return suporteWebp;
+}
+
+function largurasDasVariantes(largura) {
+  const teto = Math.min(largura, LARGURAS_VARIANTES[LARGURAS_VARIANTES.length - 1]);
+  return [...LARGURAS_VARIANTES.filter((w) => w < teto), teto];
+}
+
+const comTempo = (promessa, ms) => Promise.race([promessa, new Promise((_, falha) => setTimeout(() => falha(new Error('tempo esgotado')), ms))]);
+
+// Devolve { largura, altura, campos: [[nome, blob]...], webp }. largura/altura são da original já endireitada (EXIF).
+async function gerarVariantes(arquivo) {
+  try {
+    return await comTempo((async () => {
+      const bitmap = await createImageBitmap(arquivo, { imageOrientation: 'from-image' });
+      const escala = Math.min(1, LADO_MAXIMO / Math.max(bitmap.width, bitmap.height));
+      const largura = Math.round(bitmap.width * escala);
+      const altura = Math.round(bitmap.height * escala);
+      const webp = await navegadorGeraWebp();
+      const campos = [];
+      for (const w of largurasDasVariantes(largura)) {
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = Math.max(1, Math.round(altura * (w / largura)));
+        canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        const jpg = await new Promise((ok) => canvas.toBlob(ok, 'image/jpeg', 0.85));
+        if (!jpg) throw new Error('toBlob jpeg nulo');
+        campos.push([`${w}.jpg`, jpg]);
+        if (webp) {
+          const wb = await new Promise((ok) => canvas.toBlob(ok, 'image/webp', 0.8));
+          if (wb && wb.type === 'image/webp') campos.push([`${w}.webp`, wb]);
+        }
+      }
+      bitmap.close();
+      return { largura, altura, campos, webp };
+    })(), TEMPO_MAXIMO_VARIANTES);
+  } catch (e) {
+    console.warn('não deu para gerar as versões leves; a foto vai sem elas', e);
+    return { largura: null, altura: null, campos: [], webp: false };
+  }
+}
+
+function anexarVariantes(form, v) {
+  if (v.largura && v.altura) { form.append('largura', String(v.largura)); form.append('altura', String(v.altura)); }
+  for (const [nome, blob] of v.campos) form.append(nome, blob, nome);
+}
+
+// Compara o que o servidor gravou com o que foi mandado: alguma versão ficou de fora?
+function faltouVariante(item, v) {
+  if (!v.campos.length) return false;
+  const esperadas = v.campos.filter(([n]) => n.endsWith('.jpg')).map(([n]) => Number(n.split('.')[0]));
+  const tem = item?.variantes?.larguras || [];
+  const faltaJpg = esperadas.some((w) => !tem.includes(w));
+  const mandouWebp = v.campos.some(([n]) => n.endsWith('.webp'));
+  return faltaJpg || (mandouWebp && !item?.variantes?.webp);
+}
+
+async function enviarVariantes(item, v) {
+  if (!v.campos.length) return item;
+  const form = new FormData();
+  anexarVariantes(form, v);
+  const r = await api(`/api/painel/itens/${enc(item.id)}/variantes`, { metodo: 'POST', form });
+  return r.item;
+}
+
+function avisarVariantesFaltando(item, v) {
+  mostrarToast('Foto publicada; algumas versões leves não subiram. Toque para tentar de novo.', {
+    acao: { texto: 'Tentar de novo', aoTocar: async () => { const novo = await enviarVariantes(item, v); await sincronizar(); if (faltouVariante(novo, v)) avisarVariantesFaltando(novo, v); else mostrarToast('Pronto, versões leves no ar'); } },
+  });
+}
+
+// Fotos vindas do Instagram chegam só no tamanho original: o painel baixa cada uma (mesma origem), gera as versões
+// e manda em segundo plano, uma por vez, com progresso. Falha numa foto não para as outras nem vira erro.
+async function otimizarFotos(itens) {
+  const lista = itens.filter((i) => !i.variantes);
+  if (!lista.length) return;
+  const status = $('#otimizando');
+  let n = 0;
+  for (const item of lista) {
+    n += 1;
+    status.textContent = `Otimizando fotos… ${n} de ${lista.length}`;
+    status.hidden = false;
+    try {
+      const resposta = await fetch(item.foto_url, { credentials: 'same-origin' });
+      if (!resposta.ok) throw new Error(`foto ${resposta.status}`);
+      const v = await gerarVariantes(await resposta.blob());
+      await enviarVariantes(item, v);
+    } catch (e) {
+      console.warn('não deu para otimizar a foto', item.id, e);
+    }
+  }
+  status.hidden = true;
+  await sincronizar();
+}
+
 $('#cel-ok').addEventListener('click', async () => {
   if (!celArquivo) { mostrar('#cel-erro', 'Escolha uma foto da galeria primeiro.'); return; }
   const botao = $('#cel-ok');
-  ocupado(botao, 'Colocando no site...');
-  const { arquivo: foto } = await reduzirFoto(celArquivo);
+  ocupado(botao, 'Preparando foto...');
+  const [{ arquivo: foto }, variantes] = await Promise.all([reduzirFoto(celArquivo), gerarVariantes(celArquivo)]);
   const form = new FormData();
   form.append('secao', secaoAtual);
   form.append('titulo', $('#cel-nome').value.trim());
   form.append('foto', foto, foto === celArquivo ? (celArquivo.name || 'foto.jpg') : 'foto.jpg');
+  anexarVariantes(form, variantes);
+  botao.textContent = 'Enviando...';
   try {
     const r = await api('/api/painel/itens', { metodo: 'POST', form });
     const criados = r.itens || [];
     livre(botao);
     fecharDialogo('#dlg-celular');
     await sincronizar();
+    if (faltouVariante(criados[0], variantes)) { avisarVariantesFaltando(criados[0], variantes); return; }
     mostrarToast('Foto colocada no site', {
       verSite: true,
       desfazer: async () => {
@@ -1822,11 +1937,22 @@ $('#dlg-publicar').addEventListener('click', (ev) => { if (ev.target === ev.curr
 
 let toastTimer = null;
 
-function mostrarToast(texto, { desfazer, verSite, erro } = {}) {
+function mostrarToast(texto, { desfazer, verSite, erro, acao } = {}) {
   const area = $('#toast-area');
   clearTimeout(toastTimer);
   area.replaceChildren();
   const acoes = el('div', { class: 'toast-acoes' });
+  if (acao) {
+    acoes.append(el('button', {
+      type: 'button', text: acao.texto,
+      onclick: async (ev) => {
+        const b = ev.currentTarget;
+        b.disabled = true;
+        clearTimeout(toastTimer);
+        try { await acao.aoTocar(); } catch (e) { if (e.tipo !== 'sessao') mostrarToast(mensagemDe(e), { erro: true }); }
+      },
+    }));
+  }
   if (desfazer) {
     acoes.append(el('button', {
       type: 'button', text: 'Desfazer',
@@ -1844,7 +1970,7 @@ function mostrarToast(texto, { desfazer, verSite, erro } = {}) {
     el('p', { text: texto }),
     acoes.childNodes.length ? acoes : null);
   area.append(toast);
-  const tempo = desfazer ? 10000 : 6000;
+  const tempo = desfazer || acao ? 10000 : 6000;
   const agendar = () => { toastTimer = setTimeout(() => toast.remove(), tempo); };
   toast.addEventListener('focusin', () => clearTimeout(toastTimer));
   toast.addEventListener('focusout', agendar);

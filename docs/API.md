@@ -48,7 +48,7 @@ Rotas que mudam algo (POST/PUT/PATCH/DELETE) exigem `Content-Type: application/j
   "site_url": "/"
 }
 ```
-`itens` vêm ordenados por `secao`, depois `ordem`. `origem` é `instagram`, `celular` ou `inicial`.
+`itens` vêm ordenados por `secao`, depois `ordem`. `origem` é `instagram`, `celular` ou `inicial`. Cada item traz também `variantes` (`{ "larguras": [...], "webp": true }` ou `null`), `largura` e `altura` (ou `null`); no site, item com variantes vira `<picture>`/`srcset`, sem elas fica `<img>` simples. As fotos iniciais (`/img/...`) usam `public/img/variantes.json`, gerado por `scripts/gerar-variantes.sh`.
 
 ## Instagram
 
@@ -68,6 +68,9 @@ Rotas que mudam algo (POST/PUT/PATCH/DELETE) exigem `Content-Type: application/j
 - `POST /api/painel/itens` (multipart/form-data) campos `secao`, `titulo` (opcional), `foto` (jpg/png/webp até 15 MB) → `201 { "itens": [ item ] }`
   - `400 { erro: "foto_invalida", mensagem: "Esse arquivo não é uma foto. Escolha uma foto da galeria." }`
   - `413 { erro: "foto_grande", mensagem: "Essa foto é grande demais. Escolha outra ou tire um print dela." }`
+  - **Versões leves no mesmo multipart** (R-10): campos `largura` e `altura` (tamanho da foto enviada, já endireitada) e arquivos chamados `480.jpg`, `960.jpg`, `1600.jpg` e, opcionalmente, `480.webp`, `960.webp`, `1600.webp` (só as larguras menores que a original, mais a própria original: foto de 1080 px manda `480.jpg`, `960.jpg`, `1080.jpg`). O item devolvido traz `variantes: { "larguras": [480, 960, 1600], "webp": true }` com o que de fato subiu, mais `largura`/`altura`. Sem esses campos, a foto entra só no tamanho original (`variantes: null`).
+- `POST /api/painel/itens/:id/variantes` (multipart/form-data com os mesmos campos acima; corpo todo até 24 MB) → `{ "item": {...} }`. Usado pelo painel depois de trazer fotos do Instagram e no backfill manual (`docs/OPERACAO.md`). Repetir sobrescreve as mesmas chaves (`<chave>-<largura>.<ext>` no R2). `webp` só fica `true` quando toda largura em `larguras` tem a versão WebP.
+  - Arquivo cujos bytes não batem com a extensão (um PNG chamado `480.webp`) → `400 { erro: "foto_invalida", mensagem }`; nenhuma versão no corpo → `400`; `largura`/`altura` fora de 1 a 10000 → `400`; item inexistente ou fora do site → `404`.
 - `PATCH /api/painel/itens/:id` `{ "titulo": "..." }` → `{ "item": {...} }`
 - `DELETE /api/painel/itens/:id` → `{ "item": {...} }` (sai do site; pode desfazer)
 - `POST /api/painel/itens/:id/restaurar` → `{ "item": {...} }` (volta para a posição em que estava)
