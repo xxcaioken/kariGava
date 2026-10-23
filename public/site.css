@@ -357,7 +357,7 @@ p { margin: 0; }
   .rodape { padding-bottom: 40px; }
   .barra-wa { display: none; }
 }
-@media (max-width: 959px) { body { padding-bottom: 76px; } }
+@media (max-width: 959px) { body:has(.barra-wa) { padding-bottom: 76px; } } /* só a home tem a barra fixa; quiz, privacidade e 404 ficam sem a faixa vazia */
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
 
 /* ---------- Fotos que a Kari adiciona pelo painel ---------- */
