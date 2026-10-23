@@ -76,7 +76,7 @@ test('estado traz seções, fotos iniciais e contas', async () => {
   const { status, dados } = await chamar('/api/painel/estado');
   assert.equal(status, 200);
   assert.equal(dados.usuario.email, EMAIL);
-  assert.equal(dados.secoes.length, 8);
+  assert.equal(dados.secoes.length, 6, 'LALAIÁ, 4 serviços e Sobre mim');
   assert.equal(dados.itens.filter(i => i.secao === 'lalaia').length, 5);
   assert.ok(dados.instagram.contas.every(c => c.conectada));
   assert.equal(dados.textos.consultoria.titulo, 'Consultoria de estilo');
@@ -166,7 +166,7 @@ test('textos editados vão para o site e são escapados', async () => {
 test('foto do celular: aceita jpg e recusa o que não é foto', async () => {
   const jpg = readFileSync(new URL('../../public/img/lalaia-caixa.jpg', import.meta.url));
   const form = new FormData();
-  form.set('secao', 'edicao');
+  form.set('secao', 'styling');
   form.set('titulo', 'Armário da cliente');
   form.set('foto', new Blob([jpg], { type: 'image/jpeg' }), 'foto.jpg');
   const ok = await chamar('/api/painel/itens', { metodo: 'POST', form });
@@ -175,12 +175,12 @@ test('foto do celular: aceita jpg e recusa o que não é foto', async () => {
   assert.equal((await fetch(BASE + ok.dados.itens[0].foto_url)).status, 200);
   // 2ª foto do serviço aparece como miniatura no cartão dele.
   const site = (await chamar('/')).dados;
-  const cartao = site.slice(site.indexOf('id="edicao"'), site.indexOf('id="oficina-look"'));
+  const cartao = site.slice(site.indexOf('id="styling"'), site.indexOf('id="vm"'));
   assert.match(cartao, /class="servico-mais"/);
   assert.ok(cartao.includes(ok.dados.itens[0].foto_url));
 
   const ruim = new FormData();
-  ruim.set('secao', 'edicao');
+  ruim.set('secao', 'styling');
   ruim.set('foto', new Blob(['não sou foto'], { type: 'image/jpeg' }), 'falsa.jpg');
   const r = await chamar('/api/painel/itens', { metodo: 'POST', form: ruim });
   assert.equal(r.status, 400);
@@ -241,7 +241,7 @@ test('R-02 preço do serviço: PUT parcial, "A partir de", "Valor sob consulta" 
   assert.equal(r.dados.textos.resumo, antes.resumo, 'PUT parcial mantém o resumo');
 
   let html = (await chamar('/')).dados;
-  let cartao = cartaoDoServico(html, 'consultoria', 'edicao');
+  let cartao = cartaoDoServico(html, 'consultoria', 'styling');
   assert.ok(cartao.includes('A partir de'), 'rótulo');
   assert.ok(cartao.includes('R$ 380'), 'valor');
   const escapado = antes.resumo.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -249,7 +249,6 @@ test('R-02 preço do serviço: PUT parcial, "A partir de", "Valor sob consulta" 
   assert.ok(!cartaoDoServico(html, 'vm', 'ensino').includes('A partir de'));
   assert.ok(cartaoDoServico(html, 'vm', 'ensino').includes('Valor sob consulta'), 'grupo lojas sem preço');
   assert.ok(cartaoDoServico(html, 'ensino', 'como-trabalhar').includes('Valor sob consulta'), 'grupo ensino sem preço');
-  assert.ok(!cartaoDoServico(html, 'edicao', 'oficina-look').includes('sob consulta'), 'grupo "para você" sem preço não mostra nada');
 
   // Só o resumo muda; o preço fica.
   const soResumo = await chamar('/api/painel/textos/consultoria', { metodo: 'PUT', corpo: { resumo: 'Resumo novo da consultoria.' } });
@@ -268,9 +267,9 @@ test('R-02 preço do serviço: PUT parcial, "A partir de", "Valor sob consulta" 
   assert.equal(limpa.status, 200);
   assert.equal(limpa.dados.textos.preco, null);
   html = (await chamar('/')).dados;
-  cartao = cartaoDoServico(html, 'consultoria', 'edicao');
+  cartao = cartaoDoServico(html, 'consultoria', 'styling');
   assert.ok(!cartao.includes('A partir de'));
-  assert.ok(!cartao.includes('sob consulta'));
+  assert.ok(!cartao.includes('sob consulta'), 'grupo "para você" sem preço não mostra nada');
 
   const estado = (await chamar('/api/painel/estado')).dados;
   assert.equal(estado.textos.consultoria.preco, null);
@@ -392,9 +391,9 @@ test('R-01 botões de WhatsApp: número da config e mensagem por contexto', asyn
   assert.ok(links.length >= 8, `há ${links.length} links de WhatsApp`);
   for (const l of links) assert.ok(l.startsWith(`https://wa.me/${numero}?text=`), l);
 
-  const cartao = html.slice(html.indexOf('id="edicao"'), html.indexOf('id="oficina-look"'));
+  const cartao = html.slice(html.indexOf('id="vm"'), html.indexOf('id="ensino"'));
   const botao = cartao.match(/<a class="btn" href="([^"]+)"/)[1];
-  assert.equal(decodificarTexto(botao), 'Oi Kari, vi o site e quero saber sobre Edição de guarda-roupa');
+  assert.equal(decodificarTexto(botao), 'Oi Kari, vi o site e quero saber sobre Vitrines e visual merchandising');
 
   const lalaia = html.slice(html.indexOf('id="lalaia"'), html.indexOf('id="cursos"'));
   const produto = lalaia.slice(lalaia.indexOf('<li class="produto">'));
@@ -646,7 +645,7 @@ test('R-04 depoimentos: seção só quando existe, foto com consentimento, valid
   const naoFoto = await chamar('/api/painel/depoimentos', { metodo: 'POST', form: formDepoimento({ nome: 'Paula', texto: 'Amei a edição.', consentimento: 'true', largura: 480, altura: 360 }, new Blob(['não sou foto'], { type: 'image/jpeg' })) });
   assert.equal(naoFoto.status, 400);
   assert.equal(naoFoto.dados.erro, 'foto_invalida');
-  const r2 = await chamar('/api/painel/depoimentos', { metodo: 'POST', form: formDepoimento({ nome: 'Paula', de_onde: 'Palhoça', texto: 'Amei a edição.', servico: 'edicao', consentimento: 'true', largura: 480, altura: 360 }, jpg) });
+  const r2 = await chamar('/api/painel/depoimentos', { metodo: 'POST', form: formDepoimento({ nome: 'Paula', de_onde: 'Palhoça', texto: 'Amei a edição.', servico: 'styling', consentimento: 'true', largura: 480, altura: 360 }, jpg) });
   assert.equal(r2.status, 201, JSON.stringify(r2.dados));
   const d2 = r2.dados.depoimento;
   assert.match(d2.foto_url, /^\/fotos\/dep\//);
@@ -743,7 +742,7 @@ test('R-05 antes e depois: par só com as duas fotos e consentimento, seção na
   assert.equal(semConsent.dados.erro, 'foto_invalida');
   assert.match(semConsent.dados.mensagem, /autorizou/);
   // Serviço fora dos 3 permitidos, legenda longa, tamanho inválido.
-  assert.equal((await chamar('/api/painel/antes-depois', { metodo: 'POST', form: formPar({ ...base, servico: 'consultoria', antes: jpgA, depois: jpgD }) })).status, 400);
+  assert.equal((await chamar('/api/painel/antes-depois', { metodo: 'POST', form: formPar({ ...base, servico: 'ensino', antes: jpgA, depois: jpgD }) })).status, 400);
   const legendaLonga = await chamar('/api/painel/antes-depois', { metodo: 'POST', form: formPar({ ...base, legenda: 'a'.repeat(121), antes: jpgA, depois: jpgD }) });
   assert.equal(legendaLonga.status, 400);
   assert.match(legendaLonga.dados.mensagem, /120 letras.*121/);
@@ -775,12 +774,12 @@ test('R-05 antes e depois: par só com as duas fotos e consentimento, seção na
   const r2 = await chamar('/api/painel/antes-depois', { metodo: 'POST', form: formPar({ ...base, legenda: 'Look de festa', servico: 'styling', antes: jpgA, depois: jpgD }) });
   assert.equal(r2.status, 201);
   const p2 = r2.dados.par;
-  const ed = await chamar(`/api/painel/antes-depois/${p1.id}`, { metodo: 'PATCH', corpo: { legenda: 'Vitrine de inverno', servico: 'edicao' } });
+  const ed = await chamar(`/api/painel/antes-depois/${p1.id}`, { metodo: 'PATCH', corpo: { legenda: 'Vitrine de inverno', servico: 'consultoria' } });
   assert.equal(ed.status, 200, JSON.stringify(ed.dados));
   assert.equal(ed.dados.par.legenda, 'Vitrine de inverno');
   assert.equal((await chamar(`/api/painel/antes-depois/${p1.id}`, { metodo: 'PATCH', corpo: { legenda: 'a'.repeat(121) } })).status, 400);
   secao = secaoAntesDepois((await chamar('/')).dados);
-  assert.ok(secao.includes('alt="Antes: Vitrine de inverno"') && secao.includes('Edição de guarda-roupa'));
+  assert.ok(secao.includes('alt="Antes: Vitrine de inverno"') && secao.includes('Consultoria de estilo'));
   const mv = await chamar(`/api/painel/antes-depois/${p2.id}/mover`, { metodo: 'POST', corpo: { direcao: 'cima' } });
   assert.equal(mv.status, 200);
   assert.deepEqual(mv.dados.antes_depois.map(p => p.id), [p2.id, p1.id]);

@@ -16,13 +16,13 @@ function comVariantes(foto) {
 // `var` é o nome da cor em public/site.css; `curto` vai no leque, `legenda` nos botões do celular.
 const AMOSTRAS = {
   consultoria: { kg: 'KG 01', nome: 'Roxo Autêntico', cor: '#8D51FF', var: 'roxo', escuro: false, curto: 'Consultoria', legenda: 'Consultoria de estilo' },
-  edicao: { kg: 'KG 02', nome: 'Vermelho Armário', cor: '#C52118', var: 'vermelho', escuro: false, curto: 'Edição', legenda: 'Edição de guarda-roupa' },
-  'oficina-look': { kg: 'KG 03', nome: 'Mostarda Oficina', cor: '#FEBC5C', var: 'mostarda', escuro: true, curto: 'Oficina de Look', legenda: 'Oficina de Look' },
   styling: { kg: 'KG 04', nome: 'Pink Produção', cor: '#E5196E', var: 'pink', escuro: false, curto: 'Styling', legenda: 'Styling e produção' },
   vm: { kg: 'KG 05', nome: 'Verde Vitrine', cor: '#017F38', var: 'verde', escuro: false, curto: 'Vitrines', legenda: 'Vitrines e VM' },
   ensino: { kg: 'KG 06', nome: 'Grafite Aula', cor: '#2A2730', var: 'grafite', escuro: false, curto: 'Cursos', legenda: 'Cursos e palestras' },
 };
-export const ORDEM_SERVICOS = ['consultoria', 'edicao', 'oficina-look', 'styling', 'vm', 'ensino'];
+export const ORDEM_SERVICOS = ['consultoria', 'styling', 'vm', 'ensino'];
+// Serviços que viraram parte de outro (migration 0010): o endereço antigo (#id) continua levando ao cartão que os absorveu.
+export const ANCORAS_ANTIGAS = { consultoria: ['edicao'], ensino: ['oficina-look'] };
 
 const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 export const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ESCAPES[c]);
@@ -74,6 +74,7 @@ export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos 
     preco: textoDoPreco(textos[s.id]?.preco, s.grupo),
     grupo_nome: grupos.get(s.grupo),
     fotos: porSecao.get(s.id) || [],
+    ancoras: ANCORAS_ANTIGAS[s.id] || [],
     wa: wa(MENSAGENS_WA.servico(s.titulo)),
   }));
 

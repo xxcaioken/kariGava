@@ -21,7 +21,7 @@
   },
   "hero": {
     "titulo": "Moda para guarda-roupas autênticos.",
-    "subtitulo": "Consultoria de estilo, edição de guarda-roupa, styling e vitrines com Kariene Gava, em Florianópolis.",
+    "subtitulo": "Consultoria de estilo, styling, vitrines e cursos com Kariene Gava, em Florianópolis.",
     "foto": "img/kari-stylist-toia.jpg",
     "credito_foto": "Foto: @toiaoliveirafotografia"
   },
@@ -53,32 +53,18 @@
       "id": "consultoria",
       "grupo": "voce",
       "titulo": "Consultoria de estilo",
-      "resumo": "Para se reconhecer no espelho e vestir quem você é, sem fórmula pronta.",
-      "para_quem": "Mulheres que sentem que o guarda-roupa não conversa mais com elas.",
+      "resumo": "Para se reconhecer no espelho e vestir quem você é, começando pelo que já está no seu armário.",
+      "para_quem": "Mulheres que sentem que o guarda-roupa não conversa mais com elas, ou que têm o armário cheio e nada para vestir. Também atendo adolescentes, sempre com a vontade delas no centro.",
       "como_funciona": [
         "Uma conversa sobre sua rotina, suas referências e o que você quer comunicar.",
         "Leitura do seu estilo e das peças que mais têm a sua cara.",
+        "Edição do guarda-roupa, peça por peça: o que fica, o que sai e o que vira look novo.",
         "Um mapa de looks e de compras para você seguir sozinha."
       ],
       "foto": "img/kari-look-blazer.jpg",
       "cta": "Quero minha consultoria",
-      "rascunho": true
-    },
-    {
-      "id": "edicao",
-      "grupo": "voce",
-      "titulo": "Edição de guarda-roupa",
-      "resumo": "Peça por peça, no seu armário: o que fica, o que sai e o que ganha combinação nova.",
-      "para_quem": "Quem tem o armário cheio e a sensação de não ter o que vestir. Também atendo adolescentes, sempre com a vontade delas no centro.",
-      "como_funciona": [
-        "Visita ao seu armário.",
-        "Triagem de cada peça: fica, sai ou vira look novo.",
-        "Organização e combinações registradas para você usar no dia a dia."
-      ],
-      "citacao": "Como falo sempre para as mulheres que procuram esse serviço: ela precisa querer.",
-      "foto": "img/sapatos-vermelhos.jpg",
-      "cta": "Quero editar meu guarda-roupa",
-      "rascunho": true
+      "rascunho": true,
+      "citacao": "Como falo sempre para as mulheres que procuram esse serviço: ela precisa querer."
     },
     {
       "id": "styling",
@@ -111,33 +97,19 @@
       "rascunho": true
     },
     {
-      "id": "oficina-look",
-      "grupo": "voce",
-      "titulo": "Oficina de Look",
-      "resumo": "Encontros em grupo para aprender a montar looks com o que você já tem.",
-      "para_quem": "Grupos de amigas, empresas e eventos.",
-      "como_funciona": [
-        "Conversa sobre estilo e combinações.",
-        "Prática com peças reais.",
-        "Cada pessoa sai com ideias de looks para usar."
-      ],
-      "foto": "img/oficina-turma.jpg",
-      "cta": "Quero uma Oficina de Look",
-      "rascunho": true
-    },
-    {
       "id": "ensino",
       "grupo": "ensino",
       "titulo": "Cursos, oficinas e palestras",
-      "resumo": "Aulas sobre moda, visual merchandising, expografia e acessórios de cabeça.",
-      "para_quem": "Faculdades, escolas de moda e eventos.",
+      "resumo": "Aulas, palestras e a Oficina de Look: encontros para aprender moda, estilo, visual merchandising e acessórios de cabeça.",
+      "para_quem": "Faculdades, escolas de moda, empresas, eventos e grupos de amigas.",
       "foto": "img/modateca-curso.jpg",
-      "cta": "Quero levar a Kari para minha escola",
+      "cta": "Quero um curso, oficina ou palestra",
       "rascunho": true,
       "como_funciona": [
         "Conversa sobre o tema e o público.",
         "Montagem da aula, oficina ou palestra.",
-        "Encontro presencial, com prática quando fizer sentido."
+        "Encontro presencial, com prática quando fizer sentido.",
+        "Na Oficina de Look, prática com peças reais: cada pessoa sai com ideias de looks para usar."
       ]
     }
   ],
@@ -246,8 +218,8 @@
       {
         "id": "edicao",
         "nome": "Armário cheio, nada para vestir",
-        "servico": "edicao",
-        "texto": "Você tem roupa. O que falta é olhar peça por peça, tirar o que não serve mais e registrar combinações para o dia a dia. É a Edição de guarda-roupa."
+        "servico": "consultoria",
+        "texto": "Você tem roupa. O que falta é olhar peça por peça, tirar o que não serve mais e registrar combinações para o dia a dia. A Consultoria de estilo começa por aí: pela edição do seu guarda-roupa."
       },
       {
         "id": "consultoria",

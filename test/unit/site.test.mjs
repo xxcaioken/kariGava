@@ -60,7 +60,7 @@ test('R-01 renderizarSite: todo botão de WhatsApp usa o número com mensagem po
   assert.ok(links.length >= 8, `há ${links.length} links de WhatsApp`);
   assert.ok(links.every(l => l.startsWith(`https://wa.me/${NUMERO}?text=`)), 'todos com o número e ?text=');
   const textos = links.map(l => decodeURIComponent(new URL(l).searchParams.get('text')));
-  assert.ok(textos.includes('Oi Kari, vi o site e quero saber sobre Edição de guarda-roupa'));
+  assert.ok(textos.includes('Oi Kari, vi o site e quero saber sobre Consultoria de estilo'));
   assert.ok(textos.includes('Oi Kari, vi o site e quero conversar'), 'botão geral do hero/rodapé');
   assert.ok(textos.some(t => t.startsWith('Oi Kari, quero encomendar ')), 'botão da LALAIÁ');
 });

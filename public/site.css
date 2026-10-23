@@ -172,20 +172,10 @@ p { margin: 0; }
 .secao-cab h2 { font-size: clamp(40px, 7vw, 76px); line-height: .95; letter-spacing: -.045em; }
 .secao-cab p { color: var(--tinta-suave); font-size: 18px; max-width: 46ch; }
 
-/* Filtro por grupo (só CSS) */
-.filtro { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; border: 0; padding: 0; }
-.filtro input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.filtro label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--linha); background: #fff; font-weight: 600; font-size: 15px; cursor: pointer; }
-.filtro label i { width: 10px; height: 10px; border-radius: 50%; background: var(--cor, var(--tinta)); }
-.filtro input:checked + label { background: var(--tinta); color: #fff; border-color: var(--tinta); }
-.filtro input:focus-visible + label { outline: 3px solid var(--roxo-forte); outline-offset: 3px; }
-.servicos:has(#f-voce:checked) .servico:not([data-grupo="voce"]),
-.servicos:has(#f-lojas:checked) .servico:not([data-grupo="lojas"]),
-.servicos:has(#f-ensino:checked) .servico:not([data-grupo="ensino"]) { display: none; }
-
 /* Cartões de serviço: todos com a mesma estrutura */
 .grade-servicos { display: grid; grid-template-columns: 1fr; gap: 20px; list-style: none; margin: 0; padding: 0; }
-.servico { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--linha); border-radius: var(--raio); overflow: hidden; scroll-margin-top: 84px; }
+.servico { position: relative; display: flex; flex-direction: column; background: #fff; border: 1px solid var(--linha); border-radius: var(--raio); overflow: hidden; scroll-margin-top: 84px; }
+.ancora { position: absolute; top: 0; scroll-margin-top: 84px; } /* #edicao e #oficina-look antigos caem no topo do cartão que os absorveu */
 .servico-foto { position: relative; margin: 0; }
 .servico-foto img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
 .servico-faixa { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; background: var(--cor-forte, var(--cor)); color: #fff; font: 13px/1.2 var(--mono); letter-spacing: .03em; } /* -forte: texto branco pequeno precisa de 4,5:1 (R-15) */
@@ -351,7 +341,8 @@ p { margin: 0; }
   .depoimentos { grid-template-columns: 1fr 1fr; gap: 0 48px; }
   .pares { grid-template-columns: 1fr 1fr; gap: 32px 40px; }
   .faq-grupos { grid-template-columns: 1fr 1fr; gap: 36px 48px; }
-  .grade-servicos, .produtos { grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .grade-servicos { gap: 24px; } /* 4 serviços: 2×2 */
+  .produtos { grid-template-columns: repeat(3, 1fr); gap: 24px; }
   .sobre-grade { grid-template-columns: 5fr 7fr; gap: 64px; }
   .lalaia-cab { grid-template-columns: 1fr 1fr; align-items: end; }
   .rodape { padding-bottom: 40px; }

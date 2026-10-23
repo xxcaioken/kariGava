@@ -4,7 +4,7 @@ import { buscarPost, baixarImagem } from './instagram.js';
 import { nomeDaVariante, chaveDaVariante } from './variantes.js';
 
 const CORES = { lalaia: '#FEBC5C', sobre: '#141218' };
-const COR_SERVICO = { consultoria: '#8D51FF', edicao: '#C52118', 'oficina-look': '#FEBC5C', styling: '#E5196E', vm: '#017F38', ensino: '#2A2730' };
+const COR_SERVICO = { consultoria: '#8D51FF', styling: '#E5196E', vm: '#017F38', ensino: '#2A2730' };
 
 export const SECOES = [
   { id: 'lalaia', nome: 'LALAIÁ (produtos)', tipo: 'lalaia', cor: CORES.lalaia },

@@ -1593,7 +1593,7 @@ $('#form-depoimento').addEventListener('submit', async (ev) => {
 
 const pares = () => estado?.antes_depois || [];
 const LIMITE_LEGENDA = 120;
-const SERVICOS_PAR = ['vm', 'styling', 'edicao'];
+const SERVICOS_PAR = ['vm', 'styling', 'consultoria'];
 let parEditando = null;
 const parArquivos = { antes: null, depois: null };
 const parUrls = { antes: null, depois: null };

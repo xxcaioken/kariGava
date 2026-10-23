@@ -41,6 +41,7 @@ Atualizado em 23/10/2026.
 
 - [ ] Textos marcados com `"rascunho": true` em `conteudo.json`: resumo, "para quem" e "como funciona" de cada serviço, e o 3º passo de "Como trabalhar comigo". Foram redigidos a partir do Instagram dela.
 - [ ] Os passos de "Como funciona" de Cursos, oficinas e palestras (escritos por nós).
+- [ ] **Serviços unidos a pedido dela (23/10/2026):** a Edição de guarda-roupa virou parte da Consultoria de estilo e a Oficina de Look entrou em Cursos, oficinas e palestras. O resumo, o "para quem" e os passos desses dois serviços foram reescritos por nós juntando os textos antigos; o resultado "Armário cheio" do quiz agora leva à Consultoria. Ela confere se é assim que descreve o trabalho.
 - [ ] Os 3 passos de "Como encomendar" da LALAIÁ (`lalaia.como_encomendar`, escritos por nós): confirmar que o pagamento é por Pix e o envio pelos Correios. As condições (pagamento, frete, prazo, trocas) a Kari preenche no painel, em LALAIÁ → Como encomendar.
 - [ ] Nomes dos produtos da LALAIÁ: "BigScrunchie (a Xuxona)", "Acessórios de cabeça sob medida", "Vai de presente".
 - [ ] Nomes das cores da cartela: Roxo Autêntico, Vermelho Armário, Mostarda Oficina, Pink Produção, Verde Vitrine, Grafite Aula.

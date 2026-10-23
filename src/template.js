@@ -30,21 +30,16 @@ export function template(d, esc) {
   };
 
   const leque = d.servicos.map((s, i) => `
-          <a class="amostra ${i < 3 ? 'esq' : 'dir'} a${i + 1}${s.escuro ? ' escuro' : ''}" href="#${esc(s.id)}" style="--cor:var(--${s.var});--cor-forte:var(--${s.var}-forte)"><span class="amostra-cod">${esc(s.kg)}</span><span class="amostra-cor">${esc(s.nome)}</span><span class="amostra-servico">${esc(s.curto)}</span><span class="visualmente-oculto">${esc(s.titulo)}</span></a>`).join('');
+          <a class="amostra ${i < 2 ? 'esq' : 'dir'} a${i + 2}${s.escuro ? ' escuro' : ''}" href="#${esc(s.id)}" style="--cor:var(--${s.var});--cor-forte:var(--${s.var}-forte)"><span class="amostra-cod">${esc(s.kg)}</span><span class="amostra-cor">${esc(s.nome)}</span><span class="amostra-servico">${esc(s.curto)}</span><span class="visualmente-oculto">${esc(s.titulo)}</span></a>`).join('');
 
   const legenda = d.servicos.map(s => `
         <li><a href="#${esc(s.id)}" style="--cor:var(--${s.var})"><i></i>${esc(s.legenda)}</a></li>`).join('');
-
-  const COR_GRUPO = { voce: 'roxo', lojas: 'verde', ensino: 'grafite' };
-  const filtro = d.grupos.map(g => {
-    const cor = COR_GRUPO[g.id] || 'tinta';
-    return `<input type="radio" name="grupo" id="f-${esc(g.id)}"><label for="f-${esc(g.id)}" style="--cor:var(--${cor})"><i></i>${esc(g.titulo)}</label>`;
-  }).join('\n        ');
 
   const servicos = d.servicos.map(s => {
     const [principal, ...outras] = s.fotos;
     return `
         <li class="servico${s.escuro ? ' escuro' : ''}" id="${esc(s.id)}" data-grupo="${esc(s.grupo)}" style="--cor:var(--${s.var});--cor-forte:var(--${s.var}-forte)">
+          ${s.ancoras.map(a => `<span class="ancora" id="${esc(a)}"></span>`).join('')}
           <figure class="servico-foto">
             ${img(principal, principal?.titulo || s.titulo)}
             <figcaption class="servico-faixa"><span>${esc(s.kg)}</span><span>${esc(s.nome)}</span></figcaption>
@@ -226,12 +221,6 @@ ${jsonLd(d, { base: d.base, whatsappNumero: d.whatsapp.numero })}
         <h2 id="titulo-servicos">Serviços</h2>
         <p>Cada serviço tem a sua cor na cartela. Escolha o que combina com você e me chame no WhatsApp pelo botão do próprio serviço.</p>
       </div>
-
-      <fieldset class="filtro">
-        <legend class="visualmente-oculto">Mostrar serviços</legend>
-        <input type="radio" name="grupo" id="f-todos" checked><label for="f-todos">Todos</label>
-        ${filtro}
-      </fieldset>
 
       <ul class="grade-servicos">${servicos}
       </ul>${antesDepois}

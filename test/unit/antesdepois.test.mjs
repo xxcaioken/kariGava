@@ -58,7 +58,7 @@ test('R-05 validarPar: fotos obrigatórias com mensagem de qual falta, consentim
   assert.throws(() => validarPar({ ...entrada, depois: null }), erro('foto_invalida', /Falta a foto de Depois/));
   assert.throws(() => validarPar({ ...entrada, antes: null }), erro('foto_invalida', /Falta a foto de Antes/));
   assert.throws(() => validarPar({ ...entrada, consentimento: false }), erro('foto_invalida', /autorizou/));
-  assert.throws(() => validarPar({ ...entrada, servico: 'consultoria' }), erro('texto_invalido', /./));
+  assert.throws(() => validarPar({ ...entrada, servico: 'ensino' }), erro('texto_invalido', /./));
   assert.throws(() => validarPar({ ...entrada, legenda: 'a'.repeat(121) }), erro('texto_invalido', /120 letras; esta tem 121/));
   assert.throws(() => validarPar({ ...entrada, antes: { ...foto, altura: 0 } }), erro('foto_invalida', /./));
   assert.equal(validarPar({ ...entrada, legenda: '  Vitrine   nova ' }).legenda, 'Vitrine nova');

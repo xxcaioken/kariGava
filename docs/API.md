@@ -10,14 +10,14 @@ O painel deve mostrar `mensagem` como está (já vem escrita para a Kari).
 |---|---|---|
 | `lalaia` | LALAIÁ (produtos) | lalaia |
 | `consultoria` | Consultoria de estilo | servico |
-| `edicao` | Edição de guarda-roupa | servico |
 | `styling` | Styling e produção de moda | servico |
 | `vm` | Vitrines e visual merchandising | servico |
-| `oficina-look` | Oficina de Look | servico |
 | `ensino` | Cursos, oficinas e palestras | servico |
 | `sobre` | Sobre mim | sobre |
 
 Só seções `tipo: servico` têm textos editáveis (`resumo`, `para_quem`).
+
+Desde a migration `0010_servicos_unidos.sql` (23/10/2026) não existem mais `edicao` (virou parte de `consultoria`) nem `oficina-look` (virou parte de `ensino`): fotos, depoimentos, pares e textos foram movidos, e `#edicao`/`#oficina-look` continuam como âncoras no cartão que os absorveu.
 A primeira foto (ordem 0) de cada serviço é a foto principal dele no site.
 
 ## Login (código por e-mail)
@@ -137,7 +137,7 @@ Seção "O que dizem" do site, entre "Como trabalhar comigo" e "Sobre"; só exis
 
 ## Antes e depois
 
-Bloco "Antes e depois" dentro da área de serviços do site, logo após a grade; só existe no HTML quando há par ativo. O estado traz `antes_depois`: `[ { "id": "ad_...", "ordem", "legenda", "servico": "vm" | "styling" | "edicao", "antes_url", "depois_url", "largura_antes", "altura_antes", "largura_depois", "altura_depois", "consentimento_em" } ]`.
+Bloco "Antes e depois" dentro da área de serviços do site, logo após a grade; só existe no HTML quando há par ativo. O estado traz `antes_depois`: `[ { "id": "ad_...", "ordem", "legenda", "servico": "vm" | "styling" | "consultoria", "antes_url", "depois_url", "largura_antes", "altura_antes", "largura_depois", "altura_depois", "consentimento_em" } ]`.
 
 - `POST /api/painel/antes-depois` (só multipart/form-data) campos `antes` e `depois` (as duas fotos, jpg/png/webp até 15 MB cada; corpo todo até 24 MB), `largura_antes`, `altura_antes`, `largura_depois`, `altura_depois` (inteiros de 1 a 10000; viram `width`/`height` no site), `legenda` (até 120 letras, opcional), `servico` (`vm`, `styling` ou `edicao`) e `consentimento` (`true`, obrigatório) → `201 { "par": {...} }`
   - Falta uma foto → `400 { erro: "foto_invalida", mensagem: "Falta a foto de Antes. O par precisa das duas fotos." }` (ou "de Depois"). Sem `consentimento` → `400 { erro: "foto_invalida", mensagem: "Marque que a cliente autorizou antes de publicar as fotos." }`. Legenda longa ou serviço fora dos três → `400 texto_invalido`. Tamanho inválido → `400 foto_invalida`; grande demais → `413 foto_grande`.
