@@ -26,6 +26,14 @@ Só mande as larguras menores que a foto original, mais a própria original (fot
 
 As versões ficam em `/fotos/<chave>-<largura>.<ext>` com `cache-control: public, max-age=31536000, immutable`. Repetir o `POST .../variantes` sobrescreve o objeto no R2, mas quem já viu a foto (e a CDN da Cloudflare) continua com a versão antiga até o cache expirar. Depois de regenerar, limpe o cache no painel da Cloudflare: *Caching → Configuration → Purge Cache → Custom purge* com as URLs das versões (ou *Purge Everything*, que é inofensivo neste site).
 
+## Painel na tela inicial do celular
+
+O painel tem `public/painel/manifest.webmanifest` e ícones (`scripts/gerar-icones.sh`): no Android, o Chrome oferece "Adicionar à tela inicial"; no iPhone, Safari → Compartilhar → "Adicionar à Tela de Início". O painel instalado no iPhone tem cookies próprios, separados do Safari, então a Kari entra de novo uma vez (código por e-mail) na primeira abertura. Sem sessão, o painel instalado abre direto na tela de e-mail. Não há service worker: sem internet, o painel mostra "Não deu para abrir o painel" e o botão de tentar de novo.
+
+## Variáveis locais (`.dev.vars`)
+
+O `npm run dev` lê `.dev.vars` só ao subir. Mudou uma variável (por exemplo `ANALYTICS_TOKEN` ou `EMAIL_CONTATO`), pare e rode `npm run dev` de novo.
+
 ## Fotos iniciais do repositório
 
 As fotos de `public/img/` têm as versões geradas por `scripts/gerar-variantes.sh` (ImageMagick) e listadas em `public/img/variantes.json`; os arquivos gerados são commitados. Ao trocar ou acrescentar uma foto em `public/img/`, rode o script e commite o resultado. A prévia do link (`public/og.jpg`) é gerada por `scripts/gerar-og.sh`.

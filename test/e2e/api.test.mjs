@@ -1092,3 +1092,36 @@ test('R-11 analytics: com ANALYTICS_TOKEN o site traz o beacon do Cloudflare; o 
   const js = await fetch(BASE + '/painel/painel.js');
   assert.ok(!(await js.text()).includes('cloudflareinsights'));
 });
+
+// ---------- S-16 · Painel na tela inicial do celular (R-14) ----------
+test('R-14 manifest: JSON válido com standalone, escopo /painel/, cores e ícones PNG; links no painel', async () => {
+  const r = await fetch(BASE + '/painel/manifest.webmanifest');
+  assert.equal(r.status, 200);
+  assert.match(r.headers.get('content-type'), /application\/manifest\+json/);
+  const m = JSON.parse(await r.text());
+  assert.equal(m.name, 'Painel da Kari');
+  assert.equal(m.short_name, 'Painel');
+  assert.equal(m.start_url, '/painel/');
+  assert.equal(m.scope, '/painel/');
+  assert.equal(m.display, 'standalone');
+  assert.match(m.theme_color, /^#[0-9A-Fa-f]{6}$/);
+  assert.match(m.background_color, /^#[0-9A-Fa-f]{6}$/);
+  assert.equal(m.lang, 'pt-BR');
+  for (const tamanho of ['192x192', '512x512']) {
+    const icone = m.icons.find(i => i.sizes === tamanho);
+    assert.ok(icone && icone.type === 'image/png', `ícone ${tamanho}`);
+    const png = await fetch(BASE + icone.src);
+    assert.equal(png.status, 200, icone.src);
+    assert.match(png.headers.get('content-type'), /image\/png/);
+    const bytes = new Uint8Array(await png.arrayBuffer());
+    assert.deepEqual([...bytes.slice(0, 4)], [0x89, 0x50, 0x4e, 0x47], 'é PNG de verdade');
+    const lado = Number(tamanho.split('x')[0]);
+    assert.equal((bytes[16] << 24 | bytes[17] << 16 | bytes[18] << 8 | bytes[19]) >>> 0, lado, 'largura no IHDR');
+  }
+  const painel = (await chamar('/painel/')).dados;
+  assert.ok(painel.includes('rel="manifest"') && painel.includes('href="/painel/manifest.webmanifest"'), 'link do manifest');
+  assert.ok(painel.includes('rel="apple-touch-icon"') && painel.includes('icone-180.png'), 'apple-touch-icon');
+  assert.ok(painel.includes('name="apple-mobile-web-app-title"'), 'título no iOS');
+  assert.equal((await fetch(BASE + '/painel/icone-180.png')).status, 200);
+  assert.ok(!painel.includes('serviceWorker'), 'sem service worker');
+});

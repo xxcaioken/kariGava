@@ -1,0 +1,16 @@
+{
+  "name": "Painel da Kari",
+  "short_name": "Painel",
+  "description": "Fotos e textos do site da Kari Gava e da LALAIÁ.",
+  "lang": "pt-BR",
+  "start_url": "/painel/",
+  "scope": "/painel/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#141218",
+  "background_color": "#FFFFFF",
+  "icons": [
+    { "src": "/painel/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/painel/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
