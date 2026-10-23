@@ -88,6 +88,13 @@ Achados confirmados no código e deixados para uma próxima rodada (o processo e
 - [ ] **Foto proibida só fica fora do leque** (review da PR #3, 23/10/2026): `kari-chapeu-anturio` e `kari-oculos` são filtradas na abertura, mas se alguém as puser num serviço ou em "Sobre" elas aparecem no cartão. Hoje nenhuma está no banco. Correção sugerida: recusar essas fotos ao adicionar (painel) em vez de filtrar na hora de mostrar.
 - [ ] **Foto órfã ao importar do Instagram** (`src/itens.js`, `adicionarDoInstagram`; já existia antes desta entrega). Se gravar no banco falhar, a foto fica no armazenamento sem uso. Mesma correção já feita no envio pelo celular.
 
+## Correções técnicas abertas da PR #3 (ajustes da Kari; 3ª rodada de code review, 23/10/2026)
+
+- [ ] **"Ver no site" das fotos da LALAIÁ abre a home** (`public/painel/painel.js`, toasts de adicionar foto do Instagram e do celular). Quando a foto vai para a parte LALAIÁ, o link deveria abrir a `/lalaia` (como já fazem "Produto salvo" e "Condições salvas").
+- [ ] **Peça com uma foto só fica borrada no celular** (`src/lalaia.js`, `SIZES_PRODUTO`). A foto ocupa o cartão inteiro, mas o navegador é avisado de meia largura e baixa a versão menor. Correção: `sizes` de largura cheia quando a peça tem uma foto.
+- [ ] **Leque com número ímpar de lâminas** (`src/template.js`): a lâmina do meio fica em pé atrás da foto da Kari, com só a pontinha à mostra. Só acontece quando um serviço fica sem foto.
+- [ ] Limpezas: `data-grupo` nos cartões e `grupos` em `montarDados` (o filtro saiu); `quiz.js` com cópia própria do ícone do WhatsApp; `/lalaia` monta os dados da home inteira; o link `/lalaia` dos toasts ignora `estado.site_url` (hoje sempre `/`).
+
 ## Ideias adiadas de propósito (não entram sem nova decisão)
 
 Levantadas na revisão de produto e design e deixadas de fora desta entrega, cada uma com o motivo:
