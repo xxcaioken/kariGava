@@ -99,61 +99,46 @@ p { margin: 0; }
 
 .leque-area { position: relative; }
 .leque {
-  --h: 196px;   /* altura da amostra */
-  --w: 92px;    /* largura da amostra */
+  --h: 196px;   /* altura da lâmina */
+  --w: 92px;    /* largura da lâmina */
   --fh: 168px;  /* altura da foto */
   --fw: 116px;  /* largura da foto */
   --giro: 16px; /* distância do pino até a base */
+  --abre: 1;    /* quanto o leque abre (multiplica o ângulo de cada lâmina) */
   position: relative; height: calc(var(--h) + 34px); margin: 8px auto 0; max-width: 100%;
 }
-.amostra, .leque-foto {
+/* Lâminas: uma foto de cada serviço em moldura branca, girando em volta do pino (--a vem do HTML) */
+.lamina, .leque-foto {
   position: absolute; left: 50%; bottom: 14px;
   transform-origin: 50% calc(100% - var(--giro));
-  transform: rotate(var(--a, 0deg));
   border-radius: 5px;
   box-shadow: 0 1px 0 rgba(0,0,0,.06), 0 10px 24px -10px rgba(20,18,24,.45);
 }
-.amostra {
-  width: var(--w); height: var(--h); margin-left: calc(var(--w) / -2);
-  background: var(--destaque); color: #fff; text-decoration: none;
-  display: flex; flex-direction: column; padding: 8px;
+.lamina {
+  width: var(--w); height: var(--h); margin-left: calc(var(--w) / -2); z-index: var(--z, 1);
+  transform: rotate(calc(var(--a, 0deg) * var(--abre)));
+  display: flex; flex-direction: column; padding: 4px 4px 0; background: #fff; color: var(--tinta); text-decoration: none;
   transition: transform .3s cubic-bezier(.3,1.4,.5,1);
 }
-.amostra.esq { align-items: flex-start; text-align: left; }
-.amostra.dir { align-items: flex-end; text-align: right; }
-.amostra-servico { display: none; }
-.amostra::after { /* furo do pino */
-  content: ""; position: absolute; left: 50%; bottom: calc(var(--giro) - 5px); width: 10px; height: 10px; margin-left: -5px; border-radius: 50%;
-  background: rgba(255,255,255,.55);
-}
-.amostra:hover, .amostra:focus-visible { transform: rotate(var(--a)) translateY(-10px); }
+.lamina picture, .lamina > img { flex: 1; min-height: 0; }
+.lamina img { width: 100%; height: 100%; object-fit: cover; border-radius: 3px; }
+.lamina-nome { display: none; }
+.lamina:hover, .lamina:focus-visible { transform: rotate(calc(var(--a, 0deg) * var(--abre))) translateY(-10px); }
 .leque-foto {
   width: var(--fw); height: var(--fh); margin-left: calc(var(--fw) / -2);
-  background: #fff; padding: 5px 5px 0; z-index: 2; margin-block: 0; transform: rotate(0deg);
+  background: #fff; padding: 5px 5px 0; z-index: 5; margin-block: 0;
 }
 .leque-foto img { width: 100%; height: calc(100% - 18px); object-fit: cover; object-position: 50% 30%; border-radius: 3px; }
 .leque-foto figcaption { font: 8px/18px var(--mono); color: var(--tinta-suave); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pino { position: absolute; left: 50%; bottom: calc(14px + var(--giro) - 9px); width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; z-index: 3;
+.pino { position: absolute; left: 50%; bottom: calc(14px + var(--giro) - 9px); width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; z-index: 6;
   background: radial-gradient(circle at 35% 35%, #fff 0 18%, #c9c6cf 40%, #7c7884 100%); box-shadow: 0 1px 3px rgba(0,0,0,.35); }
-
-/* Ordem de empilhamento: as de fora atrás, as de dentro na frente */
-.a1, .a6 { z-index: 0; }
-.a2, .a5 { z-index: 1; }
-.a3, .a4 { z-index: 1; }
-.a1 { --a: -45deg; } .a2 { --a: -30deg; } .a3 { --a: -15deg; }
-.a4 { --a: 15deg; }  .a5 { --a: 30deg; }  .a6 { --a: 45deg; }
-.a3, .a4 { z-index: 2; }
-.a2, .a5 { z-index: 1; }
 
 /* Legenda do leque no celular: nomes tocáveis */
 .legenda { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; list-style: none; padding: 0; }
-.legenda a { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 6px 12px 6px 6px; border: 1px solid var(--linha); border-radius: var(--raio); text-decoration: none; font-weight: 600; font-size: 15px; line-height: 1.15; background: #fff; }
+.legenda a { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 6px 12px; border: 1px solid var(--linha); border-radius: var(--raio); text-decoration: none; font-weight: 600; font-size: 15px; line-height: 1.15; background: #fff; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .amostra { animation: abrir .9s cubic-bezier(.2,.85,.25,1) both; }
-  .a3, .a4 { animation-delay: .05s; }
-  .a2, .a5 { animation-delay: .12s; }
-  .a1, .a6 { animation-delay: .19s; }
+  .lamina { animation: abrir .9s cubic-bezier(.2,.85,.25,1) both; animation-delay: var(--atraso, 0s); }
   .leque-foto { animation: subir .6s ease-out both; }
   @keyframes abrir { from { transform: rotate(0deg); } }
   @keyframes subir { from { transform: translateY(14px); opacity: 0; } }
@@ -317,13 +302,13 @@ p { margin: 0; }
   .leque-area { grid-column: 2; grid-row: 1; }
   .legenda { display: none; }
   .leque { --h: 340px; --w: 158px; --fh: 290px; --fw: 196px; --giro: 22px; height: 400px; }
-  .amostra { padding: 12px 12px; }
-  .amostra-servico { display: block; font: 12px/1.2 var(--mono); max-width: 92px; }
+  .leque { --abre: 1.2; }
+  .lamina { padding: 6px 6px 0; }
+  .lamina-nome { display: block; font: 11px/1 var(--mono); letter-spacing: .04em; padding: 2px 2px 7px; }
+  .lamina.dir .lamina-nome { text-align: right; } /* à direita, a borda esquerda fica atrás da lâmina vizinha */
   .leque-foto { padding: 7px 7px 0; }
   .leque-foto figcaption { font-size: 10px; line-height: 24px; }
   .leque-foto img { height: calc(100% - 24px); }
-  .a1 { --a: -54deg; } .a2 { --a: -36deg; } .a3 { --a: -18deg; }
-  .a4 { --a: 18deg; }  .a5 { --a: 36deg; }  .a6 { --a: 54deg; }
   .secao { padding: 110px 0; }
   .secao-cab { grid-template-columns: 1fr 1fr; align-items: end; margin-bottom: 40px; }
   .depoimentos { grid-template-columns: 1fr 1fr; gap: 0 48px; }

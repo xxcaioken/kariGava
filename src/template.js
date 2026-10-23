@@ -9,6 +9,7 @@ import { abrirHtml, marcaLeque } from './marca.js';
 const SIZES_CARTAO = '(max-width: 640px) 100vw, 480px';
 const SIZES_GRANDE = '(max-width: 640px) 100vw, 640px';
 const SIZES_MINIATURA = '(max-width: 640px) 40vw, 160px';
+const SIZES_LAMINA = '(max-width: 959px) 118px, 158px';
 
 const ICONE_WA = '<svg class="icone-wa" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.2-.1-1-.4-2-1.2-.7-.6-1.2-1.4-1.3-1.7-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.2-.9.9-.9 2.2s.9 2.5 1 2.7c.1.2 1.8 2.8 4.4 3.9 2.2.9 2.6.7 3.1.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>';
 
@@ -28,8 +29,16 @@ export function template(d, esc) {
     return `<picture>${webp}<img src="${esc(f.foto_url)}" srcset="${lista('jpg')}" sizes="${sizes}" alt="${texto}"${dims}${carga}></picture>`;
   };
 
-  const leque = d.servicos.map((s, i) => `
-          <a class="amostra ${i < 2 ? 'esq' : 'dir'} a${i + 2}" href="#${esc(s.id)}"><span class="amostra-servico">${esc(s.curto)}</span><span class="visualmente-oculto">${esc(s.titulo)}</span></a>`).join('');
+  // Leque da abertura (ajustes da Kari): uma lâmina por serviço com foto, aberta em volta da foto dela. Metade à
+  // esquerda e metade à direita, de 20 em 20 graus; as de dentro ficam na frente e abrem primeiro.
+  const comFoto = d.servicos.filter(s => s.foto_leque);
+  const metade = Math.ceil(comFoto.length / 2);
+  const angulo = i => (i < metade ? -20 * (metade - i) : 20 * (i - metade + 1));
+  const leque = comFoto.map((s, i) => {
+    const a = angulo(i), passo = Math.abs(a) / 20;
+    return `
+          <a class="lamina${a > 0 ? ' dir' : ''}" href="#${esc(s.id)}" style="--a:${a}deg;--z:${5 - passo};--atraso:${(0.05 + 0.07 * (passo - 1)).toFixed(2)}s"><span class="lamina-nome" aria-hidden="true">${esc(s.curto)}</span>${img(s.foto_leque, '', { sizes: SIZES_LAMINA })}<span class="visualmente-oculto">${esc(s.titulo)}</span></a>`;
+  }).join('');
 
   const legenda = d.servicos.map(s => `
         <li><a href="#${esc(s.id)}">${esc(s.legenda)}</a></li>`).join('');
@@ -199,7 +208,7 @@ ${jsonLd(d, { base: d.base, whatsappNumero: d.whatsapp.numero })}
       </div>
 
       <div class="leque-area">
-        <div class="leque" aria-label="Serviços da Kari">${leque}
+        <div class="leque" role="group" aria-label="Serviços da Kari">${leque}
           <figure class="leque-foto">
             ${img(d.hero.foto_item, 'Kari sorrindo, segurando um cabide com uma peça de babados vermelhos, num fundo pink', { sizes: SIZES_GRANDE, hero: true })}
             <figcaption>${esc(d.hero.credito_foto)}</figcaption>

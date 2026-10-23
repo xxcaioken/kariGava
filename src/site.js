@@ -20,6 +20,8 @@ const NOMES_CURTOS = {
   ensino: { curto: 'Cursos', legenda: 'Cursos e palestras' },
 };
 export const ORDEM_SERVICOS = ['consultoria', 'styling', 'vm', 'ensino'];
+// Fotos que nunca vão para o leque da abertura (CLAUDE.md: a do chapéu com antúrio não é a Kari).
+const FORA_DO_LEQUE = /kari-chapeu-anturio|kari-oculos/;
 // Serviços que viraram parte de outro (migration 0010): o endereço antigo (#id) continua levando ao cartão que os absorveu.
 export const ANCORAS_ANTIGAS = { consultoria: ['edicao'], ensino: ['oficina-look'] };
 
@@ -73,6 +75,7 @@ export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos 
     preco: textoDoPreco(textos[s.id]?.preco, s.grupo),
     grupo_nome: grupos.get(s.grupo),
     fotos: porSecao.get(s.id) || [],
+    foto_leque: (porSecao.get(s.id) || []).find(f => !FORA_DO_LEQUE.test(f.foto_url)) || null,
     ancoras: ANCORAS_ANTIGAS[s.id] || [],
     wa: wa(MENSAGENS_WA.servico(s.titulo)),
   }));

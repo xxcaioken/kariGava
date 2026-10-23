@@ -49,6 +49,7 @@ Desde 23/10/2026 o site tem **uma** cor de destaque, sem cor por serviço: a Kar
 
 - Alvos de toque: tudo clicável com pelo menos 44×44 px (`.btn` 48 px, `.legenda a` 46 px, `summary` 44 px).
 - Movimento: só o leque abrindo no hero; `prefers-reduced-motion: reduce` desliga tudo (`site.css`).
+- Leque da abertura: uma lâmina por serviço com a primeira foto dele (nunca `kari-chapeu-anturio` nem `kari-oculos`), em moldura branca, aberta de 20 em 20 graus em volta da foto da Kari (×1,2 no desktop, `--abre`); o ângulo vem do HTML (`--a`), as de dentro ficam na frente. No desktop cada lâmina leva o nome curto do serviço, alinhado na borda que fica à mostra. Serviço sem foto não entra no leque.
 - Imagens: `loading="lazy"`, `width` e `height` em toda foto fora do hero; o hero tem `fetchpriority="high"`.
 - Breakpoints: 640 px (2 colunas) e 960 px (3 colunas, navegação no topo, barra fixa some).
 - Sem componente novo fora desta lista: se a seção não cabe, é decisão de design, não de código.
