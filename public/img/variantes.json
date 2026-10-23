@@ -1,0 +1,17 @@
+{
+  "atelie-busto": {"largura": 360, "altura": 640, "larguras": [360], "webp": true},
+  "kari-brasil": {"largura": 480, "altura": 640, "larguras": [480], "webp": true},
+  "kari-look-blazer": {"largura": 360, "altura": 640, "larguras": [360], "webp": true},
+  "kari-perfil": {"largura": 150, "altura": 150, "larguras": [150], "webp": true},
+  "kari-stylist-toia": {"largura": 640, "altura": 640, "larguras": [480,640], "webp": true},
+  "lalaia-babado-vermelho": {"largura": 512, "altura": 640, "larguras": [480,512], "webp": true},
+  "lalaia-caixa": {"largura": 361, "altura": 640, "larguras": [361], "webp": true},
+  "lalaia-flor-vermelha": {"largura": 360, "altura": 640, "larguras": [360], "webp": true},
+  "lalaia-laco-organza": {"largura": 512, "altura": 640, "larguras": [480,512], "webp": true},
+  "lalaia-perolas": {"largura": 359, "altura": 640, "larguras": [359], "webp": true},
+  "lalaia-scrunchie": {"largura": 361, "altura": 640, "larguras": [361], "webp": true},
+  "modateca-curso": {"largura": 512, "altura": 640, "larguras": [480,512], "webp": true},
+  "modateca-palestra": {"largura": 512, "altura": 640, "larguras": [480,512], "webp": true},
+  "oficina-turma": {"largura": 480, "altura": 640, "larguras": [480], "webp": true},
+  "sapatos-vermelhos": {"largura": 480, "altura": 640, "larguras": [480], "webp": true}
+}

@@ -26,6 +26,11 @@ No `wrangler.jsonc`, preencha:
 - `database_id` (do comando acima);
 - `vars.EMAILS_PERMITIDOS`: `"email.da.kari@...,seu.email@..."` (só esses entram no painel);
 - `vars.REMETENTE`: um endereço do domínio, ex.: `"painel@karigava.com.br"`;
+- `vars.WHATSAPP_NUMERO`: o número da Kari só com dígitos, com DDI e DDD (`"5548998459412"`); cada botão do site abre a conversa já com a mensagem do serviço ou produto;
+- `vars.EMAIL_CONTATO`: o e-mail que a página `/privacidade` indica para pedidos sobre dados (ex.: `"kari@karigava.com.br"`); enquanto vazio, a página aponta o WhatsApp;
+- `vars.SITE_URL`: o endereço final do site (`"https://karigava.com.br"`), usado em canonical, `og:url`, sitemap e dados estruturados, para o Google não ver o `workers.dev` e o domínio como dois sites; enquanto vazio, vale o endereço do próprio request;
+- `vars.ANALYTICS_TOKEN`: para contar visitas sem cookies, no painel da Cloudflare abra *Analytics & Logs → Web Analytics → Add a site*, informe o endereço do site, escolha a instalação manual ("JS snippet") e copie só o valor de `token` (ex.: `"3f2a…"`) para esta variável; vazio, o site não inclui nada. O painel de edição nunca é medido. Os números aparecem na mesma tela da Cloudflare;
+- a prévia do link (`public/og.jpg`) já está pronta; para regenerar depois de trocar a foto do hero: `bash scripts/gerar-og.sh` (precisa do ImageMagick: `sudo apt install imagemagick`);
 - a rota do domínio, adicionando no topo do arquivo:
 
 ```jsonc
@@ -35,9 +40,10 @@ No `wrangler.jsonc`, preencha:
 Depois:
 
 ```bash
-npm run banco:remoto    # cria as tabelas e as fotos iniciais
-npx wrangler deploy
+npm run deploy    # aplica as migrations no banco remoto (tabelas e fotos iniciais) e publica o Worker
 ```
+
+Daqui em diante, toda publicação é `npm run deploy`: ele sempre migra antes de publicar, então uma versão nova nunca sobe antes da tabela que ela precisa.
 
 O site já abre em `https://karigava.com.br` e o painel em `https://karigava.com.br/painel/`.
 

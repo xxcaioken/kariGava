@@ -21,7 +21,7 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--papel); color: var(--tinta); font: 17px/1.55 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-img { display: block; max-width: 100%; }
+img { display: block; max-width: 100%; height: auto; } /* height:auto: os atributos width/height só reservam espaço; a altura vem do aspect-ratio (pré-QA C16) */
 a { color: inherit; }
 h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -.025em; }
 p { margin: 0; }
@@ -58,6 +58,47 @@ p { margin: 0; }
 .legenda { order: 4; }
 .hero-sub { order: 5; font-size: 18px; color: var(--tinta-suave); margin-top: 18px; max-width: 34ch; }
 .hero-acoes { order: 6; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.hero-quiz { order: 7; margin-top: 16px; font-size: 15px; }
+.hero-quiz a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; text-underline-offset: 4px; text-decoration-color: var(--roxo); }
+
+/* ---------- /quiz (R-07) ---------- */
+.pagina-quiz { background: var(--cinza); }
+.pagina-quiz .topo-cta { display: inline-flex; min-height: 44px; padding: 0 16px; font-size: 15px; }
+.quiz-wrap { max-width: 640px; padding: 40px 0 72px; }
+.quiz h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1; letter-spacing: -.04em; margin: 8px 0 12px; }
+.quiz-intro { color: var(--tinta-suave); font-size: 17px; }
+.quiz-progresso { margin-top: 28px; font: 13px/1.4 var(--mono); color: var(--tinta-suave); }
+.quiz-barra { height: 4px; margin: 8px 0 24px; border-radius: 2px; background: var(--linha); overflow: hidden; }
+.quiz-barra i { display: block; height: 100%; width: 0; background: var(--roxo); transition: width .3s ease; }
+.quiz-tela { opacity: 1; transform: none; transition: opacity .22s ease, transform .22s ease; }
+.quiz-tela.saindo { opacity: 0; transform: translateY(6px); }
+.quiz-pergunta h2, .quiz-resultado h2 { font-size: clamp(24px, 5vw, 34px); line-height: 1.1; letter-spacing: -.03em; margin-bottom: 20px; }
+.quiz-tela h2:focus { outline: none; } /* foco programático para o leitor de tela anunciar; não é interativo */
+.quiz-opcoes { display: grid; gap: 10px; }
+.quiz-opcao { display: block; width: 100%; min-height: 56px; padding: 14px 18px; border: 1.5px solid var(--linha); border-radius: var(--raio); background: #fff; color: var(--tinta); font: 500 17px/1.3 var(--sans); text-align: left; cursor: pointer; transition: border-color .15s ease, transform .15s ease; }
+.quiz-opcao:hover { border-color: var(--roxo); transform: translateY(-1px); }
+.quiz-voltar { display: inline-flex; align-items: center; min-height: 44px; margin-top: 18px; padding: 0; border: 0; background: none; color: var(--tinta-suave); font: 600 15px var(--sans); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.quiz-resultado-texto { font-size: 18px; line-height: 1.5; }
+.quiz-resultado-servico { margin-top: 14px; font: 13px/1.4 var(--mono); color: var(--tinta-suave); }
+.quiz-acoes { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.quiz-sem-js { margin-top: 24px; padding: 14px 16px; border-radius: var(--raio); background: #fff; border: 1px solid var(--linha); }
+.quiz-lista { margin: 20px 0 24px; padding-left: 0; list-style: none; display: grid; gap: 18px; }
+.quiz-lista-pergunta ul { margin: 6px 0 0; padding-left: 20px; color: var(--tinta-suave); }
+/* ---------- Páginas de leitura: /privacidade e 404 ---------- */
+.pagina-leitura .topo-cta { display: inline-flex; min-height: 44px; padding: 0 16px; font-size: 15px; }
+.leitura-wrap { max-width: 70ch; padding: 40px 0 72px; }
+.leitura h1 { font-size: clamp(32px, 7vw, 52px); line-height: 1; letter-spacing: -.04em; margin: 8px 0 16px; }
+.leitura h2 { font-size: 24px; margin: 36px 0 10px; }
+.leitura p, .leitura li { font-size: 17px; line-height: 1.6; }
+.leitura p + p { margin-top: 12px; }
+.leitura-intro { color: var(--tinta-suave); font-size: 18px; }
+.leitura ul { margin: 8px 0 0; padding-left: 22px; display: grid; gap: 8px; }
+.leitura-acoes { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.leitura-versao { margin-top: 36px; font: 13px/1.4 var(--mono); color: var(--tinta-suave); }
+.rodape-curto { padding-bottom: 32px; }
+.rodape-curto .wrap { padding-top: 24px; }
+.rodape-curto .rodape-fim { margin-top: 0; padding-top: 0; border-top: 0; }
+.rodape-fim a { display: inline-flex; align-items: center; min-height: 44px; text-underline-offset: 4px; } /* alvo de toque ≥ 44 px (R-15) */
 
 .leque-area { position: relative; }
 .leque {
@@ -77,14 +118,14 @@ p { margin: 0; }
 }
 .amostra {
   width: var(--w); height: var(--h); margin-left: calc(var(--w) / -2);
-  background: var(--cor); color: #fff; text-decoration: none;
+  background: var(--cor-forte, var(--cor)); color: #fff; text-decoration: none; /* -forte: contraste ≥ 4,5:1 com o código em branco (R-15) */
   display: flex; flex-direction: column; padding: 8px;
   transition: transform .3s cubic-bezier(.3,1.4,.5,1);
 }
 .amostra.esq { align-items: flex-start; text-align: left; }
 .amostra.dir { align-items: flex-end; text-align: right; }
 .amostra.escuro { color: var(--tinta); }
-.amostra-cod { font: 10px/1 var(--mono); letter-spacing: .04em; opacity: .9; }
+.amostra-cod { font: 10px/1 var(--mono); letter-spacing: .04em; } /* sem opacidade: branco a 90% sobre o verde dava 4,46:1 (R-15) */
 .amostra-cor, .amostra-servico { display: none; }
 .amostra::after { /* furo do pino */
   content: ""; position: absolute; left: 50%; bottom: calc(var(--giro) - 5px); width: 10px; height: 10px; margin-left: -5px; border-radius: 50%;
@@ -147,7 +188,7 @@ p { margin: 0; }
 .servico { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--linha); border-radius: var(--raio); overflow: hidden; scroll-margin-top: 84px; }
 .servico-foto { position: relative; margin: 0; }
 .servico-foto img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
-.servico-faixa { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; background: var(--cor); color: #fff; font: 13px/1.2 var(--mono); letter-spacing: .03em; }
+.servico-faixa { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; background: var(--cor-forte, var(--cor)); color: #fff; font: 13px/1.2 var(--mono); letter-spacing: .03em; } /* -forte: texto branco pequeno precisa de 4,5:1 (R-15) */
 .servico.escuro .servico-faixa { color: var(--tinta); }
 .servico-corpo { display: flex; flex-direction: column; gap: 14px; padding: 20px 18px 22px; flex: 1; }
 .grupo-tag { align-self: flex-start; font: 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 6px 8px; border-radius: 3px; background: var(--cinza); color: var(--tinta-suave); }
@@ -162,17 +203,46 @@ p { margin: 0; }
 .como[open] summary::after { content: "−"; }
 .como ol { margin: 4px 0 6px; padding-left: 20px; font-size: 15px; display: grid; gap: 6px; }
 .citacao { margin: 0; padding-left: 14px; border-left: 3px solid var(--cor); font-style: italic; font-size: 16px; color: var(--tinta-suave); }
+.preco { margin-top: auto; display: flex; align-items: baseline; gap: 8px; }
+.preco strong { font-size: 20px; line-height: 1; letter-spacing: -.02em; }
 .servico .btn { margin-top: auto; background: var(--cor-forte); width: 100%; }
+.servico .preco + .btn { margin-top: 0; }
 .servico.escuro .btn { color: var(--tinta); }
 
 /* Como trabalhar comigo */
 .passos { display: grid; gap: 14px; list-style: none; margin: 0; padding: 0; counter-reset: passo; }
 .passo { display: grid; grid-template-columns: 56px 1fr; gap: 16px; align-items: start; padding: 22px 0; border-top: 1px solid var(--linha); counter-increment: passo; }
 .passo::before { content: counter(passo); display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--tinta); color: #fff; font: 22px/1 var(--mono); }
-.passo h3 { font-size: 22px; line-height: 1.15; margin-top: 4px; }
+.passo h3, .passo h4 { font-size: 22px; line-height: 1.15; margin-top: 4px; font-weight: 600; letter-spacing: -.025em; }
+.passo h4 { margin-bottom: 0; }
 .passo p { color: var(--tinta-suave); margin-top: 4px; }
 
 /* Sobre */
+/* Antes e depois (R-05): fotos lado a lado em qualquer largura, caixa 3:4, rótulo sobreposto */
+.antes-depois { margin-top: 56px; padding-top: 40px; border-top: 1px solid var(--linha); }
+.antes-depois .secao-cab h3 { font-size: clamp(30px, 5vw, 48px); line-height: 1; letter-spacing: -.04em; }
+.pares { display: grid; gap: 28px; list-style: none; margin: 0; padding: 0; }
+.par-fotos { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.par-foto { position: relative; margin: 0; }
+.par-foto img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--raio); background: #fff; }
+.par-foto figcaption { position: absolute; top: 8px; left: 8px; padding: 5px 9px; border-radius: 4px; background: var(--tinta); color: #fff; font: 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.par-legenda { margin-top: 10px; font-size: 16px; }
+.par-legenda .rotulo { display: block; margin-top: 4px; }
+
+/* O que dizem (R-04): lista vertical, um depoimento por bloco */
+.depoimentos-secao { border-top: 1px solid var(--linha); }
+.depoimentos { display: grid; gap: 18px; list-style: none; margin: 0; padding: 0; }
+.depoimento { display: grid; grid-template-columns: 56px 1fr; gap: 6px 16px; padding: 22px 0; border-top: 1px solid var(--linha); }
+.depoimento-foto, .depoimento-inicial { grid-row: 1 / 3; width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
+.depoimento-inicial { display: grid; place-items: center; background: var(--cor); color: #fff; font: 600 24px/1 var(--sans); }
+.depoimento.escuro .depoimento-inicial { color: var(--tinta); }
+.depoimento .citacao { font-size: 18px; color: var(--tinta); }
+.depoimento .citacao::before { content: "\201C"; }
+.depoimento .citacao::after { content: "\201D"; }
+.depoimento-autor { font-size: 15px; color: var(--tinta-suave); }
+.depoimento-autor strong { color: var(--tinta); }
+.depoimento-autor .rotulo { display: block; margin-top: 6px; }
+
 .sobre-grade { display: grid; gap: 28px; align-items: center; }
 .sobre-foto img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--raio); }
 .sobre-texto { display: grid; gap: 18px; }
@@ -198,11 +268,31 @@ p { margin: 0; }
 .produto-corpo { display: flex; flex-direction: column; gap: 10px; padding: 18px 18px 20px; flex: 1; }
 .produto h3 { font-size: 24px; line-height: 1.1; }
 .produto p { color: var(--tinta-suave); font-size: 16px; }
+.produto .preco { margin-top: 4px; }
+.produto .preco strong { color: var(--tinta); }
+.produto .disponibilidade { font: 13px/1.4 var(--mono); color: var(--tinta-suave); }
 .produto a { margin-top: auto; padding-top: 8px; font-weight: 600; text-underline-offset: 4px; min-height: 44px; display: inline-flex; align-items: center; }
+/* Cupom de primeira encomenda (R-08): uma linha da LALAIÁ, nunca faixa do site todo */
+.cupom { margin-top: 28px; padding: 16px 18px; border: 2px dashed var(--mostarda); border-radius: var(--raio); font-size: 17px; line-height: 1.5; }
+.cupom code { font: 15px/1 var(--mono); letter-spacing: .08em; padding: 4px 8px; border-radius: 4px; background: var(--mostarda); color: var(--tinta); }
+/* Como encomendar (R-03): fecha o bloco LALAIÁ com os 3 passos e as condições preenchidas */
+.como-encomendar { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--linha); }
+.como-encomendar > h3 { font-size: 26px; margin-bottom: 4px; }
+.como-encomendar .passos { gap: 0; }
+.condicoes { display: grid; gap: 16px 32px; margin: 8px 0 0; padding: 22px 0 0; border-top: 1px solid var(--linha); }
+.condicoes > div { display: grid; gap: 4px; align-content: start; }
+.condicoes dt { font: 12px/1.3 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-suave); }
+.condicoes dd { margin: 0; font-size: 16px; line-height: 1.5; }
 .lalaia-cta { margin-top: 28px; }
 .lalaia-cta .btn { background: var(--tinta); }
 
 /* Cursos já feitos */
+/* Perguntas frequentes (R-06): grupos com <details> reaproveitando .como */
+.faq-grupos { display: grid; gap: 36px; }
+.faq-grupo h3 { font: 12px/1.3 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-suave); margin-bottom: 10px; }
+.faq-item summary { font-size: 17px; padding: 10px 0; gap: 16px; }
+.faq-item p { padding: 0 0 16px; font-size: 16px; line-height: 1.55; color: var(--tinta-suave); max-width: 64ch; }
+
 .agenda { list-style: none; margin: 0; padding: 0; }
 .agenda li { display: grid; gap: 6px; padding: 20px 0; border-top: 1px solid var(--linha); }
 .agenda li:last-child { border-bottom: 1px solid var(--linha); }
@@ -226,6 +316,7 @@ p { margin: 0; }
 /* ---------- Telas maiores ---------- */
 @media (min-width: 640px) {
   .grade-servicos, .produtos { grid-template-columns: 1fr 1fr; }
+  .condicoes { grid-template-columns: 1fr 1fr; }
   .leque { --h: 250px; --w: 118px; --fh: 214px; --fw: 150px; --giro: 18px; }
   .legenda { grid-template-columns: repeat(3, 1fr); }
   .passos { grid-template-columns: repeat(3, 1fr); gap: 24px; }
@@ -249,7 +340,7 @@ p { margin: 0; }
   .amostra { padding: 12px 12px; }
   .amostra-cod { font-size: 11px; }
   .amostra-cor { display: block; font: 600 14px/1.15 var(--sans); margin-top: 6px; max-width: 92px; }
-  .amostra-servico { display: block; font: 12px/1.2 var(--mono); margin-top: 6px; opacity: .9; max-width: 92px; }
+  .amostra-servico { display: block; font: 12px/1.2 var(--mono); margin-top: 6px; max-width: 92px; }
   .leque-foto { padding: 7px 7px 0; }
   .leque-foto figcaption { font-size: 10px; line-height: 24px; }
   .leque-foto img { height: calc(100% - 24px); }
@@ -257,13 +348,16 @@ p { margin: 0; }
   .a4 { --a: 18deg; }  .a5 { --a: 36deg; }  .a6 { --a: 54deg; }
   .secao { padding: 110px 0; }
   .secao-cab { grid-template-columns: 1fr 1fr; align-items: end; margin-bottom: 40px; }
+  .depoimentos { grid-template-columns: 1fr 1fr; gap: 0 48px; }
+  .pares { grid-template-columns: 1fr 1fr; gap: 32px 40px; }
+  .faq-grupos { grid-template-columns: 1fr 1fr; gap: 36px 48px; }
   .grade-servicos, .produtos { grid-template-columns: repeat(3, 1fr); gap: 24px; }
   .sobre-grade { grid-template-columns: 5fr 7fr; gap: 64px; }
   .lalaia-cab { grid-template-columns: 1fr 1fr; align-items: end; }
   .rodape { padding-bottom: 40px; }
   .barra-wa { display: none; }
 }
-@media (max-width: 959px) { body { padding-bottom: 76px; } }
+@media (max-width: 959px) { body.com-barra { padding-bottom: 76px; } } /* só a home (body.com-barra) tem a barra fixa; quiz, privacidade e 404 ficam sem a faixa vazia; classe em vez de :has() para navegadores antigos */
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
 
 /* ---------- Fotos que a Kari adiciona pelo painel ---------- */

@@ -57,6 +57,12 @@ h1:focus, h2:focus { outline: none; }
 .campo input:focus, .campo textarea:focus { border-color: var(--roxo); outline: none; }
 .campo .ajuda { display: block; font-weight: 400; color: var(--tinta-suave); font-size: 15px; margin-top: 6px; }
 .campo .ajuda.passou { color: #8E140D; font-weight: 700; }
+.grupo-campos { margin: 6px 0 18px; padding: 16px; border: 2px solid var(--linha); border-radius: 16px; background: var(--fundo); }
+.grupo-campos legend { padding: 0 6px; font-weight: 700; }
+.grupo-campos > .ajuda { margin: 0 0 14px; color: var(--tinta-suave); font-size: 15px; }
+.grupo-campos .campo:last-child { margin-bottom: 0; }
+.marcar { display: flex; align-items: center; gap: 12px; min-height: 44px; margin-bottom: 14px; font-weight: 700; }
+.marcar input { width: 26px; height: 26px; margin: 0; accent-color: var(--verde); }
 .erro { display: block; margin: -4px 0 16px; padding: 12px 14px; border-radius: 12px; background: var(--vermelho-claro); color: #8E140D; font-weight: 600; }
 .codigo { letter-spacing: .4em; text-align: center; font-weight: 800; font-size: 26px !important; }
 
@@ -73,7 +79,9 @@ h1:focus, h2:focus { outline: none; }
 .topo .acoes-topo a { color: var(--roxo-forte); }
 .voltar { min-height: 48px; min-width: 48px; padding: 0 12px 0 8px; border: 0; border-radius: 12px; background: var(--fundo); font-weight: 700; }
 
-main { padding: 20px 16px 120px; }
+.conteudo { padding: 20px 16px 120px; }
+.rodape-painel { margin: 8px 0 0; text-align: center; font-size: 14px; }
+.rodape-painel a { display: inline-flex; align-items: center; min-height: 44px; color: var(--tinta-suave); }
 .ola { font-size: 28px; line-height: 1.15; margin: 4px 0 6px; letter-spacing: -.01em; }
 .dica { margin: 0 0 18px; color: var(--tinta-suave); }
 .bloco { margin-bottom: 30px; }
@@ -98,6 +106,18 @@ main { padding: 20px 16px 120px; }
 .cartao-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .cartao-nome { font-size: 20px; font-weight: 800; line-height: 1.2; }
 .cartao .qtd { font-size: 15px; color: var(--tinta-suave); white-space: nowrap; }
+.cartao-preco { display: block; margin-top: 8px; font-size: 14px; font-weight: 600; color: var(--tinta-suave); }
+
+/* Produtos da LALAIÁ: um acordeão por produto */
+.produto-edit { border: 1px solid var(--linha); border-radius: 14px; background: #fff; margin-bottom: 10px; }
+.produto-edit summary { display: flex; flex-direction: column; gap: 2px; min-height: 48px; padding: 12px 16px; cursor: pointer; list-style: none; }
+.produto-edit summary::-webkit-details-marker { display: none; }
+.produto-edit .produto-nome { font-weight: 800; font-size: 17px; }
+.produto-edit .produto-resumo { font-size: 14px; color: var(--tinta-suave); }
+.produto-edit[open] summary { border-bottom: 1px solid var(--linha); }
+.produto-edit form { padding: 12px 16px 16px; display: grid; gap: 12px; }
+.produto-edit select { width: 100%; min-height: 48px; padding: 0 12px; border: 1px solid var(--linha); border-radius: 12px; background: #fff; }
+.aviso { padding: 10px 12px; border-radius: 10px; background: var(--mostarda-claro); color: var(--tinta); font-size: 15px; }
 .miniaturas { display: flex; gap: 6px; margin: 12px 0 10px; min-height: 64px; }
 .miniaturas img { width: 52px; height: 64px; object-fit: cover; border-radius: 8px; background: var(--fundo); }
 .miniaturas .mais { display: grid; place-items: center; width: 52px; height: 64px; border-radius: 8px; background: var(--fundo); font-weight: 800; color: var(--tinta-suave); }
@@ -117,6 +137,43 @@ main { padding: 20px 16px 120px; }
 .mini:disabled { opacity: .35; cursor: not-allowed; }
 .tirar { grid-column: 2 / -1; justify-self: start; border: 0; background: none; color: var(--vermelho); font-weight: 700; min-height: 44px; padding: 0; text-decoration: underline; text-underline-offset: 4px; }
 .vazio { padding: 20px; border: 2px dashed var(--linha); border-radius: 14px; text-align: center; color: var(--tinta-suave); }
+/* Depoimentos */
+.item.dep { grid-template-columns: 56px 1fr auto; }
+.item.dep img, .dep-inicial { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
+.dep-inicial { display: grid; place-items: center; background: var(--cor, var(--roxo)); color: #fff; font-size: 24px; font-weight: 800; }
+.item.dep .nome small { color: var(--tinta-suave); text-decoration: none; font-weight: 400; }
+.item.dep .nome em { display: block; font-style: normal; font-weight: 500; color: var(--tinta-suave); font-size: 14px; margin-top: 2px; }
+.item.dep .editar { grid-column: 2; justify-self: start; border: 0; background: none; color: var(--roxo-forte); font-weight: 700; min-height: 44px; padding: 0; text-decoration: underline; text-underline-offset: 4px; }
+.item.dep .tirar { grid-column: 3; }
+.dep-foto-linha { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 6px 0; }
+.dep-foto-linha .btn { width: auto; min-height: 48px; }
+.dep-foto-linha .btn + .btn { margin-top: 0; }
+.dep-foto-previa { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; background: #fff; }
+/* Perguntas frequentes */
+.item.faq { grid-template-columns: 1fr auto; }
+.item.faq .nome { grid-column: 1; }
+.item.faq .nome em { display: block; font-style: normal; font-weight: 500; color: var(--tinta-suave); font-size: 14px; margin-top: 2px; }
+.item.faq .acoes-item { grid-column: 2; grid-row: 1; }
+.item.faq .linha-acoes { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center; }
+.item.faq .editar, .item.faq .publicar { border: 0; background: none; color: var(--roxo-forte); font-weight: 700; min-height: 44px; padding: 0; text-decoration: underline; text-underline-offset: 4px; }
+.item.faq .tirar { grid-column: auto; }
+.selo { display: inline-block; margin-right: 6px; padding: 2px 8px; border-radius: 999px; font-size: 13px; font-weight: 700; }
+.selo-rascunho { background: var(--mostarda-claro); color: #6B4700; }
+.selo-oculta { background: var(--fundo); color: var(--tinta-suave); }
+.selo-publicada { background: var(--verde-claro); color: #0B5129; }
+/* Antes e depois */
+.item.par { grid-template-columns: 96px 1fr auto; }
+.par-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; width: 96px; }
+.par-mini img { width: 100%; height: 60px; object-fit: cover; border-radius: 6px; background: var(--fundo); }
+.item.par .editar { grid-column: 2; justify-self: start; border: 0; background: none; color: var(--roxo-forte); font-weight: 700; min-height: 44px; padding: 0; text-decoration: underline; text-underline-offset: 4px; }
+.item.par .tirar { grid-column: 3; }
+.par-escolha { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 6px 0; }
+.par-caixa { position: relative; display: grid; place-items: center; aspect-ratio: 3 / 4; padding: 0; border: 2px dashed var(--linha); border-radius: 14px; background: #fff; overflow: hidden; }
+.par-caixa img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.par-caixa .par-rotulo { position: absolute; top: 8px; left: 8px; padding: 4px 8px; border-radius: 6px; background: var(--tinta); color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.par-caixa .par-vazio { padding: 0 12px; color: var(--tinta-suave); font-weight: 600; font-size: 15px; }
+.par-caixa.tem-foto { border-style: solid; }
+.par-caixa.tem-foto .par-vazio { display: none; }
 .vazio p { margin: 0; }
 .textos { margin-top: 30px; padding: 18px; border-radius: 18px; background: #fff; }
 .textos h2 { font-size: 20px; margin: 0 0 4px; }

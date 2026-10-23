@@ -4,17 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#6A2FE0">
+<meta name="theme-color" content="#141218">
 <title>Painel do site · Kari Gava</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="manifest" href="/painel/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/painel/icone-180.png">
+<meta name="apple-mobile-web-app-title" content="Painel">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="/fontes.css">
 <link rel="stylesheet" href="painel.css">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <script type="module" src="painel.js"></script>
 </head>
 <body>
-<div class="app">
+<main class="app">
 
   <!-- Abrindo -->
   <section id="tela-carregando" class="carregando" aria-live="polite">
@@ -68,7 +72,7 @@
         <button type="button" class="btn-sair">Sair</button>
       </div>
     </header>
-    <main>
+    <div class="conteudo">
       <h2 class="ola" id="ola" tabindex="-1">Oi!</h2>
       <p class="dica">Toque numa foto do Instagram para colocar no site, ou escolha uma parte do site para arrumar.</p>
 
@@ -83,7 +87,62 @@
         <p class="bloco-sub">Toque numa parte para trocar as fotos ou os textos.</p>
         <div id="cartoes"></div>
       </section>
-    </main>
+      <p class="rodape-painel"><a href="/privacidade" target="_blank" rel="noopener">Privacidade</a></p>
+    </div>
+  </section>
+
+  <!-- Depoimentos -->
+  <section id="tela-depoimentos" hidden>
+    <header class="topo">
+      <button class="voltar" id="voltar-dep" type="button">← Voltar</button>
+      <h1 id="dep-titulo" tabindex="-1">Depoimentos</h1>
+    </header>
+    <div class="conteudo">
+      <div class="botoes-add">
+        <button class="btn" type="button" id="dep-novo">+ Novo depoimento</button>
+      </div>
+      <section aria-labelledby="titulo-dep-lista">
+        <h2 class="bloco-titulo" id="titulo-dep-lista">No site agora <small id="dep-qtd"></small></h2>
+        <p class="bloco-sub" id="dep-dica" hidden>O de cima aparece primeiro. Use as setas para mudar a ordem.</p>
+        <div id="dep-lista"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- Antes e depois -->
+  <section id="tela-pares" hidden>
+    <header class="topo">
+      <button class="voltar" id="voltar-par" type="button">← Voltar</button>
+      <h1 id="par-titulo" tabindex="-1">Antes e depois</h1>
+    </header>
+    <div class="conteudo">
+      <div class="botoes-add">
+        <button class="btn" type="button" id="par-novo">+ Novo par de fotos</button>
+      </div>
+      <section aria-labelledby="titulo-par-lista">
+        <h2 class="bloco-titulo" id="titulo-par-lista">No site agora <small id="par-qtd"></small></h2>
+        <p class="bloco-sub" id="par-dica" hidden>O de cima aparece primeiro. Use as setas para mudar a ordem.</p>
+        <div id="par-lista"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- Perguntas frequentes -->
+  <section id="tela-faq" hidden>
+    <header class="topo">
+      <button class="voltar" id="voltar-faq" type="button">← Voltar</button>
+      <h1 id="faq-titulo" tabindex="-1">Perguntas frequentes</h1>
+    </header>
+    <div class="conteudo">
+      <div class="botoes-add">
+        <button class="btn" type="button" id="faq-nova">+ Nova pergunta</button>
+      </div>
+      <section aria-labelledby="titulo-faq-lista">
+        <h2 class="bloco-titulo" id="titulo-faq-lista">Perguntas <small id="faq-qtd"></small></h2>
+        <p class="bloco-sub">Só as publicadas aparecem no site. As marcadas "Rascunho: revisar" foram escritas por nós: leia, ajuste e publique.</p>
+        <div id="faq-lista"></div>
+      </section>
+    </div>
   </section>
 
   <!-- Uma parte do site -->
@@ -92,11 +151,12 @@
       <button class="voltar" id="voltar" type="button">← Voltar</button>
       <h1 id="secao-titulo" tabindex="-1"></h1>
     </header>
-    <main>
+    <div class="conteudo">
       <div class="botoes-add">
         <button class="btn" type="button" id="abrir-instagram">+ Trazer do Instagram</button>
         <button class="btn btn-claro" type="button" id="abrir-celular">+ Foto do celular</button>
       </div>
+      <p class="bloco-sub" id="otimizando" hidden aria-live="polite"></p>
 
       <section aria-labelledby="titulo-no-site">
         <h2 class="bloco-titulo" id="titulo-no-site">No site agora <small id="secao-qtd"></small></h2>
@@ -116,14 +176,69 @@
             <textarea id="txt-para" maxlength="220" aria-describedby="cont-para"></textarea>
             <span class="ajuda" id="cont-para"></span>
           </label>
+          <label class="campo"><span>Preço (a partir de)</span>
+            <input id="txt-preco" type="number" inputmode="numeric" min="1" max="99999" step="1" placeholder="Ex.: 380" aria-describedby="ajuda-preco">
+            <span class="ajuda" id="ajuda-preco">Valor de entrada, em reais e sem centavos: o site mostra "A partir de R$ …". Deixe vazio para não mostrar preço.</span>
+          </label>
           <div class="erro" id="erro-textos" role="alert" hidden></div>
           <button class="btn btn-verde" type="submit" id="salvar-textos">Salvar alterações</button>
         </form>
       </section>
-    </main>
+
+      <section class="textos" id="produtos" hidden aria-labelledby="titulo-produtos">
+        <h2 id="titulo-produtos">Produtos</h2>
+        <p>Fotos com o mesmo nome formam um produto. Toque num produto para pôr preço, prazo e descrição.</p>
+        <div id="lista-produtos"></div>
+      </section>
+
+      <section class="textos" id="condicoes" hidden aria-labelledby="titulo-condicoes">
+        <h2 id="titulo-condicoes">Como encomendar</h2>
+        <p>O site já explica os 3 passos da encomenda. Aqui você completa com as suas condições. O que ficar vazio não aparece.</p>
+        <form id="form-condicoes" novalidate>
+          <label class="campo"><span>Pagamento</span>
+            <textarea id="cond-pagamento" maxlength="220" aria-describedby="cont-cond-pagamento" placeholder="Ex.: Pix à vista ou cartão em até 3x"></textarea>
+            <span class="ajuda" id="cont-cond-pagamento"></span>
+          </label>
+          <label class="campo"><span>Frete</span>
+            <textarea id="cond-frete" maxlength="220" aria-describedby="cont-cond-frete" placeholder="Ex.: Correios para todo o Brasil; retirada em Florianópolis"></textarea>
+            <span class="ajuda" id="cont-cond-frete"></span>
+          </label>
+          <label class="campo"><span>Prazo padrão</span>
+            <textarea id="cond-prazo" maxlength="220" aria-describedby="cont-cond-prazo" placeholder="Ex.: Até 10 dias úteis depois do pagamento"></textarea>
+            <span class="ajuda" id="cont-cond-prazo"></span>
+          </label>
+          <label class="campo"><span>Trocas e peça artesanal</span>
+            <textarea id="cond-troca" maxlength="220" aria-describedby="cont-cond-troca" placeholder="Ex.: Cada peça é feita à mão para você; encomenda não tem troca"></textarea>
+            <span class="ajuda" id="cont-cond-troca"></span>
+          </label>
+          <label class="campo"><span>Link das suas avaliações no Google (opcional)</span>
+            <input id="cond-gbp" type="url" inputmode="url" autocomplete="off" placeholder="https://g.page/r/..." aria-describedby="ajuda-gbp">
+            <span class="ajuda" id="ajuda-gbp">Cole o link do seu perfil da empresa no Google. Com ele, o rodapé do site ganha "Avaliações no Google".</span>
+          </label>
+          <fieldset class="grupo-campos">
+            <legend>Cupom de primeira encomenda</legend>
+            <p class="ajuda">Ligado, o site mostra "Primeira encomenda? Diga o código … no WhatsApp e ganhe …%" na LALAIÁ, e os botões já chegam com o código na mensagem.</p>
+            <label class="marcar"><input type="checkbox" id="cupom-ativo"><span>Mostrar o cupom no site</span></label>
+            <label class="campo"><span>Código</span>
+              <input id="cupom-codigo" maxlength="20" autocomplete="off" autocapitalize="characters" placeholder="Ex.: BEMVINDA" aria-describedby="ajuda-cupom-codigo">
+              <span class="ajuda" id="ajuda-cupom-codigo">Até 20 letras ou números, sem espaço. O site mostra em maiúsculas.</span>
+            </label>
+            <label class="campo"><span>Desconto (%)</span>
+              <input id="cupom-desconto" type="number" inputmode="numeric" min="1" max="99" step="1" placeholder="Ex.: 10">
+            </label>
+            <label class="campo"><span>Vale até (opcional)</span>
+              <input id="cupom-validade" type="date" aria-describedby="ajuda-cupom-validade">
+              <span class="ajuda" id="ajuda-cupom-validade">Depois dessa data o cupom some do site sozinho. Sem data, vale até você desligar.</span>
+            </label>
+          </fieldset>
+          <div class="erro" id="erro-condicoes" role="alert" hidden></div>
+          <button class="btn btn-verde" type="submit" id="salvar-condicoes">Salvar condições</button>
+        </form>
+      </section>
+    </div>
   </section>
 
-</div>
+</main>
 
 <!-- Publicar um post do Instagram (3 toques) -->
 <dialog class="folha" id="dlg-publicar" aria-labelledby="pub-titulo">
@@ -184,10 +299,110 @@
   </div>
 </dialog>
 
+<!-- Cadastrar ou editar um depoimento -->
+<dialog class="cheia" id="dlg-depoimento" aria-labelledby="dep-dlg-titulo">
+  <div class="rolagem">
+    <header class="topo">
+      <button class="voltar" type="button" data-fechar>← Voltar</button>
+      <h1 id="dep-dlg-titulo">Novo depoimento</h1>
+    </header>
+    <form class="celular-corpo" id="form-depoimento" novalidate>
+      <label class="campo"><span>Nome da cliente</span>
+        <input id="dep-nome" maxlength="80" autocomplete="off" placeholder="Ex.: Mariana">
+      </label>
+      <label class="campo"><span>De onde ou o que faz (opcional)</span>
+        <input id="dep-de-onde" maxlength="80" autocomplete="off" placeholder="Ex.: Florianópolis · arquiteta">
+      </label>
+      <label class="campo"><span>O que ela disse</span>
+        <textarea id="dep-texto" maxlength="400" aria-describedby="cont-dep-texto"></textarea>
+        <span class="ajuda" id="cont-dep-texto"></span>
+      </label>
+      <label class="campo"><span>Serviço (opcional)</span>
+        <select id="dep-servico"></select>
+      </label>
+      <div class="campo" id="dep-foto-area">
+        <span>Foto da cliente (opcional)</span>
+        <input type="file" id="dep-arquivo" accept="image/*" class="sr" tabindex="-1" aria-hidden="true">
+        <div class="dep-foto-linha">
+          <img class="dep-foto-previa" id="dep-previa" alt="" hidden>
+          <button class="btn btn-claro" type="button" id="dep-escolher">Escolher foto</button>
+          <button class="btn btn-claro" type="button" id="dep-sem-foto" hidden>Tirar a foto</button>
+        </div>
+        <span class="ajuda">Aparece redondinha ao lado do depoimento. Para trocar a foto de um depoimento já salvo, tire-o do site e cadastre de novo.</span>
+      </div>
+      <label class="marcar" id="dep-consent-linha" hidden><input type="checkbox" id="dep-consent"><span>A cliente autorizou usar a foto e o depoimento no site</span></label>
+      <div class="erro" id="dep-erro" role="alert" hidden></div>
+      <button class="btn btn-verde" type="submit" id="dep-salvar">Colocar no site</button>
+    </form>
+  </div>
+</dialog>
+
+<!-- Cadastrar ou editar um par antes/depois -->
+<dialog class="cheia" id="dlg-par" aria-labelledby="par-dlg-titulo">
+  <div class="rolagem">
+    <header class="topo">
+      <button class="voltar" type="button" data-fechar>← Voltar</button>
+      <h1 id="par-dlg-titulo">Novo par de fotos</h1>
+    </header>
+    <form class="celular-corpo" id="form-par" novalidate>
+      <div class="campo" id="par-fotos-area">
+        <span>As duas fotos</span>
+        <input type="file" id="par-arquivo-antes" accept="image/*" class="sr" tabindex="-1" aria-hidden="true">
+        <input type="file" id="par-arquivo-depois" accept="image/*" class="sr" tabindex="-1" aria-hidden="true">
+        <div class="par-escolha">
+          <button class="par-caixa" type="button" id="par-escolher-antes" aria-label="Escolher a foto de antes">
+            <img id="par-previa-antes" alt="" hidden><span class="par-rotulo">Antes</span><span class="par-vazio" id="par-vazio-antes">Toque para escolher</span>
+          </button>
+          <button class="par-caixa" type="button" id="par-escolher-depois" aria-label="Escolher a foto de depois">
+            <img id="par-previa-depois" alt="" hidden><span class="par-rotulo">Depois</span><span class="par-vazio" id="par-vazio-depois">Toque para escolher</span>
+          </button>
+        </div>
+        <span class="ajuda">Toque de novo para trocar. Para trocar as fotos de um par já salvo, tire-o do site e cadastre de novo.</span>
+      </div>
+      <label class="campo"><span>Legenda (opcional)</span>
+        <input id="par-legenda" maxlength="120" autocomplete="off" placeholder="Ex.: Vitrine de inverno da loja" aria-describedby="cont-par-legenda">
+        <span class="ajuda" id="cont-par-legenda"></span>
+      </label>
+      <label class="campo"><span>Serviço</span>
+        <select id="par-servico"></select>
+      </label>
+      <label class="marcar" id="par-consent-linha"><input type="checkbox" id="par-consent"><span>A cliente autorizou mostrar as fotos no site</span></label>
+      <div class="erro" id="par-erro" role="alert" hidden></div>
+      <button class="btn btn-verde" type="submit" id="par-salvar">Colocar no site</button>
+    </form>
+  </div>
+</dialog>
+
+<!-- Nova pergunta ou editar -->
+<dialog class="cheia" id="dlg-faq" aria-labelledby="faq-dlg-titulo">
+  <div class="rolagem">
+    <header class="topo">
+      <button class="voltar" type="button" data-fechar>← Voltar</button>
+      <h1 id="faq-dlg-titulo">Nova pergunta</h1>
+    </header>
+    <form class="celular-corpo" id="form-faq" novalidate>
+      <label class="campo"><span>Pergunta</span>
+        <input id="faq-pergunta" maxlength="140" autocomplete="off" aria-describedby="cont-faq-pergunta">
+        <span class="ajuda" id="cont-faq-pergunta"></span>
+      </label>
+      <label class="campo"><span>Resposta</span>
+        <textarea id="faq-resposta" maxlength="600" aria-describedby="cont-faq-resposta"></textarea>
+        <span class="ajuda" id="cont-faq-resposta"></span>
+      </label>
+      <label class="campo"><span>Grupo</span>
+        <select id="faq-grupo"></select>
+      </label>
+      <label class="marcar"><input type="checkbox" id="faq-publicada"><span>Mostrar no site</span></label>
+      <div class="erro" id="faq-erro" role="alert" hidden></div>
+      <button class="btn btn-verde" type="submit" id="faq-salvar">Salvar</button>
+    </form>
+  </div>
+</dialog>
+
 <!-- Tirar do site -->
 <dialog id="dlg-tirar" aria-labelledby="tirar-titulo">
   <h2 id="tirar-titulo">Tirar essa foto do site?</h2>
-  <p>Ela some do site, mas continua no seu Instagram e no seu celular.</p>
+  <p id="tirar-texto">Ela some do site, mas continua no seu Instagram e no seu celular.</p>
   <div class="erro" id="tirar-erro" role="alert" hidden></div>
   <button class="btn btn-perigo" type="button" id="tirar-sim">Sim, tirar do site</button>
   <button class="btn btn-claro" type="button" data-fechar autofocus>Não, deixar como está</button>
@@ -197,6 +412,7 @@
 <dialog id="dlg-nome" aria-labelledby="nome-titulo">
   <h2 id="nome-titulo">Nome da foto no site</h2>
   <p>Aparece embaixo da foto. Pode deixar em branco.</p>
+  <p class="aviso" id="nome-aviso" hidden></p>
   <label class="campo"><span class="sr">Nome da foto</span>
     <input id="nome-campo" maxlength="80" autocomplete="off">
   </label>

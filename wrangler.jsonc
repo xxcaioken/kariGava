@@ -6,7 +6,8 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "run_worker_first": ["/", "/api/*", "/fotos/*"]
+    // Tudo passa pelo Worker, para os cabeçalhos de segurança valerem também nos arquivos estáticos (painel, CSS, fontes).
+    "run_worker_first": true
   },
   "d1_databases": [
     {
@@ -30,7 +31,15 @@
   "vars": {
     "EMAILS_PERMITIDOS": "",
     "REMETENTE": "",
-    "WHATSAPP": "https://wa.me/message/X6FXMZWUW2EKM1",
+    // Só dígitos, com DDI e DDD: cada botão do site monta wa.me/<número>?text=<mensagem da intenção>.
+    "WHATSAPP_NUMERO": "5548998459412",
+    // Canal de contato da página /privacidade; vazio, a página cita o WhatsApp.
+    "EMAIL_CONTATO": "",
+    // Endereço final do site (ex.: "https://karigava.com.br"), usado em canonical, og:url, sitemap e JSON-LD.
+    // Vazio, o Worker usa o endereço do próprio request (workers.dev).
+    "SITE_URL": "",
+    // Token do Cloudflare Web Analytics (sem cookies). Vazio, o site não inclui o beacon; o painel nunca inclui.
+    "ANALYTICS_TOKEN": "",
     "MODO_INSTAGRAM": "real"
   }
   // Segredos (wrangler secret put): SEGREDO_SESSAO, IG_APP_ID, IG_APP_SECRET

@@ -9,7 +9,7 @@
     "seed": "node scripts/gerar-seed.mjs",
     "test": "node --test 'test/unit/*.test.mjs'",
     "test:e2e": "./scripts/resetar-local.sh && node --test 'test/e2e/*.test.mjs'",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler d1 migrations apply site-kari --remote && wrangler deploy"
   },
   "devDependencies": {
     "wrangler": "4.152.0"

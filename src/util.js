@@ -58,12 +58,17 @@ export async function conferirAssinatura(segredo, texto, assinatura) {
   return crypto.subtle.verify('HMAC', chave, bytes, codificador.encode(texto));
 }
 
+// Toda rota recebe um objeto JSON; `null`, texto, número ou lista viram 400 com mensagem, nunca 500 (review-r1 S-21).
+const MSG_JSON = 'Os dados enviados não vieram no formato esperado. Atualize a página e tente de novo.';
 export async function lerJson(request) {
+  let corpo;
   try {
-    return await request.json();
+    corpo = await request.json();
   } catch {
-    throw new ErroApi(400, 'json_invalido');
+    throw new ErroApi(400, 'json_invalido', MSG_JSON);
   }
+  if (corpo === null || typeof corpo !== 'object' || Array.isArray(corpo)) throw new ErroApi(400, 'json_invalido', MSG_JSON);
+  return corpo;
 }
 
 export function emailsPermitidos(env) {

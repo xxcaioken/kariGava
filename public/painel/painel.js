@@ -9,7 +9,7 @@ const MSG_GERAL = 'Algo não deu certo. Tente de novo em alguns minutos.';
 const MSG_DESLIGADO = 'Essa conta ainda não está ligada ao site. Peça para o Caio ligar.';
 const LIMITE_TEXTO = 220;
 const LIMITE_FOTO = 15 * 1024 * 1024;
-const TELAS = ['tela-carregando', 'tela-falha', 'tela-email', 'tela-codigo', 'tela-inicio', 'tela-secao'];
+const TELAS = ['tela-carregando', 'tela-falha', 'tela-email', 'tela-codigo', 'tela-inicio', 'tela-secao', 'tela-depoimentos', 'tela-pares', 'tela-faq'];
 
 let estado = null;
 let telaAtual = 'tela-carregando';
@@ -111,6 +111,9 @@ async function sincronizar() {
 function renderAtual() {
   if (telaAtual === 'tela-inicio') { renderCartoes(); renderNovidades(); }
   if (telaAtual === 'tela-secao' && secaoAtual) renderSecao();
+  if (telaAtual === 'tela-depoimentos') renderDepoimentos();
+  if (telaAtual === 'tela-pares') renderPares();
+  if (telaAtual === 'tela-faq') renderFaq();
 }
 
 // Marca nos posts guardados (novidades e grade) em que seção eles estão no site.
@@ -288,15 +291,69 @@ function renderCartoes() {
     } else {
       miniaturas.append(el('span', { class: 'sem', text: 'Ainda sem fotos. Toque para colocar.' }));
     }
+    // Serviço mostra também o estado do preço (R-02), para a Kari ver de longe o que falta preencher.
+    const preco = s.tipo === 'servico' ? estado.textos?.[s.id]?.preco : undefined;
+    let linhaPreco = s.tipo === 'servico'
+      ? el('span', { class: 'cartao-preco', text: preco ? `A partir de R$ ${preco.toLocaleString('pt-BR')}` : 'Sem preço no site' })
+      : null;
+    if (s.id === 'lalaia') {
+      const lista = (estado.lalaia?.produtos || []).filter((p) => p.fotos.length);
+      const semPreco = lista.filter((p) => !p.preco).length;
+      const produtosTexto = lista.length ? `${plural(lista.length, 'produto', 'produtos')} · ${semPreco ? `${semPreco} sem preço` : 'todos com preço'}` : 'Nenhum produto ainda';
+      linhaPreco = el('span', { class: 'cartao-preco', text: `${produtosTexto} · Cupom ${situacaoDoCupom(estado.lalaia?.cupom)}` });
+    }
+    // Fotos do Instagram que ainda não têm as versões leves (R-10): dá para gerar abrindo a parte e esperando "Otimizando".
+    const semVersaoLeve = itens.filter((i) => i.origem === 'instagram' && !i.variantes).length;
     const cartao = el('button', { class: 'cartao', type: 'button', 'data-secao': s.id, onclick: () => abrirSecao(s.id) },
       el('span', { class: 'cartao-topo' },
         el('span', { class: 'cartao-nome', text: s.nome }),
         el('span', { class: 'qtd', text: plural(itens.length, 'foto', 'fotos') })),
       miniaturas,
+      ...(linhaPreco ? [linhaPreco] : []),
+      semVersaoLeve ? el('span', { class: 'cartao-preco', text: `${plural(semVersaoLeve, 'foto', 'fotos')} sem versão leve` }) : null,
       el('span', { class: 'ir', 'aria-hidden': 'true', text: 'Atualizar →' }));
     aplicarCor(cartao, s.cor);
     caixa.append(cartao);
   }
+  // Depoimentos (R-04) não são fotos de seção: cartão próprio, com a própria tela.
+  const deps = depoimentos();
+  const cartaoDep = el('button', { class: 'cartao', type: 'button', 'data-secao': 'depoimentos', onclick: abrirDepoimentos },
+    el('span', { class: 'cartao-topo' },
+      el('span', { class: 'cartao-nome', text: 'Depoimentos' }),
+      el('span', { class: 'qtd', text: plural(deps.length, 'depoimento', 'depoimentos') })),
+    el('span', { class: 'cartao-preco', text: deps.length ? resumir(deps.map((d) => d.nome).join(', '), 60) : 'O que as clientes dizem de você. Toque para cadastrar o primeiro.' }),
+    el('span', { class: 'ir', 'aria-hidden': 'true', text: 'Atualizar →' }));
+  aplicarCor(cartaoDep, '#E5196E');
+  caixa.append(cartaoDep);
+  // Antes e depois (R-05): pares de fotos, com a própria tela.
+  const ps = pares();
+  const miniPares = el('span', { class: 'miniaturas' });
+  if (ps.length) {
+    ps.slice(0, 2).forEach((p) => miniPares.append(el('img', { src: p.antes_url, alt: '', loading: 'lazy' }), el('img', { src: p.depois_url, alt: '', loading: 'lazy' })));
+    if (ps.length > 2) miniPares.append(el('span', { class: 'mais', text: `+${ps.length - 2}` }));
+  } else {
+    miniPares.append(el('span', { class: 'sem', text: 'Vitrines, looks e armários antes e depois da sua mão. Toque para cadastrar o primeiro par.' }));
+  }
+  const cartaoPar = el('button', { class: 'cartao', type: 'button', 'data-secao': 'antes-depois', onclick: abrirPares },
+    el('span', { class: 'cartao-topo' },
+      el('span', { class: 'cartao-nome', text: 'Antes e depois' }),
+      el('span', { class: 'qtd', text: plural(ps.length, 'par', 'pares') })),
+    miniPares,
+    el('span', { class: 'ir', 'aria-hidden': 'true', text: 'Atualizar →' }));
+  aplicarCor(cartaoPar, '#017F38');
+  caixa.append(cartaoPar);
+  // Perguntas frequentes (R-06).
+  const fs = faqs();
+  const publicadas = fs.filter((f) => f.publicada).length;
+  const rascunhos = fs.filter((f) => !f.revisada).length;
+  const cartaoFaq = el('button', { class: 'cartao', type: 'button', 'data-secao': 'faq', onclick: abrirFaq },
+    el('span', { class: 'cartao-topo' },
+      el('span', { class: 'cartao-nome', text: 'Perguntas frequentes' }),
+      el('span', { class: 'qtd', text: plural(fs.length, 'pergunta', 'perguntas') })),
+    el('span', { class: 'cartao-preco', text: fs.length ? `${publicadas} no site${rascunhos ? ` · ${plural(rascunhos, 'rascunho para revisar', 'rascunhos para revisar')}` : ''}` : 'Nenhuma pergunta ainda. Toque para escrever a primeira.' }),
+    el('span', { class: 'ir', 'aria-hidden': 'true', text: 'Atualizar →' }));
+  aplicarCor(cartaoFaq, '#2A2730');
+  caixa.append(cartaoFaq);
 }
 
 async function carregarNovidades() {
@@ -447,15 +504,21 @@ function abrirSecao(id) {
   const ehServico = s.tipo === 'servico';
   $('#textos').hidden = !ehServico;
   if (ehServico) preencherTextos();
+  $('#produtos').hidden = id !== 'lalaia';
+  $('#condicoes').hidden = id !== 'lalaia';
+  if (id === 'lalaia') preencherCondicoes();
   renderSecao();
   window.scrollTo(0, 0);
   mostrarTela('tela-secao');
+  // Fotos do Instagram ainda sem versão leve (importação interrompida, ou anterior às versões) são otimizadas
+  // em segundo plano ao abrir a parte; é o que zera o "N fotos sem versão leve" do cartão (review-r1 S-20).
+  otimizarFotos(itensDa(id).filter((i) => i.origem === 'instagram'));
   // O "voltar" do celular volta para o início em vez de sair do painel.
   history.pushState({ secao: id }, '');
 }
 
 function sairDaSecao() {
-  if (textosMudaram() && !confirm('Você mudou os textos e ainda não salvou. Quer voltar sem salvar?')) return false;
+  if ((textosMudaram() || condicoesMudaram()) && !confirm('Você mudou os textos e ainda não salvou. Quer voltar sem salvar?')) return false;
   irInicio({ focarSecao: secaoAtual });
   return true;
 }
@@ -464,8 +527,28 @@ $('#voltar').addEventListener('click', () => {
   if (history.state?.secao) history.back(); // o popstate abaixo faz a volta
   else sairDaSecao();
 });
+$('#voltar-dep').addEventListener('click', () => {
+  if (history.state?.secao) history.back();
+  else irInicio({ focarSecao: 'depoimentos' });
+});
+$('#voltar-par').addEventListener('click', () => {
+  if (history.state?.secao) history.back();
+  else irInicio({ focarSecao: 'antes-depois' });
+});
+$('#voltar-faq').addEventListener('click', () => {
+  if (history.state?.secao) history.back();
+  else irInicio({ focarSecao: 'faq' });
+});
 
+const TELAS_PROPRIAS = { 'tela-depoimentos': 'depoimentos', 'tela-pares': 'antes-depois', 'tela-faq': 'faq' };
 window.addEventListener('popstate', () => {
+  if (TELAS_PROPRIAS[telaAtual]) {
+    const cartao = TELAS_PROPRIAS[telaAtual];
+    const aberto = document.querySelector('dialog[open]');
+    if (aberto) { aberto.close(); history.pushState({ secao: cartao }, ''); return; }
+    irInicio({ focarSecao: cartao });
+    return;
+  }
   if (telaAtual !== 'tela-secao') return;
   const aberto = document.querySelector('dialog[open]');
   if (aberto) { aberto.close(); history.pushState({ secao: secaoAtual }, ''); return; }
@@ -508,6 +591,103 @@ function renderSecao({ foco } = {}) {
     const outra = lista.querySelector(`[data-id="${CSS.escape(foco.id)}"][data-dir="${foco.dir === 'cima' ? 'baixo' : 'cima'}"]`);
     (mesma && !mesma.disabled ? mesma : outra)?.focus();
   }
+  if (secaoAtual === 'lalaia') renderProdutos();
+}
+
+// ---------- Produtos da LALAIÁ (R-03) ----------
+
+const produtos = () => estado.lalaia?.produtos || [];
+const produtoDaFoto = (item) => produtos().find((p) => p.fotos.some((f) => f.id === item.id));
+const resumoProduto = (p) => {
+  const partes = [plural(p.fotos.length, 'foto', 'fotos'), p.preco ? `R$ ${p.preco.toLocaleString('pt-BR')}` : 'sem preço'];
+  if (p.disponibilidade === 'pronta') partes.push('pronta entrega');
+  if (p.disponibilidade === 'encomenda') partes.push(p.prazo_dias ? `até ${p.prazo_dias} dias úteis` : 'sob encomenda');
+  return partes.join(' · ');
+};
+
+function renderProdutos() {
+  const lista = $('#lista-produtos');
+  const abertos = new Set([...lista.querySelectorAll('details[open]')].map((d) => d.dataset.slug));
+  lista.replaceChildren();
+  const todos = produtos();
+  if (!todos.length) {
+    lista.append(el('div', { class: 'vazio' }, el('p', { text: 'Nenhum produto ainda. Coloque fotos da LALAIÁ com o nome da peça e elas viram produtos aqui.' })));
+    return;
+  }
+  for (const p of todos) lista.append(cartaoProduto(p, abertos.has(p.slug)));
+}
+
+function cartaoProduto(p, aberto) {
+  const erro = el('div', { class: 'erro', role: 'alert', hidden: true });
+  const precoCampo = el('input', { id: `prod-preco-${p.slug}`, type: 'number', inputmode: 'numeric', min: 1, max: 99999, step: 1, placeholder: 'Ex.: 65', value: p.preco ?? '' });
+  const dispCampo = el('select', { id: `prod-disp-${p.slug}` },
+    el('option', { value: '', text: 'Não dizer' }),
+    el('option', { value: 'pronta', text: 'Pronta entrega', selected: p.disponibilidade === 'pronta' }),
+    el('option', { value: 'encomenda', text: 'Sob encomenda', selected: p.disponibilidade === 'encomenda' }));
+  const prazoCampo = el('input', { id: `prod-prazo-${p.slug}`, type: 'number', inputmode: 'numeric', min: 1, max: 90, step: 1, placeholder: 'Ex.: 7', value: p.prazo_dias ?? '' });
+  const prazoLabel = el('label', { class: 'campo', hidden: p.disponibilidade !== 'encomenda' }, el('span', { text: 'Prazo de produção (dias úteis)' }), prazoCampo);
+  dispCampo.addEventListener('change', () => { prazoLabel.hidden = dispCampo.value !== 'encomenda'; });
+  const descCampo = el('textarea', { id: `prod-desc-${p.slug}`, maxlength: 220, 'aria-describedby': `prod-cont-${p.slug}` });
+  descCampo.value = p.descricao || '';
+  const contador = el('span', { class: 'ajuda', id: `prod-cont-${p.slug}`, text: `${descCampo.value.length} de 220 letras` });
+  descCampo.addEventListener('input', () => { contador.textContent = `${descCampo.value.length} de 220 letras`; contador.classList.toggle('passou', descCampo.value.length > 220); });
+
+  const salvar = el('button', { class: 'btn btn-verde', type: 'submit', text: 'Salvar produto' });
+  const form = el('form', { novalidate: true, onsubmit: async (ev) => {
+    ev.preventDefault();
+    const precoTexto = precoCampo.value.trim();
+    const preco = precoTexto ? Number(precoTexto) : null;
+    const prazoTexto = prazoCampo.value.trim();
+    const prazo = dispCampo.value === 'encomenda' && prazoTexto ? Number(prazoTexto) : null;
+    if (preco !== null && (!Number.isInteger(preco) || preco < 1 || preco > 99999)) { mostrarErro(erro, 'O preço precisa ser um número inteiro, sem centavos, de 1 a 99.999. Deixe vazio para não mostrar.'); precoCampo.focus(); return; }
+    if (prazo !== null && (!Number.isInteger(prazo) || prazo < 1 || prazo > 90)) { mostrarErro(erro, 'O prazo é em dias úteis, de 1 a 90.'); prazoCampo.focus(); return; }
+    if (descCampo.value.trim().length > 220) { mostrarErro(erro, 'A descrição pode ter até 220 letras.'); descCampo.focus(); return; }
+    ocupado(salvar, 'Salvando...');
+    try {
+      await api(`/api/painel/lalaia/produtos/${enc(p.slug)}`, { metodo: 'PUT', json: { preco, disponibilidade: dispCampo.value || null, prazo_dias: prazo, descricao: descCampo.value.trim() } });
+      erro.hidden = true;
+      await sincronizar();
+      mostrarToast('Produto salvo', { verSite: true });
+    } catch (e) {
+      if (e.tipo !== 'sessao') mostrarErro(erro, mensagemDe(e));
+    } finally {
+      livre(salvar);
+    }
+  } },
+    el('label', { class: 'campo' }, el('span', { text: 'Preço (R$, sem centavos)' }), precoCampo,
+      el('span', { class: 'ajuda', text: 'Deixe vazio para não mostrar preço.' })),
+    el('label', { class: 'campo' }, el('span', { text: 'Disponibilidade' }), dispCampo),
+    prazoLabel,
+    el('label', { class: 'campo' }, el('span', { text: 'Descrição curta' }), descCampo, contador),
+    erro,
+    salvar,
+    el('button', { class: 'btn btn-claro', type: 'button', text: 'Renomear produto', onclick: () => renomearProduto(p) }));
+
+  const det = el('details', { class: 'produto-edit', 'data-slug': p.slug, open: aberto },
+    el('summary', {},
+      el('span', { class: 'produto-nome', text: p.titulo || 'Sem nome' }),
+      el('span', { class: 'produto-resumo', text: resumoProduto(p) })),
+    form);
+  return det;
+}
+
+function mostrarErro(div, texto) { div.textContent = texto; div.hidden = false; }
+
+// Renomeia todas as fotos do produto e leva os dados junto (confirmação com a contagem, DES-20).
+async function renomearProduto(p) {
+  const nome = prompt('Novo nome do produto (vale para todas as fotos dele):', p.titulo || '');
+  if (nome === null) return;
+  const limpo = nome.replace(/\s+/g, ' ').trim();
+  if (!limpo) { mostrarToast('O nome não pode ficar vazio.'); return; }
+  if (limpo === p.titulo) return;
+  if (!confirm(`Mover ${plural(p.fotos.length, 'foto', 'fotos')} para "${limpo}"?`)) return;
+  try {
+    await api(`/api/painel/lalaia/produtos/${enc(p.slug)}/renomear`, { metodo: 'POST', json: { nome: limpo } });
+    await sincronizar();
+    mostrarToast(`Produto renomeado para "${limpo}"`, { verSite: true });
+  } catch (e) {
+    if (e.tipo !== 'sessao') mostrarToast(mensagemDe(e));
+  }
 }
 
 let movendo = false;
@@ -528,29 +708,41 @@ async function mover(item, direcao) {
   }
 }
 
-// Tirar do site
-let tirarItem = null;
+// Tirar do site (fotos e depoimentos usam o mesmo diálogo; muda o que é tirado e o que o desfazer faz)
+let tirarPedido = null;
 function abrirTirar(item) {
-  tirarItem = item;
+  abrirConfirmacaoTirar({
+    titulo: 'Tirar essa foto do site?',
+    texto: 'Ela some do site, mas continua no seu Instagram e no seu celular.',
+    tirando: 'Tirando...',
+    apagar: async () => { await api(`/api/painel/itens/${enc(item.id)}`, { metodo: 'DELETE', json: {} }); marcarItem(item, false); },
+    saiu: 'A foto saiu do site',
+    desfazer: async () => { await api(`/api/painel/itens/${enc(item.id)}/restaurar`, { metodo: 'POST', json: {} }); marcarItem(item, true); },
+    voltou: 'Pronto, a foto voltou para o site',
+    voltarFoco: $('#secao-titulo'),
+  });
+}
+function abrirConfirmacaoTirar(pedido) {
+  tirarPedido = pedido;
+  $('#tirar-titulo').textContent = pedido.titulo;
+  $('#tirar-texto').textContent = pedido.texto;
   esconder('#tirar-erro');
-  abrirDialogo('#dlg-tirar', { voltarFoco: $('#secao-titulo') });
+  abrirDialogo('#dlg-tirar', { voltarFoco: pedido.voltarFoco });
 }
 
 $('#tirar-sim').addEventListener('click', async () => {
   const botao = $('#tirar-sim');
-  const item = tirarItem;
-  ocupado(botao, 'Tirando...');
+  const p = tirarPedido;
+  ocupado(botao, p.tirando);
   try {
-    await api(`/api/painel/itens/${enc(item.id)}`, { metodo: 'DELETE', json: {} });
+    await p.apagar();
     fecharDialogo('#dlg-tirar');
-    marcarItem(item, false);
     await sincronizar();
-    mostrarToast('A foto saiu do site', {
+    mostrarToast(p.saiu, {
       desfazer: async () => {
-        await api(`/api/painel/itens/${enc(item.id)}/restaurar`, { metodo: 'POST', json: {} });
-        marcarItem(item, true);
+        await p.desfazer();
         await sincronizar();
-        mostrarToast('Pronto, a foto voltou para o site');
+        mostrarToast(p.voltou);
       },
     });
   } catch (e) {
@@ -566,6 +758,13 @@ function abrirNome(item) {
   nomeItem = item;
   $('#nome-campo').value = item.titulo || '';
   esconder('#nome-erro');
+  // Na LALAIÁ, fotos com o mesmo nome formam um produto: avisa que renomear uma só a tira do produto.
+  const produto = item.secao === 'lalaia' ? produtoDaFoto(item) : null;
+  if (produto && (produto.fotos.length > 1 || produto.preco != null || produto.disponibilidade || produto.descricao)) {
+    mostrar('#nome-aviso', `Essa foto faz parte do produto "${produto.titulo}". Com outro nome ela sai do produto e vira um produto novo, sem preço. Para renomear o produto inteiro, use "Renomear produto" na lista de produtos.`);
+  } else {
+    esconder('#nome-aviso');
+  }
   abrirDialogo('#dlg-nome');
   $('#nome-campo').focus();
   $('#nome-campo').select();
@@ -595,14 +794,25 @@ function preencherTextos() {
   const t = estado.textos?.[secaoAtual] || {};
   $('#txt-resumo').value = t.resumo || '';
   $('#txt-para').value = t.para_quem || '';
+  $('#txt-preco').value = t.preco ?? '';
   esconder('#erro-textos');
   atualizarContadores();
+}
+
+// Campo vazio = sem preço (null). Qualquer outra coisa tem de ser inteiro em reais de 1 a 99.999.
+function lerPrecoDoCampo() {
+  const texto = $('#txt-preco').value.trim();
+  if (!texto) return null;
+  const n = Number(texto);
+  if (!Number.isInteger(n) || n < 1 || n > 99999) return NaN;
+  return n;
 }
 
 function textosMudaram() {
   if (telaAtual !== 'tela-secao' || $('#textos').hidden) return false;
   const t = estado?.textos?.[secaoAtual] || {};
-  return $('#txt-resumo').value !== (t.resumo || '') || $('#txt-para').value !== (t.para_quem || '');
+  return $('#txt-resumo').value !== (t.resumo || '') || $('#txt-para').value !== (t.para_quem || '')
+    || $('#txt-preco').value !== String(t.preco ?? '');
 }
 
 function atualizarContadores() {
@@ -625,17 +835,129 @@ $('#form-textos').addEventListener('submit', async (ev) => {
     mostrar('#erro-textos', `Cada texto pode ter até ${LIMITE_TEXTO} letras.`);
     return;
   }
+  const preco = lerPrecoDoCampo();
+  if (Number.isNaN(preco)) {
+    mostrar('#erro-textos', 'O preço precisa ser um número inteiro, sem centavos, de 1 a 99.999. Deixe vazio para não mostrar.');
+    $('#txt-preco').focus();
+    return;
+  }
   const botao = $('#salvar-textos');
   const id = secaoAtual;
   ocupado(botao, 'Salvando...');
   try {
-    const r = await api(`/api/painel/textos/${enc(id)}`, { metodo: 'PUT', json: { resumo, para_quem: paraQuem } });
-    estado.textos = { ...(estado.textos || {}), [id]: r.textos || { resumo, para_quem: paraQuem } };
+    const r = await api(`/api/painel/textos/${enc(id)}`, { metodo: 'PUT', json: { resumo, para_quem: paraQuem, preco } });
+    estado.textos = { ...(estado.textos || {}), [id]: r.textos || { resumo, para_quem: paraQuem, preco } };
+    renderCartoes();
     esconder('#erro-textos');
     if (secaoAtual === id) preencherTextos();
     mostrarToast('Alterações salvas', { verSite: true });
   } catch (e) {
     if (e.tipo !== 'sessao') mostrar('#erro-textos', mensagemDe(e));
+  } finally {
+    livre(botao);
+  }
+});
+
+// ---------- Como encomendar: condições da LALAIÁ (R-03) ----------
+
+const CAMPOS_CONDICOES = [
+  ['pagamento', '#cond-pagamento', '#cont-cond-pagamento'],
+  ['frete', '#cond-frete', '#cont-cond-frete'],
+  ['prazo_padrao', '#cond-prazo', '#cont-cond-prazo'],
+  ['troca', '#cond-troca', '#cont-cond-troca'],
+];
+const condicoesAtuais = () => estado?.lalaia?.condicoes || {};
+const cupomAtual = () => estado?.lalaia?.cupom || { ativo: false, codigo: '', desconto: null, valido_ate: '' };
+
+// Hoje no formato AAAA-MM-DD do celular da Kari, para comparar com `valido_ate` como texto.
+function hojeLocal() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+const dataCurta = iso => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+
+// "ligado", "desligado" ou "vencido em dd/mm", para o cartão em "Partes do site".
+function situacaoDoCupom(c) {
+  if (!c?.ativo) return 'desligado';
+  if (c.valido_ate && c.valido_ate < hojeLocal()) return `vencido em ${dataCurta(c.valido_ate)}`;
+  return 'ligado';
+}
+
+function preencherCondicoes() {
+  const c = condicoesAtuais();
+  for (const [campo, sel] of CAMPOS_CONDICOES) $(sel).value = c[campo] || '';
+  $('#cond-gbp').value = c.gbp_url || '';
+  const cupom = cupomAtual();
+  $('#cupom-ativo').checked = Boolean(cupom.ativo);
+  $('#cupom-codigo').value = cupom.codigo || '';
+  $('#cupom-desconto').value = cupom.desconto ?? '';
+  $('#cupom-validade').value = cupom.valido_ate || '';
+  esconder('#erro-condicoes');
+  atualizarContadoresCondicoes();
+}
+
+function cupomDoFormulario() {
+  const codigo = $('#cupom-codigo').value.trim().toUpperCase();
+  const desconto = $('#cupom-desconto').value.trim();
+  return { ativo: $('#cupom-ativo').checked, codigo: codigo || null, desconto: desconto ? Number(desconto) : null, valido_ate: $('#cupom-validade').value || null };
+}
+
+function atualizarContadoresCondicoes() {
+  for (const [, sel, cont] of CAMPOS_CONDICOES) {
+    const n = $(sel).value.length;
+    const c = $(cont);
+    c.textContent = `${n} de ${LIMITE_TEXTO} letras`;
+    c.classList.toggle('passou', n > LIMITE_TEXTO);
+  }
+}
+for (const [, sel] of CAMPOS_CONDICOES) $(sel).addEventListener('input', atualizarContadoresCondicoes);
+
+function condicoesMudaram() {
+  if (telaAtual !== 'tela-secao' || $('#condicoes').hidden) return false;
+  const c = condicoesAtuais();
+  const cupom = cupomAtual();
+  const f = cupomDoFormulario();
+  return CAMPOS_CONDICOES.some(([campo, sel]) => $(sel).value !== (c[campo] || '')) || $('#cond-gbp').value !== (c.gbp_url || '')
+    || f.ativo !== Boolean(cupom.ativo) || (f.codigo || '') !== (cupom.codigo || '') || f.desconto !== (cupom.desconto ?? null) || (f.valido_ate || '') !== (cupom.valido_ate || '');
+}
+
+$('#form-condicoes').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const corpo = {};
+  for (const [campo, sel] of CAMPOS_CONDICOES) corpo[campo] = $(sel).value.trim() || null;
+  if (CAMPOS_CONDICOES.some(([campo]) => (corpo[campo] || '').length > LIMITE_TEXTO)) {
+    mostrar('#erro-condicoes', `Cada condição pode ter até ${LIMITE_TEXTO} letras.`);
+    return;
+  }
+  const gbp = $('#cond-gbp').value.trim();
+  if (gbp && !/^https:\/\/\S+\.\S+/i.test(gbp)) {
+    mostrar('#erro-condicoes', 'Cole o link do seu perfil no Google (começa com https://).');
+    $('#cond-gbp').focus();
+    return;
+  }
+  corpo.gbp_url = gbp || null;
+  corpo.cupom = cupomDoFormulario();
+  if (corpo.cupom.ativo && (!corpo.cupom.codigo || !corpo.cupom.desconto)) {
+    mostrar('#erro-condicoes', 'Para ligar o cupom, preencha o código e o desconto.');
+    $(corpo.cupom.codigo ? '#cupom-desconto' : '#cupom-codigo').focus();
+    return;
+  }
+  if (corpo.cupom.codigo && !/^[A-Z0-9]{1,20}$/.test(corpo.cupom.codigo)) {
+    mostrar('#erro-condicoes', 'O código do cupom tem até 20 letras ou números, sem espaços nem acentos.');
+    $('#cupom-codigo').focus();
+    return;
+  }
+  const botao = $('#salvar-condicoes');
+  ocupado(botao, 'Salvando...');
+  try {
+    const r = await api('/api/painel/lalaia/condicoes', { metodo: 'PUT', json: corpo });
+    estado.lalaia = { ...(estado.lalaia || {}), condicoes: r.condicoes, cupom: r.cupom };
+    renderCartoes();
+    esconder('#erro-condicoes');
+    if (secaoAtual === 'lalaia') preencherCondicoes();
+    mostrarToast('Condições salvas', { verSite: true });
+  } catch (e) {
+    if (e.tipo !== 'sessao') mostrar('#erro-condicoes', mensagemDe(e));
   } finally {
     livre(botao);
   }
@@ -835,6 +1157,7 @@ $('#ig-adicionar').addEventListener('click', async () => {
         mostrarToast(qtd === 1 ? 'Pronto, a foto saiu do site' : 'Pronto, as fotos saíram do site');
       },
     });
+    otimizarFotos(criados); // em segundo plano; a foto já está no site
   } catch (e) {
     livre(botao);
     if (e.tipo !== 'sessao') mostrar('#ig-erro', mensagemDe(e));
@@ -881,41 +1204,173 @@ $('#dlg-celular').addEventListener('close', () => {
   celArquivo = null;
 });
 
-// Foto de celular chega com 3 a 8 MB; o site só precisa de 1600 px no lado maior.
+// Foto de celular chega com 3 a 8 MB; o site só precisa de 1600 px no lado maior (480 px para o avatar do depoimento).
 // Também endireita fotos tiradas com o celular de lado (orientação EXIF).
+// Devolve { arquivo, largura, altura }; largura/altura ficam null quando o navegador não lê o formato (o servidor explica o que fazer).
 const LADO_MAXIMO = 1600;
-async function reduzirFoto(arquivo) {
+async function reduzirFoto(arquivo, ladoMaximo = LADO_MAXIMO) {
   let bitmap;
   try {
     bitmap = await createImageBitmap(arquivo, { imageOrientation: 'from-image' });
   } catch {
-    return arquivo; // formato que o navegador não lê: o servidor explica o que fazer
+    return { arquivo, largura: null, altura: null };
   }
-  const escala = Math.min(1, LADO_MAXIMO / Math.max(bitmap.width, bitmap.height));
+  const escala = Math.min(1, ladoMaximo / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(bitmap.width * escala);
   canvas.height = Math.round(bitmap.height * escala);
   canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const original = { largura: bitmap.width, altura: bitmap.height };
   bitmap.close();
   const blob = await new Promise(ok => canvas.toBlob(ok, 'image/jpeg', 0.85));
-  return blob && blob.size < arquivo.size ? blob : arquivo;
+  if (blob && (blob.size < arquivo.size || escala < 1)) return { arquivo: blob, largura: canvas.width, altura: canvas.height };
+  return { arquivo, ...original };
+}
+
+// ---------- Versões leves das fotos (R-10) ----------
+// O Worker não redimensiona (plano Free): o navegador gera 480/960/1600 px (só as menores que a original, mais a
+// original) em JPEG e, quando o navegador souber, WebP. Em falha, a foto publica do mesmo jeito, sem versões.
+const LARGURAS_VARIANTES = [480, 960, 1600];
+const TEMPO_MAXIMO_VARIANTES = 20000;
+let suporteWebp = null;
+
+async function navegadorGeraWebp() {
+  if (suporteWebp !== null) return suporteWebp;
+  const c = document.createElement('canvas');
+  c.width = 2; c.height = 2;
+  const b = await new Promise((ok) => c.toBlob(ok, 'image/webp', 0.8));
+  suporteWebp = Boolean(b && b.type === 'image/webp'); // Safari antigo devolve PNG, não null
+  return suporteWebp;
+}
+
+function largurasDasVariantes(largura) {
+  const teto = Math.min(largura, LARGURAS_VARIANTES[LARGURAS_VARIANTES.length - 1]);
+  return [...LARGURAS_VARIANTES.filter((w) => w < teto), teto];
+}
+
+const comTempo = (promessa, ms) => Promise.race([promessa, new Promise((_, falha) => setTimeout(() => falha(new Error('tempo esgotado')), ms))]);
+
+// Devolve { largura, altura, campos: [[nome, blob]...], webp }. largura/altura são da original já endireitada (EXIF).
+async function gerarVariantes(arquivo) {
+  try {
+    return await comTempo((async () => {
+      const bitmap = await createImageBitmap(arquivo, { imageOrientation: 'from-image' });
+      const escala = Math.min(1, LADO_MAXIMO / Math.max(bitmap.width, bitmap.height));
+      const largura = Math.round(bitmap.width * escala);
+      const altura = Math.round(bitmap.height * escala);
+      const webp = await navegadorGeraWebp();
+      const campos = [];
+      for (const w of largurasDasVariantes(largura)) {
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = Math.max(1, Math.round(altura * (w / largura)));
+        canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        const jpg = await new Promise((ok) => canvas.toBlob(ok, 'image/jpeg', 0.85));
+        if (!jpg) throw new Error('toBlob jpeg nulo');
+        campos.push([`${w}.jpg`, jpg]);
+        if (webp) {
+          const wb = await new Promise((ok) => canvas.toBlob(ok, 'image/webp', 0.8));
+          if (wb && wb.type === 'image/webp') campos.push([`${w}.webp`, wb]);
+        }
+      }
+      bitmap.close();
+      return { largura, altura, campos, webp };
+    })(), TEMPO_MAXIMO_VARIANTES);
+  } catch (e) {
+    console.warn('não deu para gerar as versões leves; a foto vai sem elas', e);
+    return { largura: null, altura: null, campos: [], webp: false };
+  }
+}
+
+function anexarVariantes(form, v) {
+  if (v.largura && v.altura) { form.append('largura', String(v.largura)); form.append('altura', String(v.altura)); }
+  for (const [nome, blob] of v.campos) form.append(nome, blob, nome);
+}
+
+// Compara o que o servidor gravou com o que foi mandado: alguma versão ficou de fora?
+function faltouVariante(item, v) {
+  if (!v.campos.length) return false;
+  const esperadas = v.campos.filter(([n]) => n.endsWith('.jpg')).map(([n]) => Number(n.split('.')[0]));
+  const tem = item?.variantes?.larguras || [];
+  const faltaJpg = esperadas.some((w) => !tem.includes(w));
+  const mandouWebp = v.campos.some(([n]) => n.endsWith('.webp'));
+  return faltaJpg || (mandouWebp && !item?.variantes?.webp);
+}
+
+async function enviarVariantes(item, v) {
+  if (!v.campos.length) return item;
+  const form = new FormData();
+  anexarVariantes(form, v);
+  const r = await api(`/api/painel/itens/${enc(item.id)}/variantes`, { metodo: 'POST', form });
+  return r.item;
+}
+
+function avisarVariantesFaltando(item, v) {
+  mostrarToast('Foto publicada; algumas versões leves não subiram. Toque para tentar de novo.', {
+    acao: { texto: 'Tentar de novo', aoTocar: async () => { const novo = await enviarVariantes(item, v); await sincronizar(); if (faltouVariante(novo, v)) avisarVariantesFaltando(novo, v); else mostrarToast('Pronto, versões leves no ar'); } },
+  });
+}
+
+// Fotos vindas do Instagram chegam só no tamanho original: o painel baixa cada uma (mesma origem), gera as versões
+// e manda em segundo plano, uma por vez, com progresso. Falha numa foto não para as outras nem vira erro.
+// Fila única (review-r2 S-24): o que chega durante uma rodada entra na fila em vez de ser descartado, e cada foto
+// é tentada uma vez por sessão do painel, para uma foto que sempre falha não ser baixada de novo a cada abertura.
+const filaOtimizar = new Map(); // id → item, na ordem de chegada
+const jaTentadas = new Set();
+let otimizando = false;
+
+function otimizarFotos(itens) {
+  for (const i of itens) if (!i.variantes && !jaTentadas.has(i.id)) filaOtimizar.set(i.id, i);
+  if (otimizando || !filaOtimizar.size) return;
+  rodarFila().catch((e) => { if (e?.tipo !== 'sessao') console.warn('otimização das fotos parou', e); });
+}
+
+async function rodarFila() {
+  otimizando = true;
+  const status = $('#otimizando');
+  let n = 0;
+  try {
+    while (filaOtimizar.size) {
+      const [id, item] = filaOtimizar.entries().next().value;
+      filaOtimizar.delete(id);
+      jaTentadas.add(id);
+      n += 1;
+      status.textContent = `Otimizando fotos… ${n} de ${n + filaOtimizar.size}`;
+      status.hidden = false;
+      try {
+        const resposta = await fetch(item.foto_url, { credentials: 'same-origin' });
+        if (!resposta.ok) throw new Error(`foto ${resposta.status}`);
+        const v = await gerarVariantes(await resposta.blob());
+        await enviarVariantes(item, v);
+      } catch (e) {
+        console.warn('não deu para otimizar a foto', item.id, e);
+      }
+    }
+  } finally {
+    otimizando = false;
+    status.hidden = true;
+  }
+  await sincronizar();
 }
 
 $('#cel-ok').addEventListener('click', async () => {
   if (!celArquivo) { mostrar('#cel-erro', 'Escolha uma foto da galeria primeiro.'); return; }
   const botao = $('#cel-ok');
-  ocupado(botao, 'Colocando no site...');
-  const foto = await reduzirFoto(celArquivo);
+  ocupado(botao, 'Preparando foto...');
+  const [{ arquivo: foto }, variantes] = await Promise.all([reduzirFoto(celArquivo), gerarVariantes(celArquivo)]);
   const form = new FormData();
   form.append('secao', secaoAtual);
   form.append('titulo', $('#cel-nome').value.trim());
   form.append('foto', foto, foto === celArquivo ? (celArquivo.name || 'foto.jpg') : 'foto.jpg');
+  anexarVariantes(form, variantes);
+  botao.textContent = 'Enviando...';
   try {
     const r = await api('/api/painel/itens', { metodo: 'POST', form });
     const criados = r.itens || [];
     livre(botao);
     fecharDialogo('#dlg-celular');
     await sincronizar();
+    if (faltouVariante(criados[0], variantes)) { avisarVariantesFaltando(criados[0], variantes); return; }
     mostrarToast('Foto colocada no site', {
       verSite: true,
       desfazer: async () => {
@@ -927,6 +1382,545 @@ $('#cel-ok').addEventListener('click', async () => {
   } catch (e) {
     livre(botao);
     if (e.tipo !== 'sessao') mostrar('#cel-erro', mensagemDe(e));
+  }
+});
+
+// ---------- Depoimentos (R-04) ----------
+
+const depoimentos = () => estado?.depoimentos || [];
+const LIMITE_DEPOIMENTO = 400;
+const LADO_AVATAR = 480;
+let depEditando = null;   // depoimento em edição (null = novo)
+let depArquivo = null;    // foto escolhida (File)
+let depUrl = null;
+
+function abrirDepoimentos() {
+  secaoAtual = null;
+  renderDepoimentos();
+  window.scrollTo(0, 0);
+  mostrarTela('tela-depoimentos');
+  history.pushState({ secao: 'depoimentos' }, '');
+}
+
+function renderDepoimentos({ foco } = {}) {
+  const lista = depoimentos();
+  $('#dep-qtd').textContent = plural(lista.length, 'depoimento', 'depoimentos');
+  $('#dep-dica').hidden = lista.length < 2;
+  const caixa = $('#dep-lista');
+  caixa.replaceChildren();
+  if (!lista.length) {
+    caixa.append(el('div', { class: 'vazio' }, el('p', { text: 'Nenhum depoimento ainda. Toque em "Novo depoimento" para cadastrar o primeiro.' })));
+    return;
+  }
+  lista.forEach((d, idx) => {
+    const servico = d.servico ? nomeSecao(d.servico) : '';
+    const avatar = d.foto_url
+      ? el('img', { src: d.foto_url, alt: '', loading: 'lazy' })
+      : el('span', { class: 'dep-inicial', 'aria-hidden': 'true', text: [...(d.nome || '?')][0].toUpperCase() });
+    const cartao = el('div', { class: 'item dep' },
+      avatar,
+      el('button', { class: 'nome', type: 'button', 'aria-label': `${d.nome}. Editar`, onclick: () => abrirDepoimento(d) },
+        el('span', { text: d.nome + (d.de_onde ? `, ${d.de_onde}` : '') }),
+        el('em', { text: resumir(d.texto, 90) }),
+        servico && el('small', { text: servico })),
+      el('div', { class: 'acoes-item' },
+        el('button', { class: 'mini', type: 'button', 'data-id': d.id, 'data-dir': 'cima', disabled: idx === 0, 'aria-label': `Mostrar antes: ${d.nome}`, text: '↑', onclick: (ev) => moverDepoimento(d, 'cima', ev.currentTarget) }),
+        el('button', { class: 'mini', type: 'button', 'data-id': d.id, 'data-dir': 'baixo', disabled: idx === lista.length - 1, 'aria-label': `Mostrar depois: ${d.nome}`, text: '↓', onclick: (ev) => moverDepoimento(d, 'baixo', ev.currentTarget) })),
+      el('button', { class: 'editar', type: 'button', text: 'Editar', 'aria-label': `Editar: ${d.nome}`, onclick: () => abrirDepoimento(d) }),
+      el('button', { class: 'tirar', type: 'button', text: 'Tirar do site', 'aria-label': `Tirar do site: ${d.nome}`, onclick: () => tirarDepoimento(d) }));
+    aplicarCor(cartao, secao(d.servico)?.cor || '#E5196E');
+    caixa.append(cartao);
+  });
+  if (foco) {
+    const mesma = caixa.querySelector(`[data-id="${CSS.escape(foco.id)}"][data-dir="${foco.dir}"]`);
+    const outra = caixa.querySelector(`[data-id="${CSS.escape(foco.id)}"][data-dir="${foco.dir === 'cima' ? 'baixo' : 'cima'}"]`);
+    (mesma && !mesma.disabled ? mesma : outra)?.focus();
+  }
+}
+
+async function moverDepoimento(d, direcao, botao) {
+  botao.disabled = true;
+  try {
+    const r = await api(`/api/painel/depoimentos/${enc(d.id)}/mover`, { metodo: 'POST', json: { direcao } });
+    estado.depoimentos = r.depoimentos || estado.depoimentos;
+    renderDepoimentos({ foco: { id: d.id, dir: direcao } });
+    anunciar(`${d.nome} agora aparece ${direcao === 'cima' ? 'antes' : 'depois'}.`);
+  } catch (e) {
+    botao.disabled = false;
+    if (e.tipo !== 'sessao') mostrarToast(mensagemDe(e), { erro: true });
+  }
+}
+
+function tirarDepoimento(d) {
+  abrirConfirmacaoTirar({
+    titulo: `Tirar o depoimento de ${d.nome} do site?`,
+    texto: 'Ele some do site. Dá para desfazer logo em seguida.',
+    tirando: 'Tirando...',
+    apagar: () => api(`/api/painel/depoimentos/${enc(d.id)}`, { metodo: 'DELETE', json: {} }),
+    saiu: 'O depoimento saiu do site',
+    desfazer: () => api(`/api/painel/depoimentos/${enc(d.id)}/restaurar`, { metodo: 'POST', json: {} }),
+    voltou: 'Pronto, o depoimento voltou para o site',
+    voltarFoco: $('#dep-titulo'),
+  });
+}
+
+function preencherServicos() {
+  const sel = $('#dep-servico');
+  sel.replaceChildren(el('option', { value: '', text: 'Sem serviço' }));
+  for (const s of estado.secoes.filter((x) => x.tipo === 'servico')) sel.append(el('option', { value: s.id, text: s.nome }));
+}
+
+function limparFotoDep() {
+  if (depUrl) { URL.revokeObjectURL(depUrl); depUrl = null; }
+  depArquivo = null;
+  $('#dep-arquivo').value = '';
+  const previa = $('#dep-previa');
+  previa.removeAttribute('src');
+  previa.hidden = true;
+  $('#dep-sem-foto').hidden = true;
+  $('#dep-escolher').textContent = 'Escolher foto';
+  $('#dep-consent-linha').hidden = true;
+}
+
+function atualizarContadorDep() {
+  const n = $('#dep-texto').value.length;
+  const c = $('#cont-dep-texto');
+  c.textContent = `${n} de ${LIMITE_DEPOIMENTO} letras`;
+  c.classList.toggle('passou', n > LIMITE_DEPOIMENTO);
+}
+$('#dep-texto').addEventListener('input', atualizarContadorDep);
+
+function abrirDepoimento(d = null) {
+  depEditando = d;
+  preencherServicos();
+  $('#dep-dlg-titulo').textContent = d ? 'Editar depoimento' : 'Novo depoimento';
+  $('#dep-nome').value = d?.nome || '';
+  $('#dep-de-onde').value = d?.de_onde || '';
+  $('#dep-texto').value = d?.texto || '';
+  $('#dep-servico').value = d?.servico || '';
+  $('#dep-salvar').textContent = d ? 'Salvar alterações' : 'Colocar no site';
+  $('#dep-foto-area').hidden = Boolean(d); // a foto não muda na edição
+  $('#dep-consent').checked = false;
+  limparFotoDep();
+  $('#dep-consent-linha').hidden = true;
+  esconder('#dep-erro');
+  atualizarContadorDep();
+  abrirDialogo('#dlg-depoimento', { voltarFoco: d ? $('#dep-titulo') : $('#dep-novo') });
+  $('#dep-nome').focus();
+}
+$('#dep-novo').addEventListener('click', () => abrirDepoimento(null));
+$('#dep-escolher').addEventListener('click', () => { $('#dep-arquivo').value = ''; $('#dep-arquivo').click(); });
+$('#dep-sem-foto').addEventListener('click', () => { limparFotoDep(); $('#dep-consent-linha').hidden = true; });
+
+$('#dep-arquivo').addEventListener('change', () => {
+  const arquivo = $('#dep-arquivo').files?.[0];
+  if (!arquivo) return;
+  const pareceFoto = (arquivo.type || '').startsWith('image/') || /\.(jpe?g|png|webp|heic|heif)$/i.test(arquivo.name || '');
+  if (!pareceFoto) { mostrar('#dep-erro', 'Esse arquivo não é uma foto. Escolha uma foto da galeria.'); return; }
+  if (arquivo.size > LIMITE_FOTO) { mostrar('#dep-erro', 'Essa foto é grande demais. Escolha outra ou tire um print dela.'); return; }
+  depArquivo = arquivo;
+  if (depUrl) URL.revokeObjectURL(depUrl);
+  depUrl = URL.createObjectURL(arquivo);
+  const previa = $('#dep-previa');
+  previa.onerror = () => { previa.hidden = true; };
+  previa.src = depUrl;
+  previa.hidden = false;
+  $('#dep-sem-foto').hidden = false;
+  $('#dep-escolher').textContent = 'Trocar foto';
+  // Com foto, a autorização da cliente é obrigatória (uc4a).
+  $('#dep-consent-linha').hidden = false;
+  esconder('#dep-erro');
+});
+
+$('#dlg-depoimento').addEventListener('close', () => { limparFotoDep(); depEditando = null; });
+
+$('#form-depoimento').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const nome = $('#dep-nome').value.trim();
+  const deOnde = $('#dep-de-onde').value.trim();
+  const texto = $('#dep-texto').value.trim();
+  const servico = $('#dep-servico').value;
+  if (!nome) { mostrar('#dep-erro', 'Escreva o nome da cliente.'); $('#dep-nome').focus(); return; }
+  if (!texto) { mostrar('#dep-erro', 'Escreva o que ela disse.'); $('#dep-texto').focus(); return; }
+  if (texto.length > LIMITE_DEPOIMENTO) { mostrar('#dep-erro', `O depoimento pode ter até ${LIMITE_DEPOIMENTO} letras; este tem ${texto.length}.`); return; }
+  const consentimento = $('#dep-consent').checked;
+  if (!depEditando && depArquivo && !consentimento) { mostrar('#dep-erro', 'Marque que a cliente autorizou antes de publicar a foto.'); $('#dep-consent').focus(); return; }
+  const botao = $('#dep-salvar');
+  ocupado(botao, 'Salvando...');
+  try {
+    if (depEditando) {
+      const id = depEditando.id;
+      await api(`/api/painel/depoimentos/${enc(id)}`, { metodo: 'PATCH', json: { nome, de_onde: deOnde, texto, servico } });
+      fecharDialogo('#dlg-depoimento');
+      await sincronizar();
+      mostrarToast('Depoimento salvo', { verSite: true });
+      return;
+    }
+    let r;
+    if (depArquivo) {
+      const { arquivo, largura, altura } = await reduzirFoto(depArquivo, LADO_AVATAR);
+      const form = new FormData();
+      form.append('nome', nome);
+      form.append('de_onde', deOnde);
+      form.append('texto', texto);
+      form.append('servico', servico);
+      form.append('consentimento', 'true');
+      if (largura && altura) { form.append('largura', String(largura)); form.append('altura', String(altura)); }
+      form.append('foto', arquivo, arquivo === depArquivo ? (depArquivo.name || 'foto.jpg') : 'foto.jpg');
+      r = await api('/api/painel/depoimentos', { metodo: 'POST', form });
+    } else {
+      r = await api('/api/painel/depoimentos', { metodo: 'POST', json: { nome, de_onde: deOnde, texto, servico, consentimento } });
+    }
+    const criado = r.depoimento;
+    fecharDialogo('#dlg-depoimento');
+    await sincronizar();
+    mostrarToast('Depoimento no site', {
+      verSite: true,
+      desfazer: async () => {
+        await api(`/api/painel/depoimentos/${enc(criado.id)}`, { metodo: 'DELETE', json: {} });
+        await sincronizar();
+        mostrarToast('Pronto, o depoimento saiu do site');
+      },
+    });
+  } catch (e) {
+    if (e.tipo !== 'sessao') mostrar('#dep-erro', mensagemDe(e));
+  } finally {
+    livre(botao);
+  }
+});
+
+// ---------- Antes e depois (R-05) ----------
+
+const pares = () => estado?.antes_depois || [];
+const LIMITE_LEGENDA = 120;
+const SERVICOS_PAR = ['vm', 'styling', 'edicao'];
+let parEditando = null;
+const parArquivos = { antes: null, depois: null };
+const parUrls = { antes: null, depois: null };
+
+function abrirPares() {
+  secaoAtual = null;
+  renderPares();
+  window.scrollTo(0, 0);
+  mostrarTela('tela-pares');
+  history.pushState({ secao: 'antes-depois' }, '');
+}
+
+function renderPares({ foco } = {}) {
+  const lista = pares();
+  $('#par-qtd').textContent = plural(lista.length, 'par', 'pares');
+  $('#par-dica').hidden = lista.length < 2;
+  const caixa = $('#par-lista');
+  caixa.replaceChildren();
+  if (!lista.length) {
+    caixa.append(el('div', { class: 'vazio' }, el('p', { text: 'Nenhum par ainda. Toque em "Novo par de fotos" para cadastrar o primeiro.' })));
+    return;
+  }
+  lista.forEach((p, idx) => {
+    const nome = p.legenda || nomeSecao(p.servico);
+    const cartao = el('div', { class: 'item par' },
+      el('span', { class: 'par-mini' }, el('img', { src: p.antes_url, alt: 'Antes', loading: 'lazy' }), el('img', { src: p.depois_url, alt: 'Depois', loading: 'lazy' })),
+      el('button', { class: 'nome', type: 'button', 'aria-label': `${nome}. Editar`, onclick: () => abrirPar(p) },
+        el('span', { text: nome }),
+        el('small', { text: p.legenda ? nomeSecao(p.servico) : 'Sem legenda' })),
+      el('div', { class: 'acoes-item' },
+        el('button', { class: 'mini', type: 'button', 'data-id': p.id, 'data-dir': 'cima', disabled: idx === 0, 'aria-label': `Mostrar antes: ${nome}`, text: '↑', onclick: (ev) => moverPar(p, 'cima', ev.currentTarget) }),
+        el('button', { class: 'mini', type: 'button', 'data-id': p.id, 'data-dir': 'baixo', disabled: idx === lista.length - 1, 'aria-label': `Mostrar depois: ${nome}`, text: '↓', onclick: (ev) => moverPar(p, 'baixo', ev.currentTarget) })),
+      el('button', { class: 'editar', type: 'button', text: 'Editar legenda', 'aria-label': `Editar legenda: ${nome}`, onclick: () => abrirPar(p) }),
+      el('button', { class: 'tirar', type: 'button', text: 'Tirar do site', 'aria-label': `Tirar do site: ${nome}`, onclick: () => tirarPar(p) }));
+    aplicarCor(cartao, secao(p.servico)?.cor || '#017F38');
+    caixa.append(cartao);
+  });
+  if (foco) {
+    const mesma = caixa.querySelector(`[data-id="${CSS.escape(foco.id)}"][data-dir="${foco.dir}"]`);
+    const outra = caixa.querySelector(`[data-id="${CSS.escape(foco.id)}"][data-dir="${foco.dir === 'cima' ? 'baixo' : 'cima'}"]`);
+    (mesma && !mesma.disabled ? mesma : outra)?.focus();
+  }
+}
+
+async function moverPar(p, direcao, botao) {
+  botao.disabled = true;
+  try {
+    const r = await api(`/api/painel/antes-depois/${enc(p.id)}/mover`, { metodo: 'POST', json: { direcao } });
+    estado.antes_depois = r.antes_depois || estado.antes_depois;
+    renderPares({ foco: { id: p.id, dir: direcao } });
+    anunciar(`O par agora aparece ${direcao === 'cima' ? 'antes' : 'depois'}.`);
+  } catch (e) {
+    botao.disabled = false;
+    if (e.tipo !== 'sessao') mostrarToast(mensagemDe(e), { erro: true });
+  }
+}
+
+function tirarPar(p) {
+  abrirConfirmacaoTirar({
+    titulo: 'Tirar esse par do site?',
+    texto: 'As duas fotos somem do site. Dá para desfazer logo em seguida.',
+    tirando: 'Tirando...',
+    apagar: () => api(`/api/painel/antes-depois/${enc(p.id)}`, { metodo: 'DELETE', json: {} }),
+    saiu: 'O par saiu do site',
+    desfazer: () => api(`/api/painel/antes-depois/${enc(p.id)}/restaurar`, { metodo: 'POST', json: {} }),
+    voltou: 'Pronto, o par voltou para o site',
+    voltarFoco: $('#par-titulo'),
+  });
+}
+
+function limparFotosPar() {
+  for (const lado of ['antes', 'depois']) {
+    if (parUrls[lado]) { URL.revokeObjectURL(parUrls[lado]); parUrls[lado] = null; }
+    parArquivos[lado] = null;
+    $(`#par-arquivo-${lado}`).value = '';
+    const previa = $(`#par-previa-${lado}`);
+    previa.removeAttribute('src');
+    previa.hidden = true;
+    $(`#par-escolher-${lado}`).classList.remove('tem-foto');
+  }
+}
+
+function atualizarContadorPar() {
+  const n = $('#par-legenda').value.length;
+  const c = $('#cont-par-legenda');
+  c.textContent = `${n} de ${LIMITE_LEGENDA} letras`;
+  c.classList.toggle('passou', n > LIMITE_LEGENDA);
+}
+$('#par-legenda').addEventListener('input', atualizarContadorPar);
+
+function abrirPar(p = null) {
+  parEditando = p;
+  const sel = $('#par-servico');
+  sel.replaceChildren(...SERVICOS_PAR.map((id) => el('option', { value: id, text: nomeSecao(id) })));
+  $('#par-dlg-titulo').textContent = p ? 'Editar legenda do par' : 'Novo par de fotos';
+  $('#par-legenda').value = p?.legenda || '';
+  sel.value = p?.servico || 'vm';
+  $('#par-salvar').textContent = p ? 'Salvar alterações' : 'Colocar no site';
+  $('#par-fotos-area').hidden = Boolean(p);   // as fotos não mudam na edição
+  $('#par-consent-linha').hidden = Boolean(p);
+  $('#par-consent').checked = false;
+  limparFotosPar();
+  esconder('#par-erro');
+  atualizarContadorPar();
+  abrirDialogo('#dlg-par', { voltarFoco: p ? $('#par-titulo') : $('#par-novo') });
+  (p ? $('#par-legenda') : $('#par-escolher-antes')).focus();
+}
+$('#par-novo').addEventListener('click', () => abrirPar(null));
+for (const lado of ['antes', 'depois']) {
+  $(`#par-escolher-${lado}`).addEventListener('click', () => { $(`#par-arquivo-${lado}`).value = ''; $(`#par-arquivo-${lado}`).click(); });
+  $(`#par-arquivo-${lado}`).addEventListener('change', () => {
+    const arquivo = $(`#par-arquivo-${lado}`).files?.[0];
+    if (!arquivo) return;
+    const pareceFoto = (arquivo.type || '').startsWith('image/') || /\.(jpe?g|png|webp|heic|heif)$/i.test(arquivo.name || '');
+    if (!pareceFoto) { mostrar('#par-erro', 'Esse arquivo não é uma foto. Escolha uma foto da galeria.'); return; }
+    if (arquivo.size > LIMITE_FOTO) { mostrar('#par-erro', 'Essa foto é grande demais. Escolha outra ou tire um print dela.'); return; }
+    parArquivos[lado] = arquivo;
+    if (parUrls[lado]) URL.revokeObjectURL(parUrls[lado]);
+    parUrls[lado] = URL.createObjectURL(arquivo);
+    const previa = $(`#par-previa-${lado}`);
+    previa.onerror = () => { previa.hidden = true; };
+    previa.src = parUrls[lado];
+    previa.hidden = false;
+    $(`#par-escolher-${lado}`).classList.add('tem-foto');
+    esconder('#par-erro');
+  });
+}
+$('#dlg-par').addEventListener('close', () => { limparFotosPar(); parEditando = null; });
+
+$('#form-par').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const legenda = $('#par-legenda').value.trim();
+  const servico = $('#par-servico').value;
+  if (legenda.length > LIMITE_LEGENDA) { mostrar('#par-erro', `A legenda pode ter até ${LIMITE_LEGENDA} letras; esta tem ${legenda.length}.`); return; }
+  if (!parEditando) {
+    if (!parArquivos.antes) { mostrar('#par-erro', 'Falta a foto de Antes. O par precisa das duas fotos.'); $('#par-escolher-antes').focus(); return; }
+    if (!parArquivos.depois) { mostrar('#par-erro', 'Falta a foto de Depois. O par precisa das duas fotos.'); $('#par-escolher-depois').focus(); return; }
+    if (!$('#par-consent').checked) { mostrar('#par-erro', 'Marque que a cliente autorizou antes de publicar as fotos.'); $('#par-consent').focus(); return; }
+  }
+  const botao = $('#par-salvar');
+  ocupado(botao, 'Salvando...');
+  try {
+    if (parEditando) {
+      await api(`/api/painel/antes-depois/${enc(parEditando.id)}`, { metodo: 'PATCH', json: { legenda, servico } });
+      fecharDialogo('#dlg-par');
+      await sincronizar();
+      mostrarToast('Par salvo', { verSite: true });
+      return;
+    }
+    const form = new FormData();
+    form.append('legenda', legenda);
+    form.append('servico', servico);
+    form.append('consentimento', 'true');
+    for (const lado of ['antes', 'depois']) {
+      const { arquivo, largura, altura } = await reduzirFoto(parArquivos[lado]);
+      if (largura && altura) { form.append(`largura_${lado}`, String(largura)); form.append(`altura_${lado}`, String(altura)); }
+      form.append(lado, arquivo, arquivo === parArquivos[lado] ? (parArquivos[lado].name || `${lado}.jpg`) : `${lado}.jpg`);
+    }
+    const r = await api('/api/painel/antes-depois', { metodo: 'POST', form });
+    const criado = r.par;
+    fecharDialogo('#dlg-par');
+    await sincronizar();
+    mostrarToast('Par no site', {
+      verSite: true,
+      desfazer: async () => {
+        await api(`/api/painel/antes-depois/${enc(criado.id)}`, { metodo: 'DELETE', json: {} });
+        await sincronizar();
+        mostrarToast('Pronto, o par saiu do site');
+      },
+    });
+  } catch (e) {
+    if (e.tipo !== 'sessao') mostrar('#par-erro', mensagemDe(e));
+  } finally {
+    livre(botao);
+  }
+});
+
+// ---------- Perguntas frequentes (R-06) ----------
+
+const faqs = () => estado?.faq || [];
+const GRUPOS_FAQ = { voce: 'Para você', lojas: 'Para lojas e escolas', lalaia: 'LALAIÁ' };
+const LIMITE_PERGUNTA = 140;
+const LIMITE_RESPOSTA = 600;
+let faqEditando = null;
+
+function abrirFaq() {
+  secaoAtual = null;
+  renderFaq();
+  window.scrollTo(0, 0);
+  mostrarTela('tela-faq');
+  history.pushState({ secao: 'faq' }, '');
+}
+
+function renderFaq({ foco } = {}) {
+  const lista = faqs();
+  $('#faq-qtd').textContent = `${lista.filter((f) => f.publicada).length} de ${lista.length} no site`;
+  const caixa = $('#faq-lista');
+  caixa.replaceChildren();
+  if (!lista.length) {
+    caixa.append(el('div', { class: 'vazio' }, el('p', { text: 'Nenhuma pergunta ainda. Toque em "Nova pergunta" para escrever a primeira.' })));
+    return;
+  }
+  lista.forEach((f, idx) => {
+    const selos = [
+      !f.revisada && el('span', { class: 'selo selo-rascunho', text: 'Rascunho: revisar' }),
+      f.publicada ? el('span', { class: 'selo selo-publicada', text: 'No site' }) : el('span', { class: 'selo selo-oculta', text: 'Fora do site · revise e publique' }),
+    ];
+    const cartao = el('div', { class: 'item faq' },
+      el('button', { class: 'nome', type: 'button', 'aria-label': `${f.pergunta}. Editar`, onclick: () => abrirPergunta(f) },
+        el('span', {}, ...selos),
+        el('span', { text: f.pergunta }),
+        el('em', { text: `${GRUPOS_FAQ[f.grupo] || f.grupo} · ${resumir(f.resposta, 80)}` })),
+      el('div', { class: 'acoes-item' },
+        el('button', { class: 'mini', type: 'button', 'data-id': f.id, 'data-dir': 'cima', disabled: idx === 0, 'aria-label': `Mostrar antes: ${f.pergunta}`, text: '↑', onclick: (ev) => moverFaq(f, 'cima', ev.currentTarget) }),
+        el('button', { class: 'mini', type: 'button', 'data-id': f.id, 'data-dir': 'baixo', disabled: idx === lista.length - 1, 'aria-label': `Mostrar depois: ${f.pergunta}`, text: '↓', onclick: (ev) => moverFaq(f, 'baixo', ev.currentTarget) })),
+      el('div', { class: 'linha-acoes' },
+        el('button', { class: 'publicar', type: 'button', text: f.publicada ? 'Tirar do site' : 'Publicar no site', onclick: (ev) => publicarFaq(f, !f.publicada, ev.currentTarget) }),
+        el('button', { class: 'editar', type: 'button', text: 'Editar', 'aria-label': `Editar: ${f.pergunta}`, onclick: () => abrirPergunta(f) }),
+        el('button', { class: 'tirar', type: 'button', text: 'Apagar', 'aria-label': `Apagar: ${f.pergunta}`, onclick: () => tirarFaq(f) })));
+    aplicarCor(cartao, f.publicada ? '#2A2730' : '#BDB6C8');
+    caixa.append(cartao);
+  });
+  if (foco) {
+    const mesma = caixa.querySelector(`[data-id="${CSS.escape(foco.id)}"][data-dir="${foco.dir}"]`);
+    const outra = caixa.querySelector(`[data-id="${CSS.escape(foco.id)}"][data-dir="${foco.dir === 'cima' ? 'baixo' : 'cima'}"]`);
+    (mesma && !mesma.disabled ? mesma : outra)?.focus();
+  }
+}
+
+async function publicarFaq(f, publicada, botao) {
+  botao.disabled = true;
+  try {
+    const r = await api(`/api/painel/faq/${enc(f.id)}`, { metodo: 'PUT', json: { publicada } });
+    estado.faq = faqs().map((x) => (x.id === f.id ? r.faq : x));
+    renderFaq();
+    renderCartoes();
+    mostrarToast(publicada ? 'Pergunta no site' : 'A pergunta saiu do site', { verSite: publicada });
+  } catch (e) {
+    botao.disabled = false;
+    if (e.tipo !== 'sessao') mostrarToast(mensagemDe(e), { erro: true });
+  }
+}
+
+async function moverFaq(f, direcao, botao) {
+  botao.disabled = true;
+  try {
+    const r = await api(`/api/painel/faq/${enc(f.id)}/mover`, { metodo: 'POST', json: { direcao } });
+    estado.faq = r.faq || estado.faq;
+    renderFaq({ foco: { id: f.id, dir: direcao } });
+    anunciar(`A pergunta agora aparece ${direcao === 'cima' ? 'antes' : 'depois'}.`);
+  } catch (e) {
+    botao.disabled = false;
+    if (e.tipo !== 'sessao') mostrarToast(mensagemDe(e), { erro: true });
+  }
+}
+
+function tirarFaq(f) {
+  abrirConfirmacaoTirar({
+    titulo: 'Apagar essa pergunta?',
+    texto: 'Ela some da lista e do site. Dá para desfazer logo em seguida.',
+    tirando: 'Apagando...',
+    apagar: () => api(`/api/painel/faq/${enc(f.id)}`, { metodo: 'DELETE', json: {} }),
+    saiu: 'Pergunta apagada',
+    desfazer: () => api(`/api/painel/faq/${enc(f.id)}/restaurar`, { metodo: 'POST', json: {} }),
+    voltou: 'Pronto, a pergunta voltou',
+    voltarFoco: $('#faq-titulo'),
+  });
+}
+
+function atualizarContadoresFaq() {
+  for (const [sel, cont, max] of [['#faq-pergunta', '#cont-faq-pergunta', LIMITE_PERGUNTA], ['#faq-resposta', '#cont-faq-resposta', LIMITE_RESPOSTA]]) {
+    const n = $(sel).value.length;
+    const c = $(cont);
+    c.textContent = `${n} de ${max} letras`;
+    c.classList.toggle('passou', n > max);
+  }
+}
+$('#faq-pergunta').addEventListener('input', atualizarContadoresFaq);
+$('#faq-resposta').addEventListener('input', atualizarContadoresFaq);
+
+function abrirPergunta(f = null) {
+  faqEditando = f;
+  const sel = $('#faq-grupo');
+  sel.replaceChildren(...Object.entries(GRUPOS_FAQ).map(([id, nome]) => el('option', { value: id, text: nome })));
+  $('#faq-dlg-titulo').textContent = f ? 'Editar pergunta' : 'Nova pergunta';
+  $('#faq-pergunta').value = f?.pergunta || '';
+  $('#faq-resposta').value = f?.resposta || '';
+  sel.value = f?.grupo || 'voce';
+  $('#faq-publicada').checked = Boolean(f?.publicada);
+  $('#faq-salvar').textContent = f ? 'Salvar alterações' : 'Salvar pergunta';
+  esconder('#faq-erro');
+  atualizarContadoresFaq();
+  abrirDialogo('#dlg-faq', { voltarFoco: f ? $('#faq-titulo') : $('#faq-nova') });
+  $('#faq-pergunta').focus();
+}
+$('#faq-nova').addEventListener('click', () => abrirPergunta(null));
+$('#dlg-faq').addEventListener('close', () => { faqEditando = null; });
+
+$('#form-faq').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const pergunta = $('#faq-pergunta').value.trim();
+  const resposta = $('#faq-resposta').value.trim();
+  const grupo = $('#faq-grupo').value;
+  const publicada = $('#faq-publicada').checked;
+  if (!pergunta) { mostrar('#faq-erro', 'Escreva a pergunta.'); $('#faq-pergunta').focus(); return; }
+  if (!resposta) { mostrar('#faq-erro', 'Escreva a resposta.'); $('#faq-resposta').focus(); return; }
+  if (pergunta.length > LIMITE_PERGUNTA) { mostrar('#faq-erro', `A pergunta pode ter até ${LIMITE_PERGUNTA} letras; esta tem ${pergunta.length}.`); return; }
+  if (resposta.length > LIMITE_RESPOSTA) { mostrar('#faq-erro', `A resposta pode ter até ${LIMITE_RESPOSTA} letras; esta tem ${resposta.length}.`); return; }
+  const botao = $('#faq-salvar');
+  ocupado(botao, 'Salvando...');
+  try {
+    if (faqEditando) {
+      const antes = faqEditando;
+      const corpo = { grupo, publicada };
+      if (pergunta !== antes.pergunta) corpo.pergunta = pergunta;
+      if (resposta !== antes.resposta) corpo.resposta = resposta;
+      await api(`/api/painel/faq/${enc(antes.id)}`, { metodo: 'PUT', json: corpo });
+    } else {
+      await api('/api/painel/faq', { metodo: 'POST', json: { pergunta, resposta, grupo, publicada } });
+    }
+    fecharDialogo('#dlg-faq');
+    await sincronizar();
+    mostrarToast(publicada ? 'Pergunta salva e no site' : 'Pergunta salva (fora do site)', { verSite: publicada });
+  } catch (e) {
+    if (e.tipo !== 'sessao') mostrar('#faq-erro', mensagemDe(e));
+  } finally {
+    livre(botao);
   }
 });
 
@@ -964,11 +1958,22 @@ $('#dlg-publicar').addEventListener('click', (ev) => { if (ev.target === ev.curr
 
 let toastTimer = null;
 
-function mostrarToast(texto, { desfazer, verSite, erro } = {}) {
+function mostrarToast(texto, { desfazer, verSite, erro, acao } = {}) {
   const area = $('#toast-area');
   clearTimeout(toastTimer);
   area.replaceChildren();
   const acoes = el('div', { class: 'toast-acoes' });
+  if (acao) {
+    acoes.append(el('button', {
+      type: 'button', text: acao.texto,
+      onclick: async (ev) => {
+        const b = ev.currentTarget;
+        b.disabled = true;
+        clearTimeout(toastTimer);
+        try { await acao.aoTocar(); } catch (e) { if (e.tipo !== 'sessao') mostrarToast(mensagemDe(e), { erro: true }); }
+      },
+    }));
+  }
   if (desfazer) {
     acoes.append(el('button', {
       type: 'button', text: 'Desfazer',
@@ -986,7 +1991,7 @@ function mostrarToast(texto, { desfazer, verSite, erro } = {}) {
     el('p', { text: texto }),
     acoes.childNodes.length ? acoes : null);
   area.append(toast);
-  const tempo = desfazer ? 10000 : 6000;
+  const tempo = desfazer || acao ? 10000 : 6000;
   const agendar = () => { toastTimer = setTimeout(() => toast.remove(), tempo); };
   toast.addEventListener('focusin', () => clearTimeout(toastTimer));
   toast.addEventListener('focusout', agendar);
