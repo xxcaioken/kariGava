@@ -77,6 +77,9 @@ test('estado traz seções, fotos iniciais e contas', async () => {
   assert.equal(status, 200);
   assert.equal(dados.usuario.email, EMAIL);
   assert.equal(dados.secoes.length, 6, 'LALAIÁ, 4 serviços e Sobre mim');
+  const extintos = dados.itens.filter(i => ['edicao', 'oficina-look'].includes(i.secao)).map(i => i.id);
+  assert.deepEqual(extintos, [], 'banco zerado sem foto em serviço extinto (a 0010 vale também depois do reset)');
+  assert.ok(dados.itens.some(i => i.id === 'ini_edicao_0' && i.secao === 'consultoria'), 'sapatos na consultoria');
   assert.equal(dados.itens.filter(i => i.secao === 'lalaia').length, 5);
   assert.ok(dados.instagram.contas.every(c => c.conectada));
   assert.equal(dados.textos.consultoria.titulo, 'Consultoria de estilo');
