@@ -219,7 +219,7 @@ async function tratar(request, env, url) {
       listarItens(env), lerTextos(env), tolerante(listarProdutos(env), []), tolerante(lerCondicoes(env), null), tolerante(lerCupom(env), null),
       tolerante(listarDepoimentos(env), []), tolerante(listarPares(env), []), tolerante(listarFaq(env), []),
     ]);
-    return new Response(renderizarSite({ itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois, faq, whatsappNumero: env.WHATSAPP_NUMERO, base: baseDoSite(env, request) }), {
+    return new Response(renderizarSite({ itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois, faq, whatsappNumero: env.WHATSAPP_NUMERO, base: baseDoSite(env, request), analyticsToken: env.ANALYTICS_TOKEN }), {
       headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
     });
   }
@@ -227,8 +227,9 @@ async function tratar(request, env, url) {
   const base = baseDoSite(env, request);
   const texto = (corpo, tipo) => new Response(corpo, { headers: { 'content-type': tipo, 'cache-control': 'public, max-age=300' } });
   const pagina = html => texto(html, 'text/html; charset=utf-8');
-  if (url.pathname === '/quiz' && leitura) return pagina(renderizarQuiz({ whatsappNumero: env.WHATSAPP_NUMERO, base }));
-  if (url.pathname === '/privacidade' && leitura) return pagina(renderizarPrivacidade({ emailContato: env.EMAIL_CONTATO, whatsappNumero: env.WHATSAPP_NUMERO, base }));
+  const analyticsToken = env.ANALYTICS_TOKEN;
+  if (url.pathname === '/quiz' && leitura) return pagina(renderizarQuiz({ whatsappNumero: env.WHATSAPP_NUMERO, base, analyticsToken }));
+  if (url.pathname === '/privacidade' && leitura) return pagina(renderizarPrivacidade({ emailContato: env.EMAIL_CONTATO, whatsappNumero: env.WHATSAPP_NUMERO, base, analyticsToken }));
   if (url.pathname === '/sitemap.xml' && leitura) return texto(sitemap(base), 'application/xml; charset=utf-8');
   if (url.pathname === '/robots.txt' && leitura) return texto(robots(base), 'text/plain; charset=utf-8');
   const asset = await env.ASSETS.fetch(request);

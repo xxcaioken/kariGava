@@ -2,10 +2,11 @@
 import conteudo from '../conteudo.json' with { type: 'json' };
 import { esc, linkWa, MENSAGENS_WA } from './site.js';
 import { metaBase } from './seo.js';
+import { beaconAnalytics } from './analytics.js';
 
 const CORES_MARCA = ['roxo', 'vermelho', 'mostarda', 'pink', 'verde', 'grafite'];
 
-export function casca({ titulo, descricao, corpo, noindex = false, whatsappNumero, base = '', caminho = '/' }) {
+export function casca({ titulo, descricao, corpo, noindex = false, whatsappNumero, base = '', caminho = '/', analyticsToken = '' }) {
   const waGeral = esc(linkWa(whatsappNumero, MENSAGENS_WA.geral));
   const listras = CORES_MARCA.map(c => `<i style="background:var(--${c})"></i>`).join('');
   return `<!doctype html>
@@ -41,6 +42,7 @@ ${corpo}
     <p class="rodape-fim">${esc(conteudo.marca.nome)} · ${esc(conteudo.marca.profissao)} · ${esc(conteudo.marca.cidade)} · <a href="/">Voltar ao site</a> · <a href="/privacidade">Privacidade</a></p>
   </div>
 </footer>
+${beaconAnalytics(analyticsToken)}
 </body>
 </html>`;
 }

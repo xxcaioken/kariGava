@@ -1069,3 +1069,26 @@ test('R-10 variantes de imagem: celular num só multipart, POST /variantes, pict
   assert.equal((await chamar(`/api/painel/itens/${ig.id}/variantes`, { metodo: 'POST', form: formVariantes({}, {}) })).status, 400, 'sem nenhuma variante');
   await chamar(`/api/painel/itens/${item.id}`, { metodo: 'DELETE' });
 });
+
+// ---------- S-15 · Contador de visitas sem cookies (R-11) ----------
+function tokenAnalyticsDoDevVars() {
+  const arquivo = new URL('../../.dev.vars', import.meta.url);
+  if (!existsSync(arquivo)) return null;
+  const linha = readFileSync(arquivo, 'utf8').split('\n').find(l => /^ANALYTICS_TOKEN=/.test(l));
+  return linha ? linha.slice('ANALYTICS_TOKEN='.length).trim() : null;
+}
+
+test('R-11 analytics: com ANALYTICS_TOKEN o site traz o beacon do Cloudflare; o painel nunca', async (t) => {
+  const token = tokenAnalyticsDoDevVars();
+  if (!token) { t.skip('defina ANALYTICS_TOKEN=abc em .dev.vars'); return; }
+  for (const caminho of ['/', '/quiz', '/privacidade']) {
+    const html = (await chamar(caminho)).dados;
+    assert.ok(html.includes('https://static.cloudflareinsights.com/beacon.min.js'), `${caminho} com beacon`);
+    assert.ok(html.includes(`data-cf-beacon='{"token": "${token}"}'`), `${caminho} com o token`);
+    assert.ok(html.indexOf('beacon.min.js') < html.indexOf('</body>'), 'antes de </body>');
+  }
+  const painel = (await chamar('/painel/')).dados;
+  assert.ok(!painel.includes('cloudflareinsights'), 'o painel não é medido');
+  const js = await fetch(BASE + '/painel/painel.js');
+  assert.ok(!(await js.text()).includes('cloudflareinsights'));
+});

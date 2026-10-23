@@ -1,4 +1,7 @@
 DEV_LOGIN=1
+# Token do Cloudflare Web Analytics (vars.ANALYTICS_TOKEN): com ele o site inclui o beacon sem cookies; o painel nunca.
+# O e2e de R-11 lê esta variável de .dev.vars e é pulado se ela faltar.
+ANALYTICS_TOKEN=abc
 SEGREDO_SESSAO=segredo-local-so-para-desenvolvimento-123
 EMAILS_PERMITIDOS=kari@exemplo.com,caio@exemplo.com
 MODO_INSTAGRAM=falso

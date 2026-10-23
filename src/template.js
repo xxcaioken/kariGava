@@ -312,6 +312,7 @@ ${faq}</main>
 </footer>
 
 <div class="barra-wa"><a class="btn" href="${wa}">Chamar no WhatsApp</a></div>
+${d.analytics}
 </body>
 </html>`;
 }

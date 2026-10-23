@@ -38,6 +38,8 @@
     // Endereço final do site (ex.: "https://karigava.com.br"), usado em canonical, og:url, sitemap e JSON-LD.
     // Vazio, o Worker usa o endereço do próprio request (workers.dev).
     "SITE_URL": "",
+    // Token do Cloudflare Web Analytics (sem cookies). Vazio, o site não inclui o beacon; o painel nunca inclui.
+    "ANALYTICS_TOKEN": "",
     "MODO_INSTAGRAM": "real"
   }
   // Segredos (wrangler secret put): SEGREDO_SESSAO, IG_APP_ID, IG_APP_SECRET

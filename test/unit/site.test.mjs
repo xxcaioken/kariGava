@@ -5,6 +5,19 @@ import conteudo from '../../conteudo.json' with { type: 'json' };
 
 const NUMERO = '5548998459412';
 
+test('R-11 sem token: o site não inclui o beacon do Cloudflare Web Analytics; com token, inclui antes de </body>', () => {
+  const sem = renderizarSite({ itens: [], textos: {}, whatsappNumero: NUMERO });
+  assert.ok(!sem.includes('cloudflareinsights'), 'sem ANALYTICS_TOKEN nada entra');
+  const vazio = renderizarSite({ itens: [], textos: {}, whatsappNumero: NUMERO, analyticsToken: '   ' });
+  assert.ok(!vazio.includes('cloudflareinsights'), 'token só com espaços conta como vazio');
+  const com = renderizarSite({ itens: [], textos: {}, whatsappNumero: NUMERO, analyticsToken: 'abc' });
+  assert.ok(com.includes('https://static.cloudflareinsights.com/beacon.min.js'), 'beacon');
+  assert.ok(com.includes('data-cf-beacon=\'{"token": "abc"}\''), 'token no atributo');
+  assert.ok(com.indexOf('beacon.min.js') < com.indexOf('</body>') && com.indexOf('beacon.min.js') > com.indexOf('class="barra-wa"'), 'antes de </body>');
+  const hostil = renderizarSite({ itens: [], textos: {}, whatsappNumero: NUMERO, analyticsToken: 'a"b\'c<d' });
+  assert.ok(!hostil.includes('cloudflareinsights'), 'token fora do formato é ignorado (só letras, números e hífen)');
+});
+
 test('R-01 linkWa: número só com dígitos e mensagem codificada, acentos preservados', () => {
   const url = linkWa(NUMERO, 'Oi Kari, vi o site e quero saber sobre Edição de guarda-roupa');
   assert.ok(url.startsWith(`https://wa.me/${NUMERO}?text=`));
