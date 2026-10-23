@@ -14,7 +14,7 @@ export function renderizarLalaia(entrada) {
   const img = criarImg(esc);
   const wa = esc(l.wa);
   const titulo = `${l.nome} · feitos à mão, sob encomenda`;
-  const descricao = `${l.tagline} ${l.detalhes.join('. ')}.`;
+  const descricao = l.tagline; // os detalhes repetiriam "feitos à mão" e "sob encomenda"
 
   // A primeira foto do primeiro produto é o maior elemento da primeira tela (LCP): carrega com prioridade, sem lazy.
   const produtos = l.produtos.map((p, i) => {
@@ -85,7 +85,7 @@ ${jsonLdLalaia(d, { base: d.base })}
     <div class="wrap">
       <div class="secao-cab">
         <h2 id="titulo-como-encomendar">Como encomendar</h2>
-        <p>Tudo pelo WhatsApp, peça por peça.</p>
+        <p>${esc(l.como_encomendar_intro.texto)}</p>
       </div>
       <ol class="passos">${passos}
       </ol>${condicoes}
@@ -97,7 +97,7 @@ ${jsonLdLalaia(d, { base: d.base })}
     <div class="wrap">
       <p class="rotulo">Quem faz</p>
       <h2 id="titulo-quem-faz">${esc(d.marca.nome)}</h2>
-      <p>A LALAIÁ é a marca de acessórios da ${esc(d.marca.apelido)}, ${esc(d.marca.profissao.toLowerCase().replace(' · ', ' e '))} em ${esc(d.marca.cidade)}.</p>
+      <p>${esc(l.quem_faz.texto)}</p>
       <a class="btn btn-linha" href="/">Conheça o trabalho da ${esc(d.marca.apelido)}</a>
     </div>
   </section>

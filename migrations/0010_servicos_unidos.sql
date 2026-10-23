@@ -11,7 +11,6 @@ UPDATE depoimentos SET servico = 'ensino' WHERE servico = 'oficina-look';
 UPDATE antes_depois SET servico = 'consultoria' WHERE servico = 'edicao';
 UPDATE antes_depois SET servico = 'ensino' WHERE servico = 'oficina-look';
 
--- Texto e preço editados: o serviço que absorve fica com o seu, se tiver; senão herda o do extinto.
-UPDATE OR IGNORE textos SET servico = 'consultoria' WHERE servico = 'edicao';
-UPDATE OR IGNORE textos SET servico = 'ensino' WHERE servico = 'oficina-look';
+-- Texto e preço editados do serviço extinto descreviam outro serviço: não passam para o que o absorveu (cobririam
+-- o texto unido novo de conteudo.json). O que o serviço que absorve já tinha fica como estava.
 DELETE FROM textos WHERE servico IN ('edicao', 'oficina-look');

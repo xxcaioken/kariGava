@@ -63,7 +63,8 @@ test('R-01 migration 0010 move tudo dos serviços extintos sem perder registro',
 
   assert.deepEqual(db.prepare("SELECT servico FROM depoimentos ORDER BY id").all().map(r => r.servico), ['consultoria', 'ensino', '']);
   assert.equal(db.prepare("SELECT servico FROM antes_depois WHERE id = 'p1'").get().servico, 'consultoria');
-  // textos: a consultoria não tinha linha própria e herda a da edição; os cursos mantêm a sua.
-  assert.equal(db.prepare("SELECT preco FROM textos WHERE servico = 'consultoria'").get().preco, 300);
+  // textos (review-r1 S-07): o texto e o preço de um serviço extinto descreviam outro serviço e não passam para o
+  // que o absorveu (senão cobririam o texto unido novo); o que o serviço que absorve já tinha fica como estava.
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM textos WHERE servico = 'consultoria'").get().n, 0, 'consultoria segue com o texto unido do conteudo.json');
   assert.equal(db.prepare("SELECT preco FROM textos WHERE servico = 'ensino'").get().preco, 900);
 });

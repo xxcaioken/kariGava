@@ -15,9 +15,9 @@ import { baseDoSite, sitemap, robots } from './seo.js';
 import { comCabecalhos } from './seguranca.js';
 import { listarProdutos, agruparProdutos, salvarProduto, renomearProduto } from './produtos.js';
 import { lerCondicoes, salvarCondicoes, lerCupom } from './config.js';
+import { dadosDaPagina, tolerante } from './dados.js';
 
 // Blocos novos da home nunca derrubam a página inteira: erro vira log + valor padrão, e a seção some (ENG-07).
-const tolerante = (promessa, padrao) => promessa.catch(e => { console.error(e?.stack || e); return padrao; });
 
 function exigirOrigem(request) {
   const origem = request.headers.get('origin');
@@ -239,15 +239,12 @@ async function tratar(request, env, url) {
     const chave = chaveDaFoto(url.pathname.slice('/fotos/'.length));
     return chave ? foto(env, chave, request) : naoEncontrada404();
   }
-  // Home e /lalaia: mesmos dados do banco, sem cache (o que a Kari muda no painel aparece na hora).
+  // Home e /lalaia: dados do banco (cada página lê só o que mostra, src/dados.js), sem cache: o que a Kari muda no painel aparece na hora.
   const PAGINAS_DO_BANCO = { '/': renderizarSite, '/lalaia': renderizarLalaia };
   if (PAGINAS_DO_BANCO[url.pathname] && (request.method === 'GET' || request.method === 'HEAD')) {
-    const [itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois, faq] = await Promise.all([
-      listarItens(env), lerTextos(env), tolerante(listarProdutos(env), []), tolerante(lerCondicoes(env), null), tolerante(lerCupom(env), null),
-      tolerante(listarDepoimentos(env), []), tolerante(listarPares(env), []), tolerante(listarFaq(env), []),
-    ]);
+    const dados = await dadosDaPagina(env, url.pathname);
     const renderizar = PAGINAS_DO_BANCO[url.pathname];
-    return new Response(renderizar({ itens, textos, produtos, condicoes, cupom, depoimentos, antesDepois, faq, whatsappNumero: env.WHATSAPP_NUMERO, base: baseDoSite(env, request), analyticsToken: env.ANALYTICS_TOKEN }), {
+    return new Response(renderizar({ ...dados, whatsappNumero: env.WHATSAPP_NUMERO, base: baseDoSite(env, request), analyticsToken: env.ANALYTICS_TOKEN }), {
       headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
     });
   }

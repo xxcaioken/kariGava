@@ -56,9 +56,10 @@ export function naoEncontrada({ whatsappNumero, base = '' } = {}) {
     base,
     corpo: `    <p class="rotulo">Erro 404</p>
     <h1>Essa página não existe</h1>
-    <p>O endereço pode ter mudado ou ter sido digitado errado. O site inteiro cabe numa página só: é mais fácil começar por ela.</p>
+    <p>O endereço pode ter mudado ou ter sido digitado errado. Comece pela página inicial ou pelas peças da LALAIÁ.</p>
     <div class="leitura-acoes">
       <a class="btn" href="/">Ir para o site</a>
+      <a class="btn btn-linha" href="/lalaia">Ver as peças da LALAIÁ</a>
       <a class="btn btn-linha" href="${wa}">Chamar no WhatsApp</a>
     </div>`,
   });

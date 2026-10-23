@@ -18,7 +18,8 @@
     "titulo": "Moda para guarda-roupas autênticos.",
     "subtitulo": "Consultoria de estilo, styling, vitrines e cursos com Kariene Gava, em Florianópolis.",
     "foto": "img/kari-stylist-toia.jpg",
-    "credito_foto": "Foto: @toiaoliveirafotografia"
+    "credito_foto": "Foto: @toiaoliveirafotografia",
+    "rascunho": true
   },
   "sobre": {
     "texto": "Oi, eu sou a Kari! Sou stylist: monto looks e faço produções autênticas e cheias de estilo. Também levo esse olhar para lojas, com consultoria de visual merchandising e varejo de moda. E brinco de artista na LALAIÁ, minha marca de acessórios feitos à mão.",
@@ -184,7 +185,15 @@
         "texto": "Embalada com a etiquetinha LALAIÁ.",
         "rascunho": true
       }
-    ]
+    ],
+    "como_encomendar_intro": {
+      "texto": "Tudo pelo WhatsApp, peça por peça.",
+      "rascunho": true
+    },
+    "quem_faz": {
+      "texto": "A LALAIÁ é a marca de acessórios da Kari, stylist e visual merchandiser em Florianópolis, SC.",
+      "rascunho": true
+    }
   },
   "proibido": "Não usar fotos de crianças/adolescentes clientes, nem imagens de terceiros (ex.: Lauryn Hill). Não usar img/kari-chapeu-anturio.jpg (a pessoa de chapéu não é a Kari; foto de post da Modateca) nem img/kari-oculos.jpg (capa de reel com texto gravado).",
   "como_trabalhar": [

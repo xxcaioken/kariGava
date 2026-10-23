@@ -647,7 +647,7 @@ function cartaoProduto(p, aberto) {
       await api(`/api/painel/lalaia/produtos/${enc(p.slug)}`, { metodo: 'PUT', json: { preco, disponibilidade: dispCampo.value || null, prazo_dias: prazo, descricao: descCampo.value.trim() } });
       erro.hidden = true;
       await sincronizar();
-      mostrarToast('Produto salvo', { verSite: true });
+      mostrarToast('Produto salvo', { verSite: '/lalaia' });
     } catch (e) {
       if (e.tipo !== 'sessao') mostrarErro(erro, mensagemDe(e));
     } finally {
@@ -684,7 +684,7 @@ async function renomearProduto(p) {
   try {
     await api(`/api/painel/lalaia/produtos/${enc(p.slug)}/renomear`, { metodo: 'POST', json: { nome: limpo } });
     await sincronizar();
-    mostrarToast(`Produto renomeado para "${limpo}"`, { verSite: true });
+    mostrarToast(`Produto renomeado para "${limpo}"`, { verSite: '/lalaia' });
   } catch (e) {
     if (e.tipo !== 'sessao') mostrarToast(mensagemDe(e));
   }
@@ -955,7 +955,7 @@ $('#form-condicoes').addEventListener('submit', async (ev) => {
     renderCartoes();
     esconder('#erro-condicoes');
     if (secaoAtual === 'lalaia') preencherCondicoes();
-    mostrarToast('Condições salvas', { verSite: true });
+    mostrarToast('Condições salvas', { verSite: '/lalaia' });
   } catch (e) {
     if (e.tipo !== 'sessao') mostrar('#erro-condicoes', mensagemDe(e));
   } finally {
@@ -1986,7 +1986,8 @@ function mostrarToast(texto, { desfazer, verSite, erro, acao } = {}) {
       },
     }));
   }
-  if (verSite) acoes.append(el('a', { href: estado?.site_url || '/', target: '_blank', rel: 'noopener', text: 'Ver no site' }));
+  // verSite: true abre a home; um caminho ('/lalaia') abre a página onde aquilo aparece.
+  if (verSite) acoes.append(el('a', { href: typeof verSite === 'string' ? verSite : (estado?.site_url || '/'), target: '_blank', rel: 'noopener', text: 'Ver no site' }));
   const toast = el('div', { class: `toast${erro ? ' toast-erro' : ''}` },
     el('p', { text: texto }),
     acoes.childNodes.length ? acoes : null);

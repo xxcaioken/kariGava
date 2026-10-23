@@ -17,7 +17,7 @@ html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--papel); color: var(--tinta); font: 17px/1.55 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
 img { display: block; max-width: 100%; height: auto; } /* height:auto: os atributos width/height só reservam espaço; a altura vem do aspect-ratio (pré-QA C16) */
 a { color: inherit; }
-h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -.025em; }
+h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -.025em; overflow-wrap: anywhere; } /* nome longo sem espaços (link, código) quebra dentro da caixa (pré-QA C33) */
 p { margin: 0; }
 :focus-visible { outline: 3px solid var(--destaque); outline-offset: 3px; border-radius: 2px; }
 .wrap { width: min(1200px, 100% - 2 * var(--gutter)); margin-inline: auto; }
@@ -221,9 +221,6 @@ p { margin: 0; }
 .lalaia-cab { display: grid; gap: 16px; margin-bottom: 28px; }
 .lalaia-cab h2 { font-size: clamp(40px, 7vw, 76px); line-height: .95; letter-spacing: -.045em; }
 .lalaia-cab p { font-size: 19px; color: var(--tinta-suave); max-width: 40ch; }
-.detalhes { display: flex; flex-wrap: wrap; gap: 8px 18px; list-style: none; margin: 0 0 28px; padding: 14px 0; border-block: 1px solid var(--linha); font: 13px/1.4 var(--mono); }
-.detalhes li { display: inline-flex; align-items: center; gap: 8px; }
-.detalhes li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--destaque); }
 .produtos { display: grid; gap: 20px; list-style: none; margin: 0; padding: 0; }
 .produto { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--linha); border-radius: var(--raio); overflow: hidden; }
 .produto-fotos { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: var(--linha); }

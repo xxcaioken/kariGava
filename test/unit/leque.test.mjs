@@ -41,3 +41,13 @@ test('R-03 o leque mostra a primeira foto de cada serviço, sem texto de cor', (
   assert.match(bloco, /\.lamina\s*\{[^}]*animation/, 'lâminas só animam com prefers-reduced-motion: no-preference');
   assert.ok(!/^\.lamina[^{]*\{[^}]*animation/m.test(css.replace(bloco, '')), 'nenhuma animação de lâmina fora desse bloco');
 });
+
+test('pré-QA C22: com número ímpar de lâminas o leque continua simétrico', () => {
+  const angulos = itens => [...leque(renderizarSite({ itens, textos: {}, whatsappNumero: NUMERO })).matchAll(/--a:(-?\d+)deg/g)].map(m => Number(m[1]));
+  const tres = angulos([foto('consultoria', 0, 'kari-look-blazer.jpg'), foto('styling', 0, 'lalaia-babado-vermelho.jpg'), foto('vm', 0, 'atelie-busto.jpg')]);
+  assert.equal(tres.length, 3);
+  assert.equal(tres.reduce((a, b) => a + b, 0), 0, `3 lâminas simétricas: ${tres}`);
+  const quatro = angulos([foto('consultoria', 0, 'kari-look-blazer.jpg'), foto('styling', 0, 'lalaia-babado-vermelho.jpg'), foto('vm', 0, 'atelie-busto.jpg'), foto('ensino', 0, 'modateca-curso.jpg')]);
+  assert.deepEqual(quatro, [-40, -20, 20, 40], '4 lâminas como antes');
+  assert.deepEqual(angulos([foto('vm', 0, 'atelie-busto.jpg')]), [0], '1 lâmina: em pé, atrás da foto da Kari');
+});

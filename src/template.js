@@ -33,15 +33,18 @@ export function template(d, esc) {
   const wa = esc(d.whatsapp.geral); // botões gerais (topo, hero, rodapé, barra fixa); serviço tem o próprio link
   const img = criarImg(esc);
 
-  // Leque da abertura (ajustes da Kari): uma lâmina por serviço com foto, aberta em volta da foto dela. Metade à
-  // esquerda e metade à direita, de 20 em 20 graus; as de dentro ficam na frente e abrem primeiro.
+  // Leque da abertura (ajustes da Kari): uma lâmina por serviço com foto, aberta em volta da foto dela, sempre
+  // simétrico. Número par: metade de cada lado, de 20 em 20 graus (4 → −40, −20, 20, 40). Ímpar: uma em pé atrás
+  // da foto e as outras abertas até ±40 graus (3 → −40, 0, 40; pré-QA C22). As de dentro ficam na frente e abrem primeiro.
   const comFoto = d.servicos.filter(s => s.foto_leque);
-  const metade = Math.ceil(comFoto.length / 2);
-  const angulo = i => (i < metade ? -20 * (metade - i) : 20 * (i - metade + 1));
+  const n = comFoto.length, metade = n / 2;
+  const angulo = i => (n % 2 === 0
+    ? (i < metade ? -20 * (metade - i) : 20 * (i - metade + 1))
+    : (n === 1 ? 0 : Math.round((i - (n - 1) / 2) * (80 / (n - 1)))));
   const leque = comFoto.map((s, i) => {
     const a = angulo(i), passo = Math.abs(a) / 20;
     return `
-          <a class="lamina${a > 0 ? ' dir' : ''}" href="#${esc(s.id)}" style="--a:${a}deg;--z:${5 - passo};--atraso:${(0.05 + 0.07 * (passo - 1)).toFixed(2)}s"><span class="lamina-nome" aria-hidden="true">${esc(s.curto)}</span>${img(s.foto_leque, '', { sizes: SIZES_LAMINA })}<span class="visualmente-oculto">${esc(s.titulo)}</span></a>`;
+          <a class="lamina${a > 0 ? ' dir' : ''}" href="#${esc(s.id)}" style="--a:${a}deg;--z:${4 - Math.ceil(passo)};--atraso:${(0.05 + 0.07 * Math.max(passo - 1, 0)).toFixed(2)}s"><span class="lamina-nome" aria-hidden="true">${esc(s.curto)}</span>${img(s.foto_leque, '', { sizes: SIZES_LAMINA })}<span class="visualmente-oculto">${esc(s.titulo)}</span></a>`;
   }).join('');
 
   const legenda = d.servicos.map(s => `

@@ -4,9 +4,20 @@
 import conteudo from '../conteudo.json' with { type: 'json' };
 
 const HEX = /^#[0-9A-Fa-f]{6}$/;
-const RESERVA = '#141218'; // valor inválido no conteudo.json não quebra a página: cai na tinta
+const RESERVA = '#141218'; // valor inválido ou claro demais no conteudo.json não quebra a página: cai na tinta
 
-export const corDestaque = () => (HEX.test(conteudo.marca.cor_destaque || '') ? conteudo.marca.cor_destaque : RESERVA);
+// Contraste do texto branco sobre a cor (WCAG); botões, inicial do depoimento e cupom escrevem em branco sobre ela.
+function contrasteComBranco(hex) {
+  const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 1.05 / (0.2126 * r + 0.7152 * g + 0.0722 * b + 0.05);
+}
+
+let avisou = false;
+export function corDestaque(cor = conteudo.marca.cor_destaque) {
+  if (HEX.test(cor || '') && contrasteComBranco(cor) >= 4.5) return cor;
+  if (!avisou) { console.warn(`marca.cor_destaque "${cor}" inválida ou clara demais para texto branco (contraste < 4,5:1); usando ${RESERVA}`); avisou = true; }
+  return RESERVA;
+}
 
 export const abrirHtml = () => `<html lang="pt-BR" style="--destaque:${corDestaque()}">`;
 

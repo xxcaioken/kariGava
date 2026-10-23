@@ -94,9 +94,10 @@ function produtosLd(d, base) {
   }));
 }
 
-// /lalaia: só os produtos; o vendedor é o mesmo negócio da home (@id).
+// /lalaia: os produtos e o nó do vendedor (o mesmo negócio da home, pelo @id), para o `seller` das ofertas existir na página.
 export function jsonLdLalaia(d, { base }) {
-  return `<script type="application/ld+json">${jsonSeguro({ '@context': 'https://schema.org', '@graph': produtosLd(d, base) })}</script>`;
+  const vendedor = { '@type': 'ProfessionalService', '@id': `${base}/#negocio`, name: conteudo.marca.assinatura, url: `${base}/` };
+  return `<script type="application/ld+json">${jsonSeguro({ '@context': 'https://schema.org', '@graph': [vendedor, ...produtosLd(d, base)] })}</script>`;
 }
 
 export function sitemap(base) {

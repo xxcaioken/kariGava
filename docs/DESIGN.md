@@ -20,7 +20,7 @@ Fonte da verdade é `public/site.css` (site) e `public/painel/painel.css` (paine
 
 Desde 23/10/2026 o site tem **uma** cor de destaque, sem cor por serviço: a Kari achou que "escolher o serviço pela cor" não fazia sentido e lembrou que cor é sazonal. A cor mora em `conteudo.json` (`marca.cor_destaque`, hoje `#C52118`, vermelho provisório até ela escolher a da estação) e chega a cada página como `--destaque` no `<html style>` (`src/marca.js`); `public/site.css` não guarda essa cor, só neutros. O `/favicon.svg` é gerado pelo Worker com a mesma cor. A prévia do link (`og.jpg`) e os ícones do painel não usam a cor, para não precisarem ser refeitos a cada troca.
 
-`--destaque` pinta: botões (`.btn`), foco do teclado, a marca do topo (leque de três lâminas), a faixa do rodapé, as lâminas do leque, a barra das citações, a inicial do depoimento, o ponto dos detalhes e o cupom. Texto branco sobre `--destaque` exige contraste ≥ 4,5:1: `test/unit/cor.test.mjs` confere o valor configurado (o vermelho dá 5,8:1). Cor clara demais para texto branco (mostarda, por exemplo) reprova o teste: escolher um tom mais escuro. `--tinta-suave` sobre `--papel`/`--cinza` para texto secundário de 15 px ou mais. Nunca texto cinza sobre fundo colorido.
+`--destaque` pinta: botões (`.btn`), foco do teclado, a marca do topo (leque de três lâminas), a faixa do rodapé, as lâminas do leque, a barra das citações, a inicial do depoimento e o cupom. Texto branco sobre `--destaque` exige contraste ≥ 4,5:1: `test/unit/cor.test.mjs` confere o valor configurado (o vermelho dá 5,8:1). Cor clara demais para texto branco (mostarda, por exemplo) reprova o teste: escolher um tom mais escuro. `--tinta-suave` sobre `--papel`/`--cinza` para texto secundário de 15 px ou mais. Nunca texto cinza sobre fundo colorido.
 
 ### Tipografia
 
@@ -41,7 +41,6 @@ Desde 23/10/2026 o site tem **uma** cor de destaque, sem cor por serviço: a Kar
 | `.passos` / `.passo` | lista numerada (sequência real) | "Como trabalhar comigo", "Como encomendar" |
 | `.como` (`<details>/<summary>`) | acordeão sem JS, 44 px no `summary` | "Como funciona", perguntas da FAQ |
 | `.citacao` | citação com barra na cor de destaque | frase do serviço, texto do depoimento |
-| `.detalhes` | lista horizontal com pontos na cor de destaque | detalhes da LALAIÁ |
 | `.chips` | etiquetas pequenas | formação, cidade |
 | `.barra-wa` | barra fixa no celular com o botão | sempre presente abaixo de 960 px |
 
