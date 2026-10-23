@@ -117,7 +117,7 @@ test('foto guardada abre e aparece no site', async () => {
   assert.equal(f.status, 200);
   assert.equal(f.headers.get('content-type'), 'image/jpeg');
   assert.match(f.headers.get('cache-control'), /immutable/);
-  const { dados } = await chamar('/');
+  const { dados } = await chamar('/lalaia'); // foto da LALAIÁ: a peça inteira aparece na /lalaia
   assert.ok(dados.includes(novos[0].foto_url));
 });
 
@@ -983,10 +983,12 @@ test('R-09 prévia do link e SEO: og absoluto, og.jpg 1200×630, canonical por p
 
   let ld = jsonLdDe(home);
   const tipos = ld['@graph'].map(n => n['@type']);
-  assert.ok(tipos.includes('ProfessionalService') && tipos.includes('Person') && tipos.includes('Product'));
+  assert.ok(tipos.includes('ProfessionalService') && tipos.includes('Person') && !tipos.includes('Product'), 'home sem Product (review-r2 S-14)');
   const negocio = ld['@graph'].find(n => n['@type'] === 'ProfessionalService');
   assert.equal(negocio.telephone, `+${numeroWhatsAppDaConfig()}`);
   assert.equal(negocio.image, `${BASE}/og.jpg`);
+  let loja = (await chamar('/lalaia')).dados;
+  ld = jsonLdDe(loja);
   const comPreco = ld['@graph'].find(n => n['@type'] === 'Product' && n.offers);
   assert.ok(comPreco && comPreco.offers.priceCurrency === 'BRL' && comPreco.image[0].startsWith(BASE), 'produto com preço tem offers e imagem absoluta');
 
@@ -995,10 +997,12 @@ test('R-09 prévia do link e SEO: og absoluto, og.jpg 1200×630, canonical por p
   const nomeAntes = foto.titulo;
   assert.equal((await chamar(`/api/painel/itens/${foto.id}`, { metodo: 'PATCH', corpo: { titulo: '</script><b>oi</b>' } })).status, 200);
   home = (await chamar('/')).dados;
-  assert.ok(home.trimEnd().endsWith('</html>'), 'página inteira');
-  ld = jsonLdDe(home);
-  assert.ok(ld['@graph'].some(n => n['@type'] === 'Product' && n.name === '</script><b>oi</b>'), 'nome preservado no JSON-LD');
-  assert.ok(!home.includes('<b>oi</b>'), 'HTML escapado');
+  assert.ok(home.trimEnd().endsWith('</html>') && !home.includes('<b>oi</b>'), 'home inteira e escapada');
+  loja = (await chamar('/lalaia')).dados;
+  assert.ok(loja.trimEnd().endsWith('</html>'), '/lalaia inteira');
+  ld = jsonLdDe(loja);
+  assert.ok(ld['@graph'].some(n => n['@type'] === 'Product' && n.name === '</script><b>oi</b>'), 'nome preservado no JSON-LD da /lalaia');
+  assert.ok(!loja.includes('<b>oi</b>'), 'HTML escapado');
   assert.equal((await chamar(`/api/painel/itens/${foto.id}`, { metodo: 'PATCH', corpo: { titulo: nomeAntes } })).status, 200);
 });
 

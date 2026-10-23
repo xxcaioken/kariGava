@@ -243,6 +243,7 @@ p { margin: 0; }
 .condicoes dt { font: 12px/1.3 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-suave); }
 .condicoes dd { margin: 0; font-size: 16px; line-height: 1.5; }
 .lalaia-cta { margin-top: 28px; }
+#lalaia { position: relative; } /* âncoras antigas (#cupom, #como-encomendar) no topo do bloco da LALAIÁ da home */
 .lalaia-cta .btn { background: var(--tinta); }
 
 /* LALAIÁ na home: vitrine curta (até 3 fotos) que leva à /lalaia */

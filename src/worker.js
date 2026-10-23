@@ -15,9 +15,7 @@ import { baseDoSite, sitemap, robots } from './seo.js';
 import { comCabecalhos } from './seguranca.js';
 import { listarProdutos, agruparProdutos, salvarProduto, renomearProduto } from './produtos.js';
 import { lerCondicoes, salvarCondicoes, lerCupom } from './config.js';
-import { dadosDaPagina, tolerante } from './dados.js';
-
-// Blocos novos da home nunca derrubam a página inteira: erro vira log + valor padrão, e a seção some (ENG-07).
+import { dadosDaPagina } from './dados.js';
 
 function exigirOrigem(request) {
   const origem = request.headers.get('origin');

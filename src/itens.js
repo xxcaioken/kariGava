@@ -53,7 +53,7 @@ export async function listarItens(env) {
   return results.map(paraItem);
 }
 
-async function itensDaSecao(env, secao) {
+export async function itensDaSecao(env, secao) {
   const { results } = await env.DB.prepare('SELECT * FROM itens WHERE secao = ? AND removido_em IS NULL ORDER BY ordem').bind(secao).all();
   return results.map(paraItem);
 }

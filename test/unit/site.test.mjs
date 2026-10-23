@@ -9,7 +9,7 @@ const NUMERO = '5548998459412';
 test('ENG-07 home resiliente: sem os blocos novos, a home rende sem essas seções e sem quebrar', () => {
   const html = renderizarSite({ itens: [], textos: {}, whatsappNumero: NUMERO });
   assert.ok(html.trimEnd().endsWith('</html>'));
-  for (const id of ['id="depoimentos"', 'id="antes-depois"', 'id="faq"', 'id="cupom"', 'class="condicoes"']) assert.ok(!html.includes(id), `sem ${id}`);
+  for (const id of ['id="depoimentos"', 'id="antes-depois"', 'id="faq"', '<p class="cupom"', 'class="condicoes"']) assert.ok(!html.includes(id), `sem ${id}`);
   assert.ok(html.includes('href="/lalaia"') && html.includes('id="lalaia"') && html.includes('id="servicos"'), 'o resto da home está lá');
   assert.ok(renderizarLalaia({ itens: [], textos: {}, whatsappNumero: NUMERO }).includes('id="como-encomendar"'), '/lalaia rende sem os blocos novos');
   const comNulos = renderizarSite({ itens: [], textos: {}, produtos: [], condicoes: null, cupom: null, depoimentos: [], antesDepois: [], faq: [], whatsappNumero: NUMERO });

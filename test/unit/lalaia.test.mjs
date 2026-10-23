@@ -45,7 +45,7 @@ test('R-04 a home leva à /lalaia e não repete a loja inteira', () => {
   assert.ok(nav.includes('href="/lalaia"'), 'menu LALAIÁ → /lalaia');
   const bloco = home.slice(home.indexOf('id="lalaia"'), home.indexOf('id="cursos"'));
   assert.ok(bloco.includes('href="/lalaia"'), 'bloco curto com link para /lalaia');
-  assert.ok(!home.includes('id="como-encomendar"') && !home.includes('<li class="produto">'), 'sem a loja inteira na home');
+  assert.ok(!home.includes('<section class="secao secao-cinza" id="como-encomendar"') && !home.includes('<li class="produto">') && !home.includes('class="condicoes"'), 'sem a loja inteira na home');
   assert.ok(sitemap(BASE).includes(`<loc>${BASE}/lalaia</loc>`), 'sitemap com /lalaia');
 });
 

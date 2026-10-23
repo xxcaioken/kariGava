@@ -41,7 +41,8 @@ function jsonSeguro(valor) {
 
 const absoluta = (base, caminho) => (/^https?:\/\//.test(caminho) ? caminho : `${base}${caminho.startsWith('/') ? '' : '/'}${caminho}`);
 
-// ProfessionalService + Person + os produtos da LALAIÁ. `d` é o de montarDados.
+// Home: ProfessionalService + Person. Os produtos (com preço) ficam só no JSON-LD da /lalaia, onde aparecem na página.
+// `d` é o de montarDados.
 export function jsonLd(d, { base, whatsappNumero }) {
   const redes = Object.values(conteudo.marca.instagram);
   const precos = d.servicos.map(s => s.preco?.valor).filter(Boolean).map(v => Number(v.replace(/\D/g, ''))).filter(n => n > 0);
@@ -69,7 +70,7 @@ export function jsonLd(d, { base, whatsappNumero }) {
     sameAs: redes,
     worksFor: { '@id': `${base}/#negocio` },
   };
-  return `<script type="application/ld+json">${jsonSeguro({ '@context': 'https://schema.org', '@graph': [negocio, pessoa, ...produtosLd(d, base)] })}</script>`;
+  return `<script type="application/ld+json">${jsonSeguro({ '@context': 'https://schema.org', '@graph': [negocio, pessoa] })}</script>`;
 }
 
 // Um Product por produto da LALAIÁ (offers quando há preço); a página de cada um é a /lalaia.

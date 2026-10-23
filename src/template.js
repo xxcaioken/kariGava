@@ -77,7 +77,8 @@ export function template(d, esc) {
   const passos = d.como_trabalhar.map(p => `
         <li class="passo"><div><h3>${esc(p.titulo)}</h3><p>${esc(p.texto)}</p></div></li>`).join('');
 
-  // LALAIÁ na home (ajustes da Kari): bloco curto que leva à /lalaia; a loja inteira (produtos, cupom, como
+  // LALAIÁ na home (ajustes da Kari): bloco curto que leva à /lalaia (links antigos para #cupom e #como-encomendar
+  // caem aqui, ao lado do botão); a loja inteira (produtos, cupom, como
   // encomendar) mora lá, para o link da bio do @lalaia.acessorios cair direto nas peças.
   const vitrine = d.lalaia.produtos.slice(0, 3).map(p => `
         <li><a href="/lalaia">${img(p.fotos[0], p.titulo, { sizes: SIZES_VITRINE })}</a></li>`).join('');
@@ -245,6 +246,7 @@ ${depoimentos}
   </section>
 
   <section class="secao" id="lalaia" aria-labelledby="titulo-lalaia">
+    <span class="ancora" id="cupom"></span><span class="ancora" id="como-encomendar"></span>
     <div class="wrap">
       <div class="lalaia-cab">
         <div>

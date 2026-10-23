@@ -13,8 +13,8 @@ export function renderizarLalaia(entrada) {
   const l = d.lalaia;
   const img = criarImg(esc);
   const wa = esc(l.wa);
-  const titulo = `${l.nome} · feitos à mão, sob encomenda`;
-  const descricao = l.tagline; // os detalhes repetiriam "feitos à mão" e "sob encomenda"
+  const titulo = `${l.nome} · ${l.detalhes[0]}`;
+  const descricao = l.tagline; // os detalhes repetiriam o que a frase já diz
 
   // A primeira foto do primeiro produto é o maior elemento da primeira tela (LCP): carrega com prioridade, sem lazy.
   const produtos = l.produtos.map((p, i) => {
@@ -112,7 +112,7 @@ ${jsonLdLalaia(d, { base: d.base })}
       <a href="/privacidade">Privacidade</a>${d.marca.gbp_url ? `
       <a href="${esc(d.marca.gbp_url)}" rel="noopener">Avaliações no Google</a>` : ''}
     </div>
-    <p class="rodape-fim">${esc(l.nome)} · feitos à mão em ${esc(d.marca.cidade)}</p>
+    <p class="rodape-fim">${esc(l.nome)} · ${esc(l.detalhes[0])}</p>
   </div>
 </footer>
 
