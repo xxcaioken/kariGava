@@ -5,13 +5,7 @@
   --cinza: #F1F1F3;
   --linha: #E2E1E6;
 
-  /* Cartela: cor da amostra e cor para texto/botão com contraste */
-  --roxo: #8D51FF;        --roxo-forte: #7A3DF2;
-  --vermelho: #C52118;    --vermelho-forte: #C52118;
-  --mostarda: #FEBC5C;    --mostarda-forte: #FEBC5C;
-  --pink: #E5196E;        --pink-forte: #CC1060;
-  --verde: #017F38;       --verde-forte: #017F38;
-  --grafite: #2A2730;     --grafite-forte: #2A2730;
+  /* --destaque (a cor da estação) não mora aqui: vem de conteudo.json (marca.cor_destaque) no <html style> de cada página */
 
   --sans: "Familjen Grotesk", system-ui, sans-serif;
   --mono: "Fragment Mono", ui-monospace, monospace;
@@ -25,13 +19,13 @@ img { display: block; max-width: 100%; height: auto; } /* height:auto: os atribu
 a { color: inherit; }
 h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -.025em; }
 p { margin: 0; }
-:focus-visible { outline: 3px solid var(--roxo-forte); outline-offset: 3px; border-radius: 2px; }
+:focus-visible { outline: 3px solid var(--destaque); outline-offset: 3px; border-radius: 2px; }
 .wrap { width: min(1200px, 100% - 2 * var(--gutter)); margin-inline: auto; }
 .rotulo { font: 12px/1.3 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--tinta-suave); }
 .visualmente-oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* Botões */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: .5em; min-height: 48px; padding: 0 22px; border-radius: var(--raio); background: var(--verde); color: #fff; font: 600 16px/1.2 var(--sans); text-decoration: none; transition: transform .15s ease, filter .15s ease; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .5em; min-height: 48px; padding: 0 22px; border-radius: var(--raio); background: var(--destaque); color: #fff; font: 600 16px/1.2 var(--sans); text-decoration: none; transition: transform .15s ease, filter .15s ease; }
 .btn:hover { transform: translateY(-1px); filter: brightness(1.06); }
 .btn-linha { background: transparent; color: var(--tinta); box-shadow: inset 0 0 0 1.5px var(--tinta); }
 .icone-wa { width: 18px; height: 18px; flex: none; }
@@ -40,12 +34,15 @@ p { margin: 0; }
 .topo { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--linha); }
 .topo .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 64px; }
 .marca { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; letter-spacing: -.02em; text-decoration: none; min-height: 44px; }
-.marca-leque { display: inline-flex; gap: 2px; align-items: flex-end; }
-.marca-leque i { width: 4px; height: 18px; border-radius: 1px; }
+/* Marca: três lâminas abertas em leque, na cor de destaque (o mesmo desenho do /favicon.svg) */
+.marca-leque { position: relative; display: inline-block; width: 20px; height: 20px; }
+.marca-leque i { position: absolute; left: 8px; bottom: 0; width: 4px; height: 18px; border-radius: 1px; background: var(--destaque); transform-origin: 50% 100%; }
+.marca-leque i:nth-child(1) { transform: rotate(-24deg); }
+.marca-leque i:nth-child(3) { transform: rotate(24deg); }
 .nav { display: none; }
 .nav ul { display: flex; gap: 24px; list-style: none; margin: 0; padding: 0; }
 .nav a { text-decoration: none; font-weight: 500; font-size: 15px; display: inline-block; padding: 12px 0; }
-.nav a:hover { color: var(--roxo-forte); }
+.nav a:hover { color: var(--destaque); }
 .topo-cta { display: none; }
 
 /* ---------- HERO: o leque ---------- */
@@ -59,7 +56,7 @@ p { margin: 0; }
 .hero-sub { order: 5; font-size: 18px; color: var(--tinta-suave); margin-top: 18px; max-width: 34ch; }
 .hero-acoes { order: 6; display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
 .hero-quiz { order: 7; margin-top: 16px; font-size: 15px; }
-.hero-quiz a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; text-underline-offset: 4px; text-decoration-color: var(--roxo); }
+.hero-quiz a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; text-underline-offset: 4px; text-decoration-color: var(--destaque); }
 
 /* ---------- /quiz (R-07) ---------- */
 .pagina-quiz { background: var(--cinza); }
@@ -69,14 +66,14 @@ p { margin: 0; }
 .quiz-intro { color: var(--tinta-suave); font-size: 17px; }
 .quiz-progresso { margin-top: 28px; font: 13px/1.4 var(--mono); color: var(--tinta-suave); }
 .quiz-barra { height: 4px; margin: 8px 0 24px; border-radius: 2px; background: var(--linha); overflow: hidden; }
-.quiz-barra i { display: block; height: 100%; width: 0; background: var(--roxo); transition: width .3s ease; }
+.quiz-barra i { display: block; height: 100%; width: 0; background: var(--destaque); transition: width .3s ease; }
 .quiz-tela { opacity: 1; transform: none; transition: opacity .22s ease, transform .22s ease; }
 .quiz-tela.saindo { opacity: 0; transform: translateY(6px); }
 .quiz-pergunta h2, .quiz-resultado h2 { font-size: clamp(24px, 5vw, 34px); line-height: 1.1; letter-spacing: -.03em; margin-bottom: 20px; }
 .quiz-tela h2:focus { outline: none; } /* foco programático para o leitor de tela anunciar; não é interativo */
 .quiz-opcoes { display: grid; gap: 10px; }
 .quiz-opcao { display: block; width: 100%; min-height: 56px; padding: 14px 18px; border: 1.5px solid var(--linha); border-radius: var(--raio); background: #fff; color: var(--tinta); font: 500 17px/1.3 var(--sans); text-align: left; cursor: pointer; transition: border-color .15s ease, transform .15s ease; }
-.quiz-opcao:hover { border-color: var(--roxo); transform: translateY(-1px); }
+.quiz-opcao:hover { border-color: var(--destaque); transform: translateY(-1px); }
 .quiz-voltar { display: inline-flex; align-items: center; min-height: 44px; margin-top: 18px; padding: 0; border: 0; background: none; color: var(--tinta-suave); font: 600 15px var(--sans); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .quiz-resultado-texto { font-size: 18px; line-height: 1.5; }
 .quiz-resultado-servico { margin-top: 14px; font: 13px/1.4 var(--mono); color: var(--tinta-suave); }
@@ -118,15 +115,13 @@ p { margin: 0; }
 }
 .amostra {
   width: var(--w); height: var(--h); margin-left: calc(var(--w) / -2);
-  background: var(--cor-forte, var(--cor)); color: #fff; text-decoration: none; /* -forte: contraste ≥ 4,5:1 com o código em branco (R-15) */
+  background: var(--destaque); color: #fff; text-decoration: none;
   display: flex; flex-direction: column; padding: 8px;
   transition: transform .3s cubic-bezier(.3,1.4,.5,1);
 }
 .amostra.esq { align-items: flex-start; text-align: left; }
 .amostra.dir { align-items: flex-end; text-align: right; }
-.amostra.escuro { color: var(--tinta); }
-.amostra-cod { font: 10px/1 var(--mono); letter-spacing: .04em; } /* sem opacidade: branco a 90% sobre o verde dava 4,46:1 (R-15) */
-.amostra-cor, .amostra-servico { display: none; }
+.amostra-servico { display: none; }
 .amostra::after { /* furo do pino */
   content: ""; position: absolute; left: 50%; bottom: calc(var(--giro) - 5px); width: 10px; height: 10px; margin-left: -5px; border-radius: 50%;
   background: rgba(255,255,255,.55);
@@ -153,7 +148,6 @@ p { margin: 0; }
 /* Legenda do leque no celular: nomes tocáveis */
 .legenda { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; list-style: none; padding: 0; }
 .legenda a { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 6px 12px 6px 6px; border: 1px solid var(--linha); border-radius: var(--raio); text-decoration: none; font-weight: 600; font-size: 15px; line-height: 1.15; background: #fff; }
-.legenda i { width: 22px; height: 32px; border-radius: 3px; flex: none; background: var(--cor); }
 
 @media (prefers-reduced-motion: no-preference) {
   .amostra { animation: abrir .9s cubic-bezier(.2,.85,.25,1) both; }
@@ -178,8 +172,6 @@ p { margin: 0; }
 .ancora { position: absolute; top: 0; scroll-margin-top: 84px; } /* #edicao e #oficina-look antigos caem no topo do cartão que os absorveu */
 .servico-foto { position: relative; margin: 0; }
 .servico-foto img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
-.servico-faixa { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; background: var(--cor-forte, var(--cor)); color: #fff; font: 13px/1.2 var(--mono); letter-spacing: .03em; } /* -forte: texto branco pequeno precisa de 4,5:1 (R-15) */
-.servico.escuro .servico-faixa { color: var(--tinta); }
 .servico-corpo { display: flex; flex-direction: column; gap: 14px; padding: 20px 18px 22px; flex: 1; }
 .grupo-tag { align-self: flex-start; font: 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 6px 8px; border-radius: 3px; background: var(--cinza); color: var(--tinta-suave); }
 .servico h3 { font-size: 27px; line-height: 1.05; }
@@ -192,12 +184,11 @@ p { margin: 0; }
 .como summary::after { content: "+"; font: 20px/1 var(--mono); }
 .como[open] summary::after { content: "−"; }
 .como ol { margin: 4px 0 6px; padding-left: 20px; font-size: 15px; display: grid; gap: 6px; }
-.citacao { margin: 0; padding-left: 14px; border-left: 3px solid var(--cor); font-style: italic; font-size: 16px; color: var(--tinta-suave); }
+.citacao { margin: 0; padding-left: 14px; border-left: 3px solid var(--destaque); font-style: italic; font-size: 16px; color: var(--tinta-suave); }
 .preco { margin-top: auto; display: flex; align-items: baseline; gap: 8px; }
 .preco strong { font-size: 20px; line-height: 1; letter-spacing: -.02em; }
-.servico .btn { margin-top: auto; background: var(--cor-forte); width: 100%; }
+.servico .btn { margin-top: auto; width: 100%; }
 .servico .preco + .btn { margin-top: 0; }
-.servico.escuro .btn { color: var(--tinta); }
 
 /* Como trabalhar comigo */
 .passos { display: grid; gap: 14px; list-style: none; margin: 0; padding: 0; counter-reset: passo; }
@@ -224,8 +215,7 @@ p { margin: 0; }
 .depoimentos { display: grid; gap: 18px; list-style: none; margin: 0; padding: 0; }
 .depoimento { display: grid; grid-template-columns: 56px 1fr; gap: 6px 16px; padding: 22px 0; border-top: 1px solid var(--linha); }
 .depoimento-foto, .depoimento-inicial { grid-row: 1 / 3; width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
-.depoimento-inicial { display: grid; place-items: center; background: var(--cor); color: #fff; font: 600 24px/1 var(--sans); }
-.depoimento.escuro .depoimento-inicial { color: var(--tinta); }
+.depoimento-inicial { display: grid; place-items: center; background: var(--destaque); color: #fff; font: 600 24px/1 var(--sans); }
 .depoimento .citacao { font-size: 18px; color: var(--tinta); }
 .depoimento .citacao::before { content: "\201C"; }
 .depoimento .citacao::after { content: "\201D"; }
@@ -240,7 +230,7 @@ p { margin: 0; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
 .chips li { font: 12px/1 var(--mono); padding: 9px 12px; border: 1px solid var(--linha); border-radius: 999px; background: #fff; }
 .frase { font-size: clamp(34px, 6vw, 60px); line-height: 1; letter-spacing: -.04em; font-weight: 600; margin-top: 8px; }
-.frase span { color: var(--roxo-forte); }
+.frase span { color: var(--destaque); }
 
 /* LALAIÁ: cartela de produtos */
 .lalaia-cab { display: grid; gap: 16px; margin-bottom: 28px; }
@@ -248,7 +238,7 @@ p { margin: 0; }
 .lalaia-cab p { font-size: 19px; color: var(--tinta-suave); max-width: 40ch; }
 .detalhes { display: flex; flex-wrap: wrap; gap: 8px 18px; list-style: none; margin: 0 0 28px; padding: 14px 0; border-block: 1px solid var(--linha); font: 13px/1.4 var(--mono); }
 .detalhes li { display: inline-flex; align-items: center; gap: 8px; }
-.detalhes li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--mostarda); }
+.detalhes li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--destaque); }
 .produtos { display: grid; gap: 20px; list-style: none; margin: 0; padding: 0; }
 .produto { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--linha); border-radius: var(--raio); overflow: hidden; }
 .produto-fotos { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: var(--linha); }
@@ -263,8 +253,8 @@ p { margin: 0; }
 .produto .disponibilidade { font: 13px/1.4 var(--mono); color: var(--tinta-suave); }
 .produto a { margin-top: auto; padding-top: 8px; font-weight: 600; text-underline-offset: 4px; min-height: 44px; display: inline-flex; align-items: center; }
 /* Cupom de primeira encomenda (R-08): uma linha da LALAIÁ, nunca faixa do site todo */
-.cupom { margin-top: 28px; padding: 16px 18px; border: 2px dashed var(--mostarda); border-radius: var(--raio); font-size: 17px; line-height: 1.5; }
-.cupom code { font: 15px/1 var(--mono); letter-spacing: .08em; padding: 4px 8px; border-radius: 4px; background: var(--mostarda); color: var(--tinta); }
+.cupom { margin-top: 28px; padding: 16px 18px; border: 2px dashed var(--destaque); border-radius: var(--raio); font-size: 17px; line-height: 1.5; }
+.cupom code { font: 15px/1 var(--mono); letter-spacing: .08em; padding: 4px 8px; border-radius: 4px; background: var(--destaque); color: #fff; }
 /* Como encomendar (R-03): fecha o bloco LALAIÁ com os 3 passos e as condições preenchidas */
 .como-encomendar { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--linha); }
 .como-encomendar > h3 { font-size: 26px; margin-bottom: 4px; }
@@ -291,7 +281,7 @@ p { margin: 0; }
 
 /* Rodapé */
 .rodape { background: var(--tinta); color: #fff; padding: 0 0 110px; }
-.faixa-cores { display: grid; grid-template-columns: repeat(6, 1fr); height: 14px; }
+.faixa-destaque { height: 6px; background: var(--destaque); }
 .rodape .wrap { padding-top: 64px; display: grid; gap: 22px; }
 .rodape h2 { font-size: clamp(48px, 11vw, 120px); line-height: .9; letter-spacing: -.05em; }
 .rodape .btn { justify-self: start; }
@@ -328,9 +318,7 @@ p { margin: 0; }
   .legenda { display: none; }
   .leque { --h: 340px; --w: 158px; --fh: 290px; --fw: 196px; --giro: 22px; height: 400px; }
   .amostra { padding: 12px 12px; }
-  .amostra-cod { font-size: 11px; }
-  .amostra-cor { display: block; font: 600 14px/1.15 var(--sans); margin-top: 6px; max-width: 92px; }
-  .amostra-servico { display: block; font: 12px/1.2 var(--mono); margin-top: 6px; max-width: 92px; }
+  .amostra-servico { display: block; font: 12px/1.2 var(--mono); max-width: 92px; }
   .leque-foto { padding: 7px 7px 0; }
   .leque-foto figcaption { font-size: 10px; line-height: 24px; }
   .leque-foto img { height: calc(100% - 24px); }

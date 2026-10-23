@@ -44,7 +44,7 @@ Atualizado em 23/10/2026.
 - [ ] **Serviços unidos a pedido dela (23/10/2026):** a Edição de guarda-roupa virou parte da Consultoria de estilo e a Oficina de Look entrou em Cursos, oficinas e palestras. O resumo, o "para quem" e os passos desses dois serviços foram reescritos por nós juntando os textos antigos; o resultado "Armário cheio" do quiz agora leva à Consultoria. Ela confere se é assim que descreve o trabalho.
 - [ ] Os 3 passos de "Como encomendar" da LALAIÁ (`lalaia.como_encomendar`, escritos por nós): confirmar que o pagamento é por Pix e o envio pelos Correios. As condições (pagamento, frete, prazo, trocas) a Kari preenche no painel, em LALAIÁ → Como encomendar.
 - [ ] Nomes dos produtos da LALAIÁ: "BigScrunchie (a Xuxona)", "Acessórios de cabeça sob medida", "Vai de presente".
-- [ ] Nomes das cores da cartela: Roxo Autêntico, Vermelho Armário, Mostarda Oficina, Pink Produção, Verde Vitrine, Grafite Aula.
+- [ ] **Cor da estação** (dona: Kari): o site usa uma cor só, hoje o vermelho `#C52118` (provisório, escolhido pelo Caio em 23/10/2026). Quando ela escolher a cor, o Caio troca em `conteudo.json` (`docs/OPERACAO.md`, procedimento 16). Os nomes de cor por serviço ("Vermelho Armário" etc.) saíram do site a pedido dela.
 - [ ] Mais fotos de produto da LALAIÁ. Hoje são só as 5 que estavam públicas no Instagram; com o painel ligado, ela mesma traz.
 - [ ] Depoimentos de clientes, se ela quiser. Não inventamos nenhum.
 - [ ] **Quiz "Qual é o seu momento de estilo?"** (`/quiz`; dona: Kari; até 30/11/2026). As 8 perguntas, as opções e os 4 resultados estão em `conteudo.json` (`quiz`, marcado como rascunho) e foram escritos por nós. Ela revisa o tom e o Caio troca o texto no arquivo.

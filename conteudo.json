@@ -8,16 +8,11 @@
     "cidade": "Florianópolis, SC",
     "formacao": "Formada em Moda pela UDESC (2016)",
     "whatsapp_numero": "5548998459412",
+    "cor_destaque": "#C52118",
     "instagram": {
       "kari": "https://www.instagram.com/karienegavaw/",
       "lalaia": "https://www.instagram.com/lalaia.acessorios/"
     }
-  },
-  "cores": {
-    "roxo": "#8D51FF",
-    "verde": "#017F38",
-    "mostarda": "#FEBC5C",
-    "vermelho": "#C52118"
   },
   "hero": {
     "titulo": "Moda para guarda-roupas autênticos.",
@@ -34,18 +29,15 @@
   "grupos_servicos": [
     {
       "id": "voce",
-      "titulo": "Para você",
-      "cor": "roxo"
+      "titulo": "Para você"
     },
     {
       "id": "lojas",
-      "titulo": "Para marcas e lojas",
-      "cor": "verde"
+      "titulo": "Para marcas e lojas"
     },
     {
       "id": "ensino",
-      "titulo": "Para escolas e eventos",
-      "cor": "mostarda"
+      "titulo": "Para escolas e eventos"
     }
   ],
   "servicos": [

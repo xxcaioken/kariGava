@@ -323,7 +323,7 @@ function renderCartoes() {
       el('span', { class: 'qtd', text: plural(deps.length, 'depoimento', 'depoimentos') })),
     el('span', { class: 'cartao-preco', text: deps.length ? resumir(deps.map((d) => d.nome).join(', '), 60) : 'O que as clientes dizem de você. Toque para cadastrar o primeiro.' }),
     el('span', { class: 'ir', 'aria-hidden': 'true', text: 'Atualizar →' }));
-  aplicarCor(cartaoDep, '#E5196E');
+  aplicarCor(cartaoDep, estado.cor_destaque);
   caixa.append(cartaoDep);
   // Antes e depois (R-05): pares de fotos, com a própria tela.
   const ps = pares();
@@ -340,7 +340,7 @@ function renderCartoes() {
       el('span', { class: 'qtd', text: plural(ps.length, 'par', 'pares') })),
     miniPares,
     el('span', { class: 'ir', 'aria-hidden': 'true', text: 'Atualizar →' }));
-  aplicarCor(cartaoPar, '#017F38');
+  aplicarCor(cartaoPar, estado.cor_destaque);
   caixa.append(cartaoPar);
   // Perguntas frequentes (R-06).
   const fs = faqs();
@@ -1428,7 +1428,7 @@ function renderDepoimentos({ foco } = {}) {
         el('button', { class: 'mini', type: 'button', 'data-id': d.id, 'data-dir': 'baixo', disabled: idx === lista.length - 1, 'aria-label': `Mostrar depois: ${d.nome}`, text: '↓', onclick: (ev) => moverDepoimento(d, 'baixo', ev.currentTarget) })),
       el('button', { class: 'editar', type: 'button', text: 'Editar', 'aria-label': `Editar: ${d.nome}`, onclick: () => abrirDepoimento(d) }),
       el('button', { class: 'tirar', type: 'button', text: 'Tirar do site', 'aria-label': `Tirar do site: ${d.nome}`, onclick: () => tirarDepoimento(d) }));
-    aplicarCor(cartao, secao(d.servico)?.cor || '#E5196E');
+    aplicarCor(cartao, estado.cor_destaque);
     caixa.append(cartao);
   });
   if (foco) {
@@ -1628,7 +1628,7 @@ function renderPares({ foco } = {}) {
         el('button', { class: 'mini', type: 'button', 'data-id': p.id, 'data-dir': 'baixo', disabled: idx === lista.length - 1, 'aria-label': `Mostrar depois: ${nome}`, text: '↓', onclick: (ev) => moverPar(p, 'baixo', ev.currentTarget) })),
       el('button', { class: 'editar', type: 'button', text: 'Editar legenda', 'aria-label': `Editar legenda: ${nome}`, onclick: () => abrirPar(p) }),
       el('button', { class: 'tirar', type: 'button', text: 'Tirar do site', 'aria-label': `Tirar do site: ${nome}`, onclick: () => tirarPar(p) }));
-    aplicarCor(cartao, secao(p.servico)?.cor || '#017F38');
+    aplicarCor(cartao, estado.cor_destaque);
     caixa.append(cartao);
   });
   if (foco) {

@@ -6,6 +6,7 @@ import { listarPares, criarPar, editarPar, removerPar, restaurarPar, moverPar } 
 import { listarFaq, criarFaq, salvarFaq, removerFaq, restaurarFaq, moverFaq } from './faq.js';
 import { contasLigadas, listarPosts, urlLigar, concluirLigacao, renovarTokens, CONTAS } from './instagram.js';
 import { renderizarSite } from './site.js';
+import { corDestaque, favicon } from './marca.js';
 import { renderizarQuiz } from './quiz.js';
 import { renderizarPrivacidade } from './privacidade.js';
 import { naoEncontrada } from './paginas.js';
@@ -85,7 +86,7 @@ async function api(request, env, url) {
       listarItens(env), lerTextos(env), contasLigadas(env), listarProdutos(env), lerCondicoes(env), lerCupom(env), listarDepoimentos(env), listarPares(env), listarFaq(env),
     ]);
     const lalaia = { produtos: agruparProdutos(itens.filter(i => i.secao === 'lalaia'), produtos), condicoes, cupom };
-    return json({ usuario: { email }, secoes: SECOES, itens, textos, lalaia, depoimentos, antes_depois, faq, instagram: { contas }, site_url: '/' });
+    return json({ usuario: { email }, cor_destaque: corDestaque(), secoes: SECOES, itens, textos, lalaia, depoimentos, antes_depois, faq, instagram: { contas }, site_url: '/' });
   }
 
   // ---------- Perguntas frequentes ----------
@@ -255,6 +256,7 @@ async function tratar(request, env, url) {
   if (url.pathname === '/privacidade' && leitura) return pagina(renderizarPrivacidade({ emailContato: env.EMAIL_CONTATO, whatsappNumero: env.WHATSAPP_NUMERO, base, analyticsToken }));
   if (url.pathname === '/sitemap.xml' && leitura) return texto(sitemap(base), 'application/xml; charset=utf-8');
   if (url.pathname === '/robots.txt' && leitura) return texto(robots(base), 'text/plain; charset=utf-8');
+  if (url.pathname === '/favicon.svg' && leitura) return texto(favicon(), 'image/svg+xml');
   const asset = await env.ASSETS.fetch(request);
   // Endereço que não existe: página 404 do site (noindex) em vez do 404 vazio dos assets.
   if (asset.status === 404 && leitura) {

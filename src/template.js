@@ -3,6 +3,7 @@
 
 import { metaBase, jsonLd } from './seo.js';
 import { chaveDaVariante } from './variantes.js';
+import { abrirHtml, marcaLeque } from './marca.js';
 
 // `sizes` por posição (ENG-09): cartões ocupam a largura toda no celular e ~480 px no desktop; hero/sobre até 640 px.
 const SIZES_CARTAO = '(max-width: 640px) 100vw, 480px';
@@ -10,11 +11,9 @@ const SIZES_GRANDE = '(max-width: 640px) 100vw, 640px';
 const SIZES_MINIATURA = '(max-width: 640px) 40vw, 160px';
 
 const ICONE_WA = '<svg class="icone-wa" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.2-.1-1-.4-2-1.2-.7-.6-1.2-1.4-1.3-1.7-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.2-.9.9-.9 2.2s.9 2.5 1 2.7c.1.2 1.8 2.8 4.4 3.9 2.2.9 2.6.7 3.1.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>';
-const CORES_MARCA = ['roxo', 'vermelho', 'mostarda', 'pink', 'verde', 'grafite'];
 
 export function template(d, esc) {
   const wa = esc(d.whatsapp.geral); // botões gerais (topo, hero, rodapé, barra fixa); serviço e produto têm o próprio link
-  const listras = CORES_MARCA.map(c => `<i style="background:var(--${c})"></i>`).join('');
   // Foto com versões leves (R-10): <picture> com WebP e srcset nas larguras que existem; sem elas, <img> simples.
   // Toda foto fora do hero é lazy e, quando o tamanho é conhecido, leva width/height (sem pulo de layout).
   const img = (f, alt, { sizes = SIZES_CARTAO, hero = false } = {}) => {
@@ -30,19 +29,18 @@ export function template(d, esc) {
   };
 
   const leque = d.servicos.map((s, i) => `
-          <a class="amostra ${i < 2 ? 'esq' : 'dir'} a${i + 2}${s.escuro ? ' escuro' : ''}" href="#${esc(s.id)}" style="--cor:var(--${s.var});--cor-forte:var(--${s.var}-forte)"><span class="amostra-cod">${esc(s.kg)}</span><span class="amostra-cor">${esc(s.nome)}</span><span class="amostra-servico">${esc(s.curto)}</span><span class="visualmente-oculto">${esc(s.titulo)}</span></a>`).join('');
+          <a class="amostra ${i < 2 ? 'esq' : 'dir'} a${i + 2}" href="#${esc(s.id)}"><span class="amostra-servico">${esc(s.curto)}</span><span class="visualmente-oculto">${esc(s.titulo)}</span></a>`).join('');
 
   const legenda = d.servicos.map(s => `
-        <li><a href="#${esc(s.id)}" style="--cor:var(--${s.var})"><i></i>${esc(s.legenda)}</a></li>`).join('');
+        <li><a href="#${esc(s.id)}">${esc(s.legenda)}</a></li>`).join('');
 
   const servicos = d.servicos.map(s => {
     const [principal, ...outras] = s.fotos;
     return `
-        <li class="servico${s.escuro ? ' escuro' : ''}" id="${esc(s.id)}" data-grupo="${esc(s.grupo)}" style="--cor:var(--${s.var});--cor-forte:var(--${s.var}-forte)">
+        <li class="servico" id="${esc(s.id)}" data-grupo="${esc(s.grupo)}">
           ${s.ancoras.map(a => `<span class="ancora" id="${esc(a)}"></span>`).join('')}
           <figure class="servico-foto">
             ${img(principal, principal?.titulo || s.titulo)}
-            <figcaption class="servico-faixa"><span>${esc(s.kg)}</span><span>${esc(s.nome)}</span></figcaption>
           </figure>
           <div class="servico-corpo">
             <span class="grupo-tag">${esc(s.grupo_nome)}</span>
@@ -122,7 +120,7 @@ export function template(d, esc) {
           <p>Vitrines, looks e armários que passaram pela minha mão.</p>
         </div>
         <ul class="pares">${d.antes_depois.map(p => `
-          <li class="par" style="--cor:var(--${p.cor})">
+          <li class="par">
             <div class="par-fotos">
               ${fotoPar(p, 'antes', 'Antes')}
               ${fotoPar(p, 'depois', 'Depois')}
@@ -132,7 +130,7 @@ export function template(d, esc) {
         </ul>
       </div>` : '';
 
-  // O que dizem (R-04): só existe no HTML quando há depoimento. Lista vertical, foto redonda ou inicial na cor da cartela.
+  // O que dizem (R-04): só existe no HTML quando há depoimento. Lista vertical, foto redonda ou inicial na cor de destaque.
   const depoimentos = d.depoimentos.length ? `
   <section class="secao depoimentos-secao" id="depoimentos" aria-labelledby="titulo-depoimentos">
     <div class="wrap">
@@ -141,7 +139,7 @@ export function template(d, esc) {
         <p>Quem já passou por aqui.</p>
       </div>
       <ul class="depoimentos">${d.depoimentos.map(p => `
-        <li class="depoimento" style="--cor:var(--${p.cor})">
+        <li class="depoimento">
           ${p.foto_url
             ? `<img class="depoimento-foto" src="${esc(p.foto_url)}" alt="" width="${esc(p.largura)}" height="${esc(p.altura)}" loading="lazy" decoding="async">`
             : `<span class="depoimento-inicial" aria-hidden="true">${esc(p.inicial)}</span>`}
@@ -153,7 +151,7 @@ export function template(d, esc) {
   </section>` : '';
 
   return `<!doctype html>
-<html lang="pt-BR">
+${abrirHtml()}
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -171,7 +169,7 @@ ${jsonLd(d, { base: d.base, whatsappNumero: d.whatsapp.numero })}
 
 <header class="topo">
   <div class="wrap">
-    <a class="marca" href="#"><span class="marca-leque" aria-hidden="true">${listras}</span>${esc(d.marca.assinatura)}</a>
+    <a class="marca" href="#">${marcaLeque()}${esc(d.marca.assinatura)}</a>
     <nav class="nav" aria-label="Seções">
       <ul>
         <li><a href="#servicos">Serviços</a></li>
@@ -201,7 +199,7 @@ ${jsonLd(d, { base: d.base, whatsappNumero: d.whatsapp.numero })}
       </div>
 
       <div class="leque-area">
-        <div class="leque" aria-label="Cartela de serviços da Kari">${leque}
+        <div class="leque" aria-label="Serviços da Kari">${leque}
           <figure class="leque-foto">
             ${img(d.hero.foto_item, 'Kari sorrindo, segurando um cabide com uma peça de babados vermelhos, num fundo pink', { sizes: SIZES_GRANDE, hero: true })}
             <figcaption>${esc(d.hero.credito_foto)}</figcaption>
@@ -219,7 +217,7 @@ ${jsonLd(d, { base: d.base, whatsappNumero: d.whatsapp.numero })}
     <div class="wrap">
       <div class="secao-cab">
         <h2 id="titulo-servicos">Serviços</h2>
-        <p>Cada serviço tem a sua cor na cartela. Escolha o que combina com você e me chame no WhatsApp pelo botão do próprio serviço.</p>
+        <p>Me chame no WhatsApp pelo botão do serviço que você quer.</p>
       </div>
 
       <ul class="grade-servicos">${servicos}
@@ -286,7 +284,7 @@ ${depoimentos}
 ${faq}</main>
 
 <footer class="rodape" id="contato">
-  <div class="faixa-cores" aria-hidden="true">${listras}</div>
+  <div class="faixa-destaque" aria-hidden="true"></div>
   <div class="wrap">
     <h2>Vamos conversar?</h2>
     <a class="btn" href="${wa}">Chamar no WhatsApp</a>

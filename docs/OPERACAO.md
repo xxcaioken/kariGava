@@ -128,3 +128,11 @@ O `npm run dev` lê `.dev.vars` só ao subir. Mudou uma variável (por exemplo `
 ## 15. Fotos iniciais do repositório
 
 As fotos de `public/img/` têm as versões geradas por `scripts/gerar-variantes.sh` (ImageMagick) e listadas em `public/img/variantes.json`; os arquivos gerados são commitados. Ao trocar ou acrescentar uma foto em `public/img/`, rode o script e commite o resultado. A prévia do link (`public/og.jpg`) é gerada por `scripts/gerar-og.sh` e os ícones do painel por `scripts/gerar-icones.sh`.
+
+## 16. Trocar a cor da estação
+
+O site tem uma cor de destaque só, e ela muda com a estação (pedido da Kari). Para trocar:
+
+1. Em `conteudo.json`, mude `marca.cor_destaque` (hex de 6 dígitos, ex.: `"#017F38"`).
+2. Rode `npm test`: o teste "R-02 a cor de destaque vem só do conteudo.json" reprova cor clara demais para texto branco (contraste abaixo de 4,5:1). Se reprovar, escolha um tom mais escuro da mesma cor.
+3. Publique (`npm run deploy`). Botões, marca, favicon, faixa do rodapé e detalhes mudam juntos; a prévia do link e os ícones do painel não usam a cor e não precisam ser refeitos.

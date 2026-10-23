@@ -12,13 +12,12 @@ function comVariantes(foto) {
   return v ? { ...foto, variantes: { larguras: v.larguras, webp: v.webp }, largura: v.largura, altura: v.altura } : foto;
 }
 
-// Nome de cor estilo cartela Pantone para cada serviço.
-// `var` é o nome da cor em public/site.css; `curto` vai no leque, `legenda` nos botões do celular.
-const AMOSTRAS = {
-  consultoria: { kg: 'KG 01', nome: 'Roxo Autêntico', cor: '#8D51FF', var: 'roxo', escuro: false, curto: 'Consultoria', legenda: 'Consultoria de estilo' },
-  styling: { kg: 'KG 04', nome: 'Pink Produção', cor: '#E5196E', var: 'pink', escuro: false, curto: 'Styling', legenda: 'Styling e produção' },
-  vm: { kg: 'KG 05', nome: 'Verde Vitrine', cor: '#017F38', var: 'verde', escuro: false, curto: 'Vitrines', legenda: 'Vitrines e VM' },
-  ensino: { kg: 'KG 06', nome: 'Grafite Aula', cor: '#2A2730', var: 'grafite', escuro: false, curto: 'Cursos', legenda: 'Cursos e palestras' },
+// Nomes curtos de cada serviço: `curto` vai no leque, `legenda` na lista do celular.
+const NOMES_CURTOS = {
+  consultoria: { curto: 'Consultoria', legenda: 'Consultoria de estilo' },
+  styling: { curto: 'Styling', legenda: 'Styling e produção' },
+  vm: { curto: 'Vitrines', legenda: 'Vitrines e VM' },
+  ensino: { curto: 'Cursos', legenda: 'Cursos e palestras' },
 };
 export const ORDEM_SERVICOS = ['consultoria', 'styling', 'vm', 'ensino'];
 // Serviços que viraram parte de outro (migration 0010): o endereço antigo (#id) continua levando ao cartão que os absorveu.
@@ -68,7 +67,7 @@ export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos 
 
   const servicos = ORDEM_SERVICOS.map(id => conteudo.servicos.find(s => s.id === id)).filter(Boolean).map(s => ({
     ...s,
-    ...AMOSTRAS[s.id],
+    ...NOMES_CURTOS[s.id],
     resumo: textos[s.id]?.resumo ?? s.resumo,
     para_quem: textos[s.id]?.para_quem ?? s.para_quem,
     preco: textoDoPreco(textos[s.id]?.preco, s.grupo),
@@ -83,18 +82,10 @@ export function montarDados({ itens = [], textos = {}, produtos: linhasProdutos 
     .filter(p => p.fotos.length)
     .map(p => ({ ...p, preco_texto: textoPreco(p.preco), disponibilidade_texto: textoDisponibilidade(p), wa: waLalaia(MENSAGENS_WA.produto(p.titulo)) }));
 
-  // Depoimentos (R-04): serviço vira nome e cor da cartela; sem serviço, a cor segue a ordem da cartela.
-  const CORES = ['roxo', 'vermelho', 'mostarda', 'pink', 'verde', 'grafite'];
-  const listaDepoimentos = depoimentos.map((d, i) => {
-    const servico = servicos.find(s => s.id === d.servico);
-    return { ...d, servico_nome: servico?.titulo || '', cor: servico?.var || CORES[i % CORES.length], inicial: [...(d.nome || '?')][0].toUpperCase() };
-  });
-
-  // Antes e depois (R-05): serviço vira nome e cor da cartela.
-  const pares = antesDepois.map(p => {
-    const servico = servicos.find(s => s.id === p.servico);
-    return { ...p, servico_nome: servico?.titulo || '', cor: servico?.var || 'grafite' };
-  });
+  // Depoimentos (R-04) e antes e depois (R-05): o serviço vira o nome dele.
+  const nomeDoServico = id => servicos.find(s => s.id === id)?.titulo || '';
+  const listaDepoimentos = depoimentos.map(d => ({ ...d, servico_nome: nomeDoServico(d.servico), inicial: [...(d.nome || '?')][0].toUpperCase() }));
+  const pares = antesDepois.map(p => ({ ...p, servico_nome: nomeDoServico(p.servico) }));
 
   // Condições de "Como encomendar" (R-03): só as preenchidas vão para o site, na ordem dos rótulos.
   const cond = { ...CONDICOES_VAZIAS, ...(condicoes || {}) };

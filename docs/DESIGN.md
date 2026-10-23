@@ -14,20 +14,13 @@ Fonte da verdade é `public/site.css` (site) e `public/painel/painel.css` (paine
 | `--raio` | `6px` | cantos de cartões e botões |
 | `--gutter` | `16px` (32px ≥ 960) | margem lateral |
 | `--sans` | `"Familjen Grotesk", system-ui, sans-serif` | todo o texto; títulos em 600 |
-| `--mono` | `"Fragment Mono", ui-monospace, monospace` | rótulos em caixa alta (`.rotulo`), códigos KG, legendas |
+| `--mono` | `"Fragment Mono", ui-monospace, monospace` | rótulos em caixa alta (`.rotulo`), legendas |
 
-### Cartela (uma cor por serviço)
+### Cor de destaque (uma só, da estação)
 
-| Serviço | `--cor` | `--cor-forte` (texto/botão) | Código |
-|---|---|---|---|
-| Consultoria de estilo | `--roxo` `#8D51FF` | `--roxo-forte` `#7A3DF2` | KG 01 |
-| Edição de guarda-roupa | `--vermelho` `#C52118` | `--vermelho-forte` `#C52118` | KG 02 |
-| Oficina de Look | `--mostarda` `#FEBC5C` | `--mostarda-forte` `#FEBC5C` | KG 03 |
-| Styling e produção | `--pink` `#E5196E` | `--pink-forte` `#CC1060` | KG 04 |
-| Vitrines e VM | `--verde` `#017F38` | `--verde-forte` `#017F38` | KG 05 |
-| Cursos e palestras | `--grafite` `#2A2730` | `--grafite-forte` `#2A2730` | KG 06 |
+Desde 23/10/2026 o site tem **uma** cor de destaque, sem cor por serviço: a Kari achou que "escolher o serviço pela cor" não fazia sentido e lembrou que cor é sazonal. A cor mora em `conteudo.json` (`marca.cor_destaque`, hoje `#C52118`, vermelho provisório até ela escolher a da estação) e chega a cada página como `--destaque` no `<html style>` (`src/marca.js`); `public/site.css` não guarda essa cor, só neutros. O `/favicon.svg` é gerado pelo Worker com a mesma cor. A prévia do link (`og.jpg`) e os ícones do painel não usam a cor, para não precisarem ser refeitos a cada troca.
 
-**Pares texto/fundo permitidos.** Texto branco só sobre `--roxo-forte`, `--vermelho`, `--pink-forte`, `--verde`, `--grafite` e `--tinta` (contraste ≥ 4,5:1). Por isso a faixa do cartão de serviço (`.servico-faixa`) e as amostras do leque (`.amostra`) usam `--cor-forte` como fundo; `--cor` pura fica para superfícies sem texto (listras, bolinhas, `.legenda i`). Sobre `--mostarda` o texto é `--tinta` (classe `escuro` nos cartões e amostras). `--tinta-suave` sobre `--papel`/`--cinza` para texto secundário de 15 px ou mais. Nunca texto cinza sobre fundo colorido.
+`--destaque` pinta: botões (`.btn`), foco do teclado, a marca do topo (leque de três lâminas), a faixa do rodapé, as lâminas do leque, a barra das citações, a inicial do depoimento, o ponto dos detalhes e o cupom. Texto branco sobre `--destaque` exige contraste ≥ 4,5:1: `test/unit/cor.test.mjs` confere o valor configurado (o vermelho dá 5,8:1). Cor clara demais para texto branco (mostarda, por exemplo) reprova o teste: escolher um tom mais escuro. `--tinta-suave` sobre `--papel`/`--cinza` para texto secundário de 15 px ou mais. Nunca texto cinza sobre fundo colorido.
 
 ### Tipografia
 
@@ -42,14 +35,13 @@ Fonte da verdade é `public/site.css` (site) e `public/painel/painel.css` (paine
 | Classe | O que é | Onde usar |
 |---|---|---|
 | `.secao` / `.secao-cinza` + `.secao-cab` | seção com título grande e um parágrafo | qualquer bloco novo da home, alternando o fundo |
-| `.btn` (+ `--cor-forte`) | botão de 48 px, cor do serviço | toda ação de WhatsApp; um botão por bloco |
+| `.btn` | botão de 48 px na cor de destaque | toda ação de WhatsApp; um botão por bloco |
 | `.btn-linha` | botão secundário com contorno | ação secundária ao lado de um `.btn` |
 | `.rotulo` | rótulo mono em caixa alta | eyebrow, preço ("A partir de"), serviço do depoimento |
 | `.passos` / `.passo` | lista numerada (sequência real) | "Como trabalhar comigo", "Como encomendar" |
 | `.como` (`<details>/<summary>`) | acordeão sem JS, 44 px no `summary` | "Como funciona", perguntas da FAQ |
-| `.citacao` | citação com barra na cor do serviço | frase do serviço, texto do depoimento |
-| `.detalhes` | lista horizontal com pontos mostarda | condições da LALAIÁ |
-| `.filtro` | chips de rádio só com CSS | filtros por grupo |
+| `.citacao` | citação com barra na cor de destaque | frase do serviço, texto do depoimento |
+| `.detalhes` | lista horizontal com pontos na cor de destaque | detalhes da LALAIÁ |
 | `.chips` | etiquetas pequenas | formação, cidade |
 | `.barra-wa` | barra fixa no celular com o botão | sempre presente abaixo de 960 px |
 

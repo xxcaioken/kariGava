@@ -5,9 +5,9 @@ import conteudo from '../conteudo.json' with { type: 'json' };
 import { esc, linkWa, MENSAGENS_WA } from './site.js';
 import { metaBase } from './seo.js';
 import { beaconAnalytics } from './analytics.js';
+import { abrirHtml, marcaLeque } from './marca.js';
 
 const ICONE_WA = '<svg class="icone-wa" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.2-.1-1-.4-2-1.2-.7-.6-1.2-1.4-1.3-1.7-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.2-.9.9-.9 2.2s.9 2.5 1 2.7c.1.2 1.8 2.8 4.4 3.9 2.2.9 2.6.7 3.1.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>';
-const CORES_MARCA = ['roxo', 'vermelho', 'mostarda', 'pink', 'verde', 'grafite'];
 
 // O resultado mais escolhido vence; empate fica com o primeiro na ordem de conteudo.json. (Mesma regra de public/quiz.js.)
 export function resultadoDoQuiz(respostas) {
@@ -36,7 +36,6 @@ export function renderizarQuiz({ whatsappNumero, base = '', analyticsToken = '' 
   const waGeral = esc(linkWa(whatsappNumero, MENSAGENS_WA.geral));
   // "<" vira < para o JSON nunca fechar a tag <script>; JSON.parse devolve o texto original.
   const json = JSON.stringify(dados).replace(/</g, '\\u003c');
-  const listras = CORES_MARCA.map(c => `<i style="background:var(--${c})"></i>`).join('');
 
   const lista = q.perguntas.map((p, i) => `
         <li class="quiz-lista-pergunta"><strong>${i + 1}. ${esc(p.pergunta)}</strong>
@@ -44,7 +43,7 @@ export function renderizarQuiz({ whatsappNumero, base = '', analyticsToken = '' 
         </li>`).join('');
 
   return `<!doctype html>
-<html lang="pt-BR">
+${abrirHtml()}
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -61,7 +60,7 @@ ${metaBase({ base, caminho: '/quiz', titulo: `${q.titulo} · Quiz da ${conteudo.
 
 <header class="topo">
   <div class="wrap">
-    <a class="marca" href="/"><span class="marca-leque" aria-hidden="true">${listras}</span>${esc(conteudo.marca.assinatura)}</a>
+    <a class="marca" href="/">${marcaLeque()}${esc(conteudo.marca.assinatura)}</a>
     <a class="btn topo-cta" href="${waGeral}">Chamar no WhatsApp</a>
   </div>
 </header>
@@ -88,7 +87,7 @@ ${metaBase({ base, caminho: '/quiz', titulo: `${q.titulo} · Quiz da ${conteudo.
 </main>
 
 <footer class="rodape rodape-curto">
-  <div class="faixa-cores" aria-hidden="true">${listras}</div>
+  <div class="faixa-destaque" aria-hidden="true"></div>
   <div class="wrap">
     <p class="rodape-fim">${esc(conteudo.marca.nome)} · ${esc(conteudo.marca.profissao)} · ${esc(conteudo.marca.cidade)} · <a href="/">Voltar ao site</a></p>
   </div>

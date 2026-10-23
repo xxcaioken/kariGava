@@ -2,14 +2,13 @@ import conteudo from '../conteudo.json' with { type: 'json' };
 import { ErroApi, agora, novoId } from './util.js';
 import { buscarPost, baixarImagem } from './instagram.js';
 import { nomeDaVariante, chaveDaVariante } from './variantes.js';
+import { corDestaque } from './marca.js';
 
-const CORES = { lalaia: '#FEBC5C', sobre: '#141218' };
-const COR_SERVICO = { consultoria: '#8D51FF', styling: '#E5196E', vm: '#017F38', ensino: '#2A2730' };
-
+// Cor do cartão de cada parte no painel: a de destaque para LALAIÁ e serviços (cor não identifica serviço), tinta para "Sobre mim".
 export const SECOES = [
-  { id: 'lalaia', nome: 'LALAIÁ (produtos)', tipo: 'lalaia', cor: CORES.lalaia },
-  ...conteudo.servicos.map(s => ({ id: s.id, nome: s.titulo, tipo: 'servico', cor: COR_SERVICO[s.id] || '#141218' })),
-  { id: 'sobre', nome: 'Sobre mim', tipo: 'sobre', cor: CORES.sobre },
+  { id: 'lalaia', nome: 'LALAIÁ (produtos)', tipo: 'lalaia', cor: corDestaque() },
+  ...conteudo.servicos.map(s => ({ id: s.id, nome: s.titulo, tipo: 'servico', cor: corDestaque() })),
+  { id: 'sobre', nome: 'Sobre mim', tipo: 'sobre', cor: '#141218' },
 ];
 
 const MAX_FOTO = 15 * 1024 * 1024;

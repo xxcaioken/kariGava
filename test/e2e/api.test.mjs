@@ -1132,7 +1132,7 @@ const ORDEM_HOME = ['class="hero"', 'id="servicos"', 'id="antes-depois"', 'id="d
 test('R-15 estático: lang, descrição, alt em toda imagem, ordem da home e "Dúvidas" na navegação', async () => {
   for (const caminho of ['/', '/quiz', '/privacidade']) {
     const html = (await chamar(caminho)).dados;
-    assert.ok(html.startsWith('<!doctype html>\n<html lang="pt-BR">'), `${caminho} lang`);
+    assert.match(html, /^<!doctype html>\n<html lang="pt-BR"[ >]/, `${caminho} lang`);
     assert.match(html, /<meta name="description" content="[^"]{20,}">/, `${caminho} description`);
     assert.match(html, /<title>[^<]{5,}<\/title>/, `${caminho} title`);
     for (const img of html.match(/<img [^>]*>/g) || []) assert.ok(/ alt="[^"]*"/.test(img), `${caminho} alt em: ${img.slice(0, 80)}`);
