@@ -63,6 +63,11 @@ Atualizado em 23/10/2026.
 - [ ] **Catálogo do WhatsApp Business** (perguntar à Kari): se ela já usa o catálogo, os produtos da LALAIÁ podem apontar para lá em vez de só abrir a conversa. Decisão dela; nada no código depende disso.
 - [ ] **Backup semanal do banco** (dono: Caio): `docs/OPERACAO.md`, procedimento 1. Manual por enquanto.
 
+## Segurança (auditoria estática de 23/10/2026, decisão do Caio)
+
+- [ ] **"Sair" do painel não invalida a sessão no servidor** (médio). O cookie `kari_sessao` é assinado e vale 60 dias; "Sair" só o apaga no navegador, então um cookie copiado antes (celular perdido, computador de terceiros) continua valendo até o segredo ser trocado (`docs/OPERACAO.md`, procedimento 6). Correção sugerida: guardar por e-mail um carimbo "sessões válidas a partir de" que o "Sair" atualiza e a checagem de sessão respeita; ou reduzir a sessão para 7 dias. É mudança de comportamento (hoje a API promete 60 dias): entra numa próxima rodada com spec.
+- Sem outros achados sustentados no escopo lido (login, sessão, OAuth do Instagram, upload de fotos, escape de HTML/JSON-LD, cabeçalhos). Não rodados por falta de orçamento/perfis: varredura do histórico git, lockfile e scanners (Gitleaks, OSV, Semgrep, Trivy).
+
 ## Ideias adiadas de propósito (não entram sem nova decisão)
 
 Levantadas na revisão de produto e design e deixadas de fora desta entrega, cada uma com o motivo:
